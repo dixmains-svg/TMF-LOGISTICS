@@ -19,14 +19,7 @@ st.sidebar.success("Choisissez une page")
 st.markdown("""
 ## Bienvenue
 
-Cette application permet de gérer :
-
-- 🚛 Les Ordres de Mission
-- 🚚 Les Camions
-- 👷 Les Chauffeurs
-- 👥 Les Clients
-- 📊 Les Statistiques
-- 📈 Les KPI
+Mon application Logistique :
 
 ---
 """)
