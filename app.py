@@ -52,3 +52,4 @@ menu = st.sidebar.radio(
         "📊 Rapports"
     ]
 )
+df = pd.read_excel("DECOUCHE V1.4.xlsx")
