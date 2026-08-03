@@ -31,7 +31,6 @@ col2.metric("Camions","0")
 col3.metric("Chauffeurs","0")
 col4.metric("Clients","0")
 
-st.info("Les statistiques seront automatiquement calculées à partir du fichier Excel.")
 
 st.divider()
 
