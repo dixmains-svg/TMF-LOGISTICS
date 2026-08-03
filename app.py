@@ -52,4 +52,3 @@ menu = st.sidebar.radio(
         "📊 Rapports"
     ]
 )
-st.sidebar.image("assets/logo.png", width=180)
