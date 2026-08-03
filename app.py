@@ -41,6 +41,8 @@ from utils import get_om
 df = get_om()
 
 st.dataframe(df.head())
+import streamlit as st
+
 menu = st.sidebar.radio(
     "Navigation",
     [
@@ -52,4 +54,22 @@ menu = st.sidebar.radio(
         "📊 Rapports"
     ]
 )
+
+if menu == "🏠 Tableau de bord":
+    st.title("Tableau de bord")
+
+elif menu == "📋 Ordres de Mission":
+    st.title("Ordres de Mission")
+
+elif menu == "🚚 Camions":
+    st.title("Camions")
+
+elif menu == "👷 Chauffeurs":
+    st.title("Chauffeurs")
+
+elif menu == "👥 Clients":
+    st.title("Clients")
+
+elif menu == "📊 Rapports":
+    st.title("Rapports")
 df = pd.read_excel("DECOUCHE V1.4.xlsx")
