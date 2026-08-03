@@ -56,7 +56,7 @@ menu = st.sidebar.radio(
 
 if menu == "🏠 Tableau de bord":
     st.title("Tableau de bord")
- st.title("❤️❤️❤️❤️❤️")
+
 elif menu == "📋 Ordres de Mission":
     st.title("Ordres de Mission")
 
