@@ -19,7 +19,7 @@ st.sidebar.success("Choisissez une page")
 st.markdown("""
 ## Bienvenue
 
-Mon application Logistique :
+Ma Première Application Logistique :
 
 ---
 """)
