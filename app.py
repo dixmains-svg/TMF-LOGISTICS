@@ -43,3 +43,8 @@ st.info("Les statistiques seront automatiquement calculées à partir du fichier
 st.divider()
 
 st.write("Version 1.0")
+from utils import get_om
+
+df = get_om()
+
+st.dataframe(df.head())
