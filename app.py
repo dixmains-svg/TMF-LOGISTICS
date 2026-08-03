@@ -1,59 +1,45 @@
 import streamlit as st
-import pandas as pd
 
 st.set_page_config(
     page_title="TMF LOGISTICS",
     page_icon="🚛",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
+st.logo("https://img.icons8.com/color/96/truck.png")
+
 st.title("🚛 TMF LOGISTICS")
-st.write("Application de suivi des missions")
+st.caption("Système de Gestion des Ordres de Mission")
 
-# Charger le fichier Excel
-@st.cache_data
-def charger_donnees():
-    fichier = "DECOUCHE V1.4.xlsx"
-    feuilles = pd.read_excel(fichier, sheet_name=None)
+st.sidebar.title("Navigation")
 
-    if "Input OM Fini" in feuilles:
-        return feuilles["Input OM Fini"]
+st.sidebar.success("Choisissez une page")
 
-    return list(feuilles.values())[0]
+st.markdown("""
+## Bienvenue
 
-df = charger_donnees()
+Cette application permet de gérer :
 
-st.success("Fichier chargé avec succès")
+- 🚛 Les Ordres de Mission
+- 🚚 Les Camions
+- 👷 Les Chauffeurs
+- 👥 Les Clients
+- 📊 Les Statistiques
+- 📈 Les KPI
 
-# Affichage
-st.subheader("Données")
+---
+""")
 
-st.dataframe(df, use_container_width=True)
+col1,col2,col3,col4=st.columns(4)
 
-# Recherche
-st.subheader("Recherche")
+col1.metric("Ordres de Mission","0")
+col2.metric("Camions","0")
+col3.metric("Chauffeurs","0")
+col4.metric("Clients","0")
 
-texte = st.text_input("Rechercher")
+st.info("Les statistiques seront automatiquement calculées à partir du fichier Excel.")
 
-if texte:
-    resultat = df.astype(str).apply(
-        lambda x: x.str.contains(texte, case=False, na=False)
-    ).any(axis=1)
+st.divider()
 
-    st.dataframe(df[resultat], use_container_width=True)
-
-# Statistiques
-st.subheader("Statistiques")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.metric("Nombre de lignes", len(df))
-
-with col2:
-    st.metric("Nombre de colonnes", len(df.columns))
-
-# Colonnes disponibles
-st.subheader("Colonnes")
-
-st.write(df.columns.tolist())
+st.write("Version 1.0")
