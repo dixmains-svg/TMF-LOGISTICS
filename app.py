@@ -48,3 +48,14 @@ from utils import get_om
 df = get_om()
 
 st.dataframe(df.head())
+menu = st.sidebar.radio(
+    "Navigation",
+    [
+        "🏠 Tableau de bord",
+        "📋 Ordres de Mission",
+        "🚚 Camions",
+        "👷 Chauffeurs",
+        "👥 Clients",
+        "📊 Rapports"
+    ]
+)
