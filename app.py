@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 st.set_page_config(
     page_title="TMF LOGISTICS",
-    page_icon="🚛🚛🚛🚛🚛",
+    page_icon="🚛",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -56,7 +56,7 @@ menu = st.sidebar.radio(
 
 if menu == "🏠 Tableau de bord":
     st.title("Tableau de bord")
-
+❤️❤️❤️❤️❤️
 elif menu == "📋 Ordres de Mission":
     st.title("Ordres de Mission")
 
