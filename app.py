@@ -1,4 +1,4 @@
-import streamlit as st
+from utils import get_omimport streamlit as st
 import pandas as pd
 from io import BytesIO
 st.set_page_config(
@@ -57,7 +57,7 @@ elif menu == "📋 Ordres de Mission":
 elif menu == "🚚 Camions":
 
     st.title("🚚 Liste des Camions")
-
+from utils import get_om
     # Charger les données Excel
     df = get_om()
 
