@@ -65,7 +65,7 @@ elif menu == "🚚 Camions":
 
 elif menu == "👷 Chauffeurs":
     st.title("Chauffeurs")
-
+df = pd.read_excel("Chauffeurs.xlsx")
 elif menu == "👥 Clients":
     st.title("Clients")
 
