@@ -65,7 +65,7 @@ elif menu == "🚚 Camions":
 
 elif menu == "👷 Chauffeurs":
 
-    st.title("👷 Chauffeurs")
+    st.title("👷 Gestion des Chauffeurs")
 
     df = pd.DataFrame({
         "N°": [1, 2],
@@ -84,32 +84,33 @@ elif menu == "👷 Chauffeurs":
         num_rows="dynamic"
     )
 
-   col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2)
 
-with col1:
-    if st.button("💾 Enregistrer", key="save_chauffeurs"):
-        st.write(df_modifie)
+    with col1:
+        if st.button("💾 Enregistrer", key="save_chauffeurs"):
+            st.success("Les modifications ont été enregistrées.")
+            st.dataframe(df_modifie)
 
-with col2:
+    with col2:
 
-    buffer = BytesIO()
+        buffer = BytesIO()
 
-    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-        df_modifie.to_excel(
-            writer,
-            index=False,
-            sheet_name="Chauffeurs"
+        with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+            df_modifie.to_excel(
+                writer,
+                index=False,
+                sheet_name="Chauffeurs"
+            )
+
+        buffer.seek(0)
+
+        st.download_button(
+            label="📥 Exporter en Excel",
+            data=buffer,
+            file_name="chauffeurs.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key="download_chauffeurs"
         )
-
-    buffer.seek(0)
-
-    st.download_button(
-        label="📥 Exporter en Excel",
-        data=buffer,
-        file_name="chauffeurs.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
 elif menu == "👥 Clients":
 
     st.title("👥 Gestion des Clients")
