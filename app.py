@@ -158,7 +158,7 @@ with col2:
         file_name="clients.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-        )
+        
 elif menu == "📊 Rapports":
     st.title("Rapports")
 
