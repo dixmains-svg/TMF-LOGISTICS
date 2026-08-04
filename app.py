@@ -34,8 +34,6 @@ col4.metric("Clients","0")
 
 
 st.divider()
-
-st.dataframe(df.head())
 import streamlit as st
 
 menu = st.sidebar.radio(
