@@ -35,11 +35,6 @@ col4.metric("Clients","0")
 
 st.divider()
 
-st.write("Version 1.0")
-from utils import get_om
-
-df = get_om()
-
 st.dataframe(df.head())
 import streamlit as st
 
