@@ -71,26 +71,25 @@ elif menu == "👥 Clients":
 
 elif menu == "📊 Rapports":
     st.title("Rapports")
-df = pd.read_excel("DECOUCHE V1.4.xlsx")
+
 import streamlit as st
 import pandas as pd
 
-# Exemple de données
 df = pd.DataFrame({
-    "Nom": ["Ahmed", "Karim"],
-    "Camion": ["123456", "987654"],
-    "Ville": ["Oran", "Alger"]
+    "N°": [1, 2],
+    "Badge": ["123456", "987654"],
+    "Chauffeur": ["Ahmed Benali", "Karim Bensalem"],
+    "Fonction": ["Chauffeur PL", "Chauffeur SPL"],
+    "Section/Affectation": ["Transport Oran", "Transport Alger"],
+    "Superviseur": ["M. Rahmani", "M. Khelifi"]
 })
-
-st.title("Tableau modifiable")
 
 df_modifie = st.data_editor(
     df,
     use_container_width=True,
-    num_rows="dynamic",   # permet d'ajouter des lignes
-    hide_index=True
+    hide_index=True,
+    num_rows="dynamic"
 )
 
-if st.button("Enregistrer"):
-    df_modifie.to_excel("chauffeurs.xlsx", index=False)
-    st.success("Enregistré avec succès")
+if st.button("💾 Enregistrer"):
+    st.write(df_modifie)
