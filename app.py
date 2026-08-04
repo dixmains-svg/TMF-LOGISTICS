@@ -65,12 +65,32 @@ elif menu == "🚚 Camions":
 
 elif menu == "👷 Chauffeurs":
     st.title("Chauffeurs")
-df = pd.read_excel(
-    "Chauffeurs.xlsx",
-    sheet_name="Chauffeurs"
+
 elif menu == "👥 Clients":
     st.title("Clients")
 
 elif menu == "📊 Rapports":
     st.title("Rapports")
 df = pd.read_excel("DECOUCHE V1.4.xlsx")
+import streamlit as st
+import pandas as pd
+
+# Exemple de données
+df = pd.DataFrame({
+    "Nom": ["Ahmed", "Karim"],
+    "Camion": ["123456", "987654"],
+    "Ville": ["Oran", "Alger"]
+})
+
+st.title("Tableau modifiable")
+
+df_modifie = st.data_editor(
+    df,
+    use_container_width=True,
+    num_rows="dynamic",   # permet d'ajouter des lignes
+    hide_index=True
+)
+
+if st.button("Enregistrer"):
+    df_modifie.to_excel("chauffeurs.xlsx", index=False)
+    st.success("Enregistré avec succès")
