@@ -57,9 +57,6 @@ elif menu == "📋 Ordres de Mission":
 elif menu == "🚚 Camions":
 
     st.title("🚚 Liste des Camions")
-from utils import get_om
-    # Charger les données Excel
-    df = get_om()
 
     # Vérifier que la colonne existe
     if "Numero Camion" in df.columns:
