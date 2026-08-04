@@ -55,7 +55,43 @@ elif menu == "📋 Ordres de Mission":
     st.title("Ordres de Mission")
 
 elif menu == "🚚 Camions":
-    st.title("Camions")
+
+    st.title("🚚 Liste des Camions")
+
+    # Charger les données Excel
+    df = get_om()
+
+    # Vérifier que la colonne existe
+    if "Numero Camion" in df.columns:
+
+        # Supprimer les valeurs vides et les doublons
+        camions = (
+            df["Numero Camion"]
+            .dropna()
+            .astype(str)
+            .str.strip()
+            .drop_duplicates()
+            .sort_values()
+            .reset_index(drop=True)
+        )
+
+        # Créer un tableau
+        df_camions = pd.DataFrame({
+            "N°": range(1, len(camions) + 1),
+            "Camion": camions
+        })
+
+        # Afficher le tableau modifiable
+        df_modifie = st.data_editor(
+            df_camions,
+            key="camions",
+            use_container_width=True,
+            hide_index=True,
+            num_rows="dynamic"
+        )
+
+    else:
+        st.error("La colonne 'Numero Camion' est introuvable.")
 
 elif menu == "👷 Chauffeurs":
 
