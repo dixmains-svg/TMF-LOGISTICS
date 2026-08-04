@@ -90,27 +90,38 @@ elif menu == "👷 Chauffeurs":
 elif menu == "👥 Clients":
     st.title("Clients")
 
-elif menu == "📊 Rapports":
-    st.title("Rapports")
-
-import streamlit as st
-import pandas as pd
-
 df = pd.DataFrame({
     "N°": [1, 2],
-    "Badge": ["123456", "987654"],
-    "Chauffeur": ["Ahmed Benali", "Karim Bensalem"],
-    "Fonction": ["Chauffeur PL", "Chauffeur SPL"],
-    "Section/Affectation": ["Transport Oran", "Transport Alger"],
-    "Superviseur": ["M. Rahmani", "M. Khelifi"]
+    "Code Client": ["CL001", "CL002"],
+    "Client": ["CEVITAL", "SONATRACH"],
+    "Ville": ["Béjaïa", "Alger"],
+    "Adresse": ["Zone Industrielle", "Hydra"],
+    "Téléphone": ["0550123456", "0661234567"],
+    "Email": ["contact@cevital.com", "transport@sonatrach.dz"],
+    "Contact": ["M. Benali", "Mme Amrani"]
 })
 
 df_modifie = st.data_editor(
     df,
+    key="clients",
     use_container_width=True,
     hide_index=True,
     num_rows="dynamic"
 )
 
-if st.button("💾 Enregistrer"):
-    st.write(df_modifie)
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("💾 Enregistrer", key="save_clients"):
+        st.write(df_modifie)
+
+with col2:
+    st.download_button(
+        label="📥 Exporter en CSV",
+        data=df_modifie.to_csv(index=False).encode("utf-8"),
+        file_name="clients.csv",
+        mime="text/csv"
+    )
+elif menu == "📊 Rapports":
+    st.title("Rapports")
+
