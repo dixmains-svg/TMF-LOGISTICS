@@ -84,19 +84,31 @@ elif menu == "👷 Chauffeurs":
         num_rows="dynamic"
     )
 
-    col1, col2 = st.columns(2)
+   col1, col2 = st.columns(2)
 
-    with col1:
-        if st.button("💾 Enregistrer", key="save_chauffeurs"):
-            st.write(df_modifie)
+with col1:
+    if st.button("💾 Enregistrer", key="save_chauffeurs"):
+        st.write(df_modifie)
 
-    with col2:
-        st.download_button(
-            label="📥 Exporter en XLSX",
-            data=df_modifie.to_xlsx(index=False).encode("utf-8"),
-            file_name="chauffeurs.xlsx",
-            mime="text/xlsx"
+with col2:
+
+    buffer = BytesIO()
+
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        df_modifie.to_excel(
+            writer,
+            index=False,
+            sheet_name="Chauffeurs"
         )
+
+    buffer.seek(0)
+
+    st.download_button(
+        label="📥 Exporter en Excel",
+        data=buffer,
+        file_name="chauffeurs.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 elif menu == "👥 Clients":
 
@@ -121,18 +133,31 @@ elif menu == "👥 Clients":
         num_rows="dynamic"
     )
 
-    col1, col2 = st.columns(2)
+  col1, col2 = st.columns(2)
 
-    with col1:
-        if st.button("💾 Enregistrer", key="save_clients"):
-            st.write(df_modifie)
+with col1:
+    if st.button("💾 Enregistrer", key="save_clients"):
+        st.write(df_modifie)
 
-    with col2:
-        st.download_button(
-            label="📥 Exporter en XLSX",
-            data=df_modifie.to_xlsx(index=False).encode("utf-8"),
-            file_name="clients.xlsx",
-            mime="text/xlsx"
+with col2:
+
+    buffer = BytesIO()
+
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        df_modifie.to_excel(
+            writer,
+            index=False,
+            sheet_name="Clients"
+        )
+
+    buffer.seek(0)
+
+    st.download_button(
+        label="📥 Exporter en Excel",
+        data=buffer,
+        file_name="clients.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
         )
 elif menu == "📊 Rapports":
     st.title("Rapports")
