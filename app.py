@@ -88,40 +88,41 @@ elif menu == "👷 Chauffeurs":
         st.write(df_modifie)
 
 elif menu == "👥 Clients":
-    st.title("Clients")
 
-df = pd.DataFrame({
-    "N°": [1, 2],
-    "Code Client": ["CL001", "CL002"],
-    "Client": ["CEVITAL", "SONATRACH"],
-    "Ville": ["Béjaïa", "Alger"],
-    "Adresse": ["Zone Industrielle", "Hydra"],
-    "Téléphone": ["0550123456", "0661234567"],
-    "Email": ["contact@cevital.com", "transport@sonatrach.dz"],
-    "Contact": ["M. Benali", "Mme Amrani"]
-})
+    st.title("👥 Gestion des Clients")
 
-df_modifie = st.data_editor(
-    df,
-    key="clients",
-    use_container_width=True,
-    hide_index=True,
-    num_rows="dynamic"
-)
+    df = pd.DataFrame({
+        "N°": [1, 2],
+        "Code Client": ["CL001", "CL002"],
+        "Client": ["CEVITAL", "SONATRACH"],
+        "Ville": ["Béjaïa", "Alger"],
+        "Adresse": ["Zone Industrielle", "Hydra"],
+        "Téléphone": ["0550123456", "0661234567"],
+        "Email": ["contact@cevital.com", "transport@sonatrach.dz"],
+        "Contact": ["M. Benali", "Mme Amrani"]
+    })
 
-col1, col2 = st.columns(2)
-
-with col1:
-    if st.button("💾 Enregistrer", key="save_clients"):
-        st.write(df_modifie)
-
-with col2:
-    st.download_button(
-        label="📥 Exporter en CSV",
-        data=df_modifie.to_csv(index=False).encode("utf-8"),
-        file_name="clients.csv",
-        mime="text/csv"
+    df_modifie = st.data_editor(
+        df,
+        key="clients",
+        use_container_width=True,
+        hide_index=True,
+        num_rows="dynamic"
     )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("💾 Enregistrer", key="save_clients"):
+            st.write(df_modifie)
+
+    with col2:
+        st.download_button(
+            label="📥 Exporter en CSV",
+            data=df_modifie.to_csv(index=False).encode("utf-8"),
+            file_name="clients.csv",
+            mime="text/csv"
+        )
 elif menu == "📊 Rapports":
     st.title("Rapports")
 
