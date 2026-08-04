@@ -65,6 +65,7 @@ elif menu == "🚚 Camions":
 
 elif menu == "👷 Chauffeurs":
     st.title("Chauffeurs")
+import streamlit as st
 
 elif menu == "👥 Clients":
     st.title("Clients")
