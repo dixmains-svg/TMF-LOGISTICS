@@ -64,28 +64,28 @@ elif menu == "🚚 Camions":
     st.title("Camions")
 
 elif menu == "👷 Chauffeurs":
-    st.title("Chauffeurs")
-import streamlit as st
-import pandas as pd
 
-df = pd.DataFrame({
-    "N°": [1, 2],
-    "Badge": ["123456", "987654"],
-    "Chauffeur": ["Ahmed Benali", "Karim Bensalem"],
-    "Fonction": ["Chauffeur PL", "Chauffeur SPL"],
-    "Section/Affectation": ["Transport Oran", "Transport Alger"],
-    "Superviseur": ["M. Rahmani", "M. Khelifi"]
-})
+    st.title("👷 Chauffeurs")
 
-df_modifie = st.data_editor(
-    df,
-    use_container_width=True,
-    hide_index=True,
-    num_rows="dynamic"
-)
+    df = pd.DataFrame({
+        "N°": [1, 2],
+        "Badge": ["123456", "987654"],
+        "Chauffeur": ["Ahmed Benali", "Karim Bensalem"],
+        "Fonction": ["Chauffeur PL", "Chauffeur SPL"],
+        "Section/Affectation": ["Transport Oran", "Transport Alger"],
+        "Superviseur": ["M. Rahmani", "M. Khelifi"]
+    })
 
-if st.button("💾 Enregistrer"):
-    st.write(df_modifie)
+    df_modifie = st.data_editor(
+        df,
+        key="chauffeurs",
+        use_container_width=True,
+        hide_index=True,
+        num_rows="dynamic"
+    )
+
+    if st.button("💾 Enregistrer", key="save_chauffeurs"):
+        st.write(df_modifie)
 
 elif menu == "👥 Clients":
     st.title("Clients")
