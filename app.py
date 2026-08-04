@@ -58,37 +58,39 @@ elif menu == "🚚 Camions":
 
     st.title("🚚 Liste des Camions")
 
-    # Vérifier que la colonne existe
-    if "Numero Camion" in df.columns:
+    df = pd.read_excel(
+        "DECOUCHE V1.4.xlsx",
+        sheet_name="Input OM Fini"
+    )
 
-        # Supprimer les valeurs vides et les doublons
+    df.columns = df.columns.str.strip()
+
+    st.write("Colonnes disponibles :", df.columns.tolist())
+
+    if "Camion" in df.columns:
+
         camions = (
-            df["Numero Camion"]
+            df["Camion"]
             .dropna()
             .astype(str)
-            .str.strip()
             .drop_duplicates()
             .sort_values()
-            .reset_index(drop=True)
         )
 
-        # Créer un tableau
         df_camions = pd.DataFrame({
             "N°": range(1, len(camions) + 1),
-            "Camion": camions
+            "Camion": camions.values
         })
 
-        # Afficher le tableau modifiable
-        df_modifie = st.data_editor(
+        st.data_editor(
             df_camions,
             key="camions",
             use_container_width=True,
-            hide_index=True,
-            num_rows="dynamic"
+            hide_index=True
         )
 
     else:
-        st.error("La colonne 'Numero Camion' est introuvable.")
+        st.error("La colonne 'Camion' est introuvable.")
 
 elif menu == "👷 Chauffeurs":
 
