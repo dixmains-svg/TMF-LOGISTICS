@@ -70,10 +70,10 @@ elif menu == "👷 Chauffeurs":
     df = pd.DataFrame({
         "N°": [1, 2],
         "Badge": ["123456", "987654"],
-        "Chauffeur": ["Ahmed Benali", "Karim Bensalem"],
-        "Fonction": ["Chauffeur PL", "Chauffeur SPL"],
-        "Section/Affectation": ["Transport Oran", "Transport Alger"],
-        "Superviseur": ["M. Rahmani", "M. Khelifi"]
+        "Chauffeur": ["Nadjib Benali", "Karim Bensaci"],
+        "Fonction": ["Chauffeur SR", "Chauffeur SP"],
+        "Section/Affectation": ["Port/Akbou", "Port/Akbou"],
+        "Superviseur": ["Redjdal", "Redjdal"]
     })
 
     df_modifie = st.data_editor(
@@ -84,8 +84,19 @@ elif menu == "👷 Chauffeurs":
         num_rows="dynamic"
     )
 
-    if st.button("💾 Enregistrer", key="save_chauffeurs"):
-        st.write(df_modifie)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("💾 Enregistrer", key="save_chauffeurs"):
+            st.write(df_modifie)
+
+    with col2:
+        st.download_button(
+            label="📥 Exporter en XLSX",
+            data=df_modifie.to_xlsx(index=False).encode("utf-8"),
+            file_name="chauffeurs.xlsx",
+            mime="text/xlsx"
+        )
 
 elif menu == "👥 Clients":
 
@@ -94,11 +105,11 @@ elif menu == "👥 Clients":
     df = pd.DataFrame({
         "N°": [1, 2],
         "Code Client": ["CL001", "CL002"],
-        "Client": ["CEVITAL", "SONATRACH"],
+        "Client": ["CEVITAL", "FRUITAL"],
         "Ville": ["Béjaïa", "Alger"],
-        "Adresse": ["Zone Industrielle", "Hydra"],
+        "Adresse": ["Zone Industrielle", "Rouiba"],
         "Téléphone": ["0550123456", "0661234567"],
-        "Email": ["contact@cevital.com", "transport@sonatrach.dz"],
+        "Email": ["contact@cevital.com", "transport@fruital.dz"],
         "Contact": ["M. Benali", "Mme Amrani"]
     })
 
@@ -118,10 +129,10 @@ elif menu == "👥 Clients":
 
     with col2:
         st.download_button(
-            label="📥 Exporter en CSV",
-            data=df_modifie.to_csv(index=False).encode("utf-8"),
-            file_name="clients.csv",
-            mime="text/csv"
+            label="📥 Exporter en XLSX",
+            data=df_modifie.to_xlsx(index=False).encode("utf-8"),
+            file_name="clients.xlsx",
+            mime="text/xlsx"
         )
 elif menu == "📊 Rapports":
     st.title("Rapports")
