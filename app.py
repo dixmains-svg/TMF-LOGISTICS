@@ -55,7 +55,7 @@ if menu == "🏠 Tableau de bord":
 elif menu == "📋 Ordres de Mission":
     st.title("Ordres de Mission")
     df = pd.read_excel(
-        "DECOUCHE V1.4.xlsx",
+        "OM.xlsx",
         sheet_name="Input OM Fini"
     )
 
