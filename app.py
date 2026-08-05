@@ -25,15 +25,15 @@ Ma Première Application Logistique :
 
 ---
 """)
+# Charger le fichier des camions
+df_camions = pd.read_excel("camion.xlsx")
+
+# Compter les camions
+nombre_camions = df_camions["Camion"].count()
 
 col1,col2,col3,col4=st.columns(4)
 
 col1.metric("Ordres de Mission","0")
-
-df_camions = pd.read_excel("camion.xlsx")
-
-nombre_camions = df_camions["Camion"].count()
-
 col2.metric("🚚 Nombre de camions", nombre_camions)
 col3.metric("Chauffeurs","0")
 col4.metric("Clients","0")
