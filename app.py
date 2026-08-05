@@ -123,78 +123,33 @@ elif menu == "🚚 Camions":
 
     st.title("🚚 Gestion des Camions")
 
-    # Charger le fichier Excel
-    df = pd.read_excel(
-        "DECOUCHE V1.4.xlsx",
-        sheet_name="Input OM Fini"
-    )
+    # Charger le fichier camion.xlsx
+    df_camions = pd.read_excel("camion.xlsx")
 
     # Nettoyer les noms des colonnes
-    df.columns = df.columns.str.strip()
+    df_camions.columns = df_camions.columns.str.strip()
 
-    # Colonnes à afficher
-    df_camions = df[
-        [
-            "Numero Camion",
-            "Remorque",
-            "Chauffeur",
-            "Status",
-            "Client",
-            "Trajet Réel"
-        ]
-    ].copy()
-
-    # Renommer les colonnes
-    df_camions.columns = [
-        "Camion",
-        "Remorque",
-        "Chauffeur",
-        "Statut",
-        "Client",
-        "Mission"
-    ]
-
-    # Supprimer les doublons de camions
-    df_camions = df_camions.drop_duplicates(subset=["Camion"])
-
-    # Ajouter une numérotation
-    df_camions.insert(0, "N°", range(1, len(df_camions) + 1))
+    # Ajouter une numérotation si elle n'existe pas
+    if "N°" not in df_camions.columns:
+        df_camions.insert(0, "N°", range(1, len(df_camions) + 1))
 
     # Barre de recherche
-    recherche = st.text_input("🔍 Rechercher un camion")
+    recherche = st.text_input(
+        "🔍 Rechercher un camion",
+        placeholder="Ex : 16-123-456"
+    )
 
     if recherche:
         df_camions = df_camions[
-            df_camions["Camion"].astype(str).str.contains(
-                recherche,
-                case=False,
-                na=False
-            )
+            df_camions.astype(str)
+            .apply(lambda x: x.str.contains(recherche, case=False, na=False))
+            .any(axis=1)
         ]
 
     # Tableau modifiable
-    st.data_editor(
+    df_modifie = st.data_editor(
         df_camions,
         key="camions",
-        use_container_width=True,
-        hide_index=True
-    )
-elif menu == "👷 Chauffeurs":
-
-    st.title("👷 Gestion des Chauffeurs")
-
-    df = pd.DataFrame({
-        "N°": [1, 2],
-        "Badge": ["123456", "987654"],
-        "Chauffeur": ["Nadjib Benali", "Karim Bensaci"],
-        "Fonction": ["Chauffeur SR", "Chauffeur SP"],
-        "Section/Affectation": ["Port/Akbou", "Port/Akbou"],
-        "Superviseur": ["Redjdal", "Redjdal"]
-    })
-
-    df_modifie = st.data_editor(
-        df,
-        key="chauffeurs",
         use_container_width=True,
         hide_index=True,
         num_rows="dynamic"
@@ -203,29 +158,16 @@ elif menu == "👷 Chauffeurs":
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("💾 Enregistrer", key="save_chauffeurs"):
+        if st.button("💾 Enregistrer", key="save_camions"):
+            df_modifie.to_excel("camion.xlsx", index=False)
             st.success("Les modifications ont été enregistrées.")
-            st.dataframe(df_modifie)
 
     with col2:
-
-        buffer = BytesIO()
-
-        with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-            df_modifie.to_excel(
-                writer,
-                index=False,
-                sheet_name="Chauffeurs"
-            )
-
-        buffer.seek(0)
-
         st.download_button(
-            label="📥 Exporter en Excel",
-            data=buffer,
-            file_name="chauffeurs.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            key="download_chauffeurs"
+            "📥 Télécharger",
+            data=df_modifie.to_csv(index=False).encode("utf-8"),
+            file_name="camion.csv",
+            mime="text/csv"
         )
 elif menu == "👥 Clients":
 
