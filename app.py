@@ -29,7 +29,6 @@ Ma Première Application Logistique :
 col1,col2,col3,col4=st.columns(4)
 
 col1.metric("Ordres de Mission","0")
-import pandas as pd
 
 df_camions = pd.read_excel("camion.xlsx")
 
