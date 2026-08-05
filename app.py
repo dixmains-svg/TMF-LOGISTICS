@@ -29,7 +29,13 @@ Ma Première Application Logistique :
 col1,col2,col3,col4=st.columns(4)
 
 col1.metric("Ordres de Mission","0")
-col2.metric("Camions","0")
+import pandas as pd
+
+df_camions = pd.read_excel("camion.xlsx")
+
+nombre_camions = df_camions["Camion"].count()
+
+col2.metric("🚚 Nombre de camions", nombre_camions)
 col3.metric("Chauffeurs","0")
 col4.metric("Clients","0")
 
