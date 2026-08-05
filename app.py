@@ -53,9 +53,10 @@ if menu == "🏠 Tableau de bord":
     st.title("Tableau de bord")
 
 elif menu == "📋 Ordres de Mission":
-    st.title("Ordres de Mission")
-    df = pd.read_excel( "OM.xlsx",
-    )
+
+    st.title("📋 Ordres de Mission")
+
+    df = pd.read_excel("OM.xlsx")
 
     df.columns = df.columns.str.strip()
 
@@ -110,28 +111,29 @@ elif menu == "📋 Ordres de Mission":
         )
         df_om = df_om[masque]
 
- df_modifie = st.data_editor(
-    df_om,
-    key="ordre_mission",
-    use_container_width=True,
-    hide_index=True,
-    num_rows="dynamic"
-)
-
-col1, col2 = st.columns(2)
-
-with col1:
-    if st.button("💾 Enregistrer", key="save_om"):
-        df_modifie.to_excel("OM.xlsx", index=False)
-        st.success("Les modifications ont été enregistrées.")
-
-with col2:
-    st.download_button(
-        "📥 Télécharger",
-        data=df_modifie.to_csv(index=False).encode("utf-8"),
-        file_name="OM.csv",
-        mime="text/csv"
+    # Tableau modifiable
+    df_modifie = st.data_editor(
+        df_om,
+        key="ordre_mission",
+        use_container_width=True,
+        hide_index=True,
+        num_rows="dynamic"
     )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("💾 Enregistrer", key="save_om"):
+            df_modifie.to_excel("OM.xlsx", index=False)
+            st.success("Les modifications ont été enregistrées.")
+
+    with col2:
+        st.download_button(
+            label="📥 Télécharger",
+            data=df_modifie.to_csv(index=False).encode("utf-8"),
+            file_name="OM.csv",
+            mime="text/csv"
+        )
 elif menu == "🚚 Camions":
 
     st.title("🚚 Gestion des Camions")
