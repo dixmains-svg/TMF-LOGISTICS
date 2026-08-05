@@ -57,42 +57,64 @@ elif menu == "📋 Ordres de Mission":
 
 elif menu == "🚚 Camions":
 
-    st.title("🚚 Liste des Camions")
+    st.title("🚚 Gestion des Camions")
 
+    # Charger le fichier Excel
     df = pd.read_excel(
         "DECOUCHE V1.4.xlsx",
         sheet_name="Input OM Fini"
     )
 
+    # Nettoyer les noms des colonnes
     df.columns = df.columns.str.strip()
 
-    st.write("Colonnes disponibles :", df.columns.tolist())
+    # Colonnes à afficher
+    df_camions = df[
+        [
+            "Numero Camion",
+            "Remorque",
+            "Chauffeur",
+            "Status",
+            "Client",
+            "Trajet Réel"
+        ]
+    ].copy()
 
-    if "Camion" in df.columns:
+    # Renommer les colonnes
+    df_camions.columns = [
+        "Camion",
+        "Remorque",
+        "Chauffeur",
+        "Statut",
+        "Client",
+        "Mission"
+    ]
 
-        camions = (
-            df["Camion"]
-            .dropna()
-            .astype(str)
-            .drop_duplicates()
-            .sort_values()
-        )
+    # Supprimer les doublons de camions
+    df_camions = df_camions.drop_duplicates(subset=["Camion"])
 
-        df_camions = pd.DataFrame({
-            "N°": range(1, len(camions) + 1),
-            "Camion": camions.values
-        })
+    # Ajouter une numérotation
+    df_camions.insert(0, "N°", range(1, len(df_camions) + 1))
 
-        st.data_editor(
-            df_camions,
-            key="camions",
-            use_container_width=True,
-            hide_index=True
-        )
+    # Barre de recherche
+    recherche = st.text_input("🔍 Rechercher un camion")
 
-    else:
-        st.error("La colonne 'Camion' est introuvable.")
+    if recherche:
+        df_camions = df_camions[
+            df_camions["Camion"].astype(str).str.contains(
+                recherche,
+                case=False,
+                na=False
+            )
+        ]
 
+    # Tableau modifiable
+    st.data_editor(
+        df_camions,
+        key="camions",
+        use_container_width=True,
+        hide_index=True
+    )
 elif menu == "👷 Chauffeurs":
 
     st.title("👷 Gestion des Chauffeurs")
