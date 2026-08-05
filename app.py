@@ -25,20 +25,25 @@ Ma Première Application Logistique :
 
 ---
 """)
-# Charger le fichier des camions
+# Charger les fichiers
+df_om = pd.read_excel("OM.xlsx")
 df_camions = pd.read_excel("camion.xlsx")
+df_chauffeurs = pd.read_excel("chauffeurs.xlsx")
+df_clients = pd.read_excel("clients.xlsx")
 
-# Compter les camions
-nombre_camions = df_camions["Camion"].count()
+# Calculs
+nombre_om = len(df_om)
+nombre_camions = df_camions["Camion"].nunique()
+nombre_chauffeurs = len(df_chauffeurs)
+nombre_clients = len(df_clients)
 
-col1,col2,col3,col4=st.columns(4)
+# Indicateurs
+col1, col2, col3, col4 = st.columns(4)
 
-col1.metric("Ordres de Mission","0")
-col2.metric("🚚 Nombre de camions", nombre_camions)
-col3.metric("Chauffeurs","0")
-col4.metric("Clients","0")
-
-
+col1.metric("📋 Ordres de Mission", nombre_om)
+col2.metric("🚚 Camions", nombre_camions)
+col3.metric("👷 Chauffeurs", nombre_chauffeurs)
+col4.metric("👥 Clients", nombre_clients)
 st.divider()
 import streamlit as st
 
