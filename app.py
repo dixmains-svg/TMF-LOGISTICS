@@ -54,7 +54,71 @@ if menu == "🏠 Tableau de bord":
 
 elif menu == "📋 Ordres de Mission":
     st.title("Ordres de Mission")
+    df = pd.read_excel(
+        "DECOUCHE V1.4.xlsx",
+        sheet_name="Input OM Fini"
+    )
 
+    df.columns = df.columns.str.strip()
+
+    df_om = df[
+        [
+            "Numéro",
+            "N° Commande",
+            "Numero Camion",
+            "Remorque",
+            "Chauffeur",
+            "Client",
+            "Trajet Réel",
+            "Date Depart",
+            "Time Depart",
+            "Date de Retour",
+            "Time Retour",
+            "Kilometrage au Depart",
+            "Kilometrage au Retour",
+            "Kilometrage Parcouru",
+            "Status"
+        ]
+    ].copy()
+
+    df_om.columns = [
+        "N° OM",
+        "Commande",
+        "Camion",
+        "Remorque",
+        "Chauffeur",
+        "Client",
+        "Mission",
+        "Date Départ",
+        "Heure Départ",
+        "Date Retour",
+        "Heure Retour",
+        "KM Départ",
+        "KM Retour",
+        "KM Parcourus",
+        "Statut"
+    ]
+
+    recherche = st.text_input(
+        "🔍 Rechercher un OM, un camion, un chauffeur ou un client"
+    )
+
+    if recherche:
+        masque = (
+            df_om["N° OM"].astype(str).str.contains(recherche, case=False, na=False)
+            | df_om["Camion"].astype(str).str.contains(recherche, case=False, na=False)
+            | df_om["Chauffeur"].astype(str).str.contains(recherche, case=False, na=False)
+            | df_om["Client"].astype(str).str.contains(recherche, case=False, na=False)
+        )
+        df_om = df_om[masque]
+
+    st.data_editor(
+        df_om,
+        key="ordre_mission",
+        use_container_width=True,
+        hide_index=True,
+        num_rows="dynamic"
+    )
 elif menu == "🚚 Camions":
 
     st.title("🚚 Gestion des Camions")
