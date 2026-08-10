@@ -1,6 +1,5 @@
 import streamlit as st
 
-
 # ============================================================
 # CONFIGURATION
 # ============================================================
@@ -12,7 +11,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-
 # ============================================================
 # LOGO
 # ============================================================
@@ -20,7 +18,6 @@ st.set_page_config(
 st.logo(
     "https://img.icons8.com/color/96/truck.png"
 )
-
 
 # ============================================================
 # NAVIGATION
@@ -36,7 +33,6 @@ pages = {
     ],
 
     "🚛 Gestion Transport": [
-
         st.Page(
             "pages/1_Ordres_de_Mission.py",
             title="Ordres de Mission",
@@ -68,7 +64,6 @@ pages = {
         )
     ]
 }
-
 
 # ============================================================
 # LANCER LA NAVIGATION
