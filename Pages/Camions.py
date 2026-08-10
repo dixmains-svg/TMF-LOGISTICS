@@ -1,4 +1,15 @@
 import streamlit as st
+from database import get_camions
+
+st.title("🚚 Gestion des Camions")
+
+df = get_camions()
+
+st.dataframe(
+    df,
+    use_container_width=True,
+    hide_index=True
+)import streamlit as st
 import pandas as pd
 from io import BytesIO
 
