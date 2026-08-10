@@ -1,5 +1,10 @@
 import streamlit as st
 
+
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
 st.set_page_config(
     page_title="TMF LOGISTICS",
     page_icon="🚛",
@@ -7,7 +12,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.logo("https://img.icons8.com/color/96/truck.png")
+
+# ============================================================
+# LOGO
+# ============================================================
+
+st.logo(
+    "https://img.icons8.com/color/96/truck.png"
+)
+
 
 # ============================================================
 # NAVIGATION
@@ -23,37 +36,43 @@ pages = {
     ],
 
     "🚛 Gestion Transport": [
+
         st.Page(
-            "pages/1_Ordres_de_Mission.py",
+            "pages/om.py",
             title="Ordres de Mission",
             icon="📋"
         ),
 
         st.Page(
-            "pages/2_Camions.py",
+            "pages/camions.py",
             title="Camions",
             icon="🚚"
         ),
 
         st.Page(
-            "pages/3_Chauffeurs.py",
+            "pages/chauffeurs.py",
             title="Chauffeurs",
             icon="👷"
         ),
 
         st.Page(
-            "pages/4_Clients.py",
+            "pages/clients.py",
             title="Clients",
             icon="👥"
         ),
 
         st.Page(
-            "pages/5_Rapports.py",
+            "pages/rapports.py",
             title="Rapports",
             icon="📊"
         )
     ]
 }
+
+
+# ============================================================
+# LANCER LA NAVIGATION
+# ============================================================
 
 navigation = st.navigation(pages)
 
