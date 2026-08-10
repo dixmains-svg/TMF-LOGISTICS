@@ -1,23 +1,74 @@
 import streamlit as st
-from pathlib import Path
 
-st.set_page_config(
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
+st.set_Page_config(
     page_title="TMF LOGISTICS",
     page_icon="🚛",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-st.title("🚛 TMF LOGISTICS")
+# ============================================================
+# LOGO
+# ============================================================
 
-st.write("### 🔎 Vérification des fichiers")
+st.logo(
+    "https://img.icons8.com/color/96/truck.png"
+)
 
-base = Path(__file__).parent
+# ============================================================
+# NAVIGATION
+# ============================================================
 
-st.write("Dossier de l'application :")
-st.code(str(base))
+pages = {
+    "🏠 Accueil": [
+        st.Page(
+            "app_home.py",
+            title="Tableau de bord",
+            icon="📊"
+        )
+    ],
 
-st.write("### Fichiers présents")
+    "🚛 Gestion Transport": [
+        st.Page(
+            "Pages/1_Ordres_de_Mission.py",
+            title="Ordres de Mission",
+            icon="📋"
+        ),
 
-for fichier in base.rglob("*"):
-    if fichier.is_file():
-        st.write(str(fichier.relative_to(base)))
+        st.Page(
+            "Pages/2_Camions.py",
+            title="Camions",
+            icon="🚚"
+        ),
+
+        st.Page(
+            "Pages/3_Chauffeurs.py",
+            title="Chauffeurs",
+            icon="👷"
+        ),
+
+        st.Page(
+            "Pages/4_Clients.py",
+            title="Clients",
+            icon="👥"
+        ),
+
+        st.Page(
+            "Pages/5_Rapports.py",
+            title="Rapports",
+            icon="📊"
+        )
+    ]
+}
+
+# ============================================================
+# LANCER LA NAVIGATION
+# ============================================================
+
+navigation = st.navigation(Pages)
+
+navigation.run()
