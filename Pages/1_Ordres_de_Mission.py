@@ -2,12 +2,10 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 
-from database.database import (
+from database import (
     get_ordres_mission,
     ajouter_ordre_mission,
-    get_camions,
-    get_chauffeurs,
-    get_clients
+    supprimer_ordre_mission
 )
 
 
