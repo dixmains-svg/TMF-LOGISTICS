@@ -4,7 +4,7 @@ import streamlit as st
 # CONFIGURATION
 # ============================================================
 
-st.set_Page_config(
+st.set_page_config(
     page_title="TMF LOGISTICS",
     page_icon="🚛",
     layout="wide",
@@ -23,7 +23,7 @@ st.logo(
 # NAVIGATION
 # ============================================================
 
-pages = {
+Pages = {
     "🏠 Accueil": [
         st.Page(
             "app_home.py",
