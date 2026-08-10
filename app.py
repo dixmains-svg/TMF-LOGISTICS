@@ -1,9 +1,6 @@
 import streamlit as st
 
-from database.database import (
-    init_database,
-    statistiques
-)
+from database import init_database, statistiques
 
 
 # ============================================================
