@@ -38,31 +38,31 @@ pages = {
     "🚛 Gestion Transport": [
 
         st.Page(
-            "pages/om.py",
+            "pages/1_Ordres_de_Mission.py",
             title="Ordres de Mission",
             icon="📋"
         ),
 
         st.Page(
-            "pages/camions.py",
+            "pages/2_Camions.py",
             title="Camions",
             icon="🚚"
         ),
 
         st.Page(
-            "pages/chauffeurs.py",
+            "pages/3_Chauffeurs.py",
             title="Chauffeurs",
             icon="👷"
         ),
 
         st.Page(
-            "pages/clients.py",
+            "pages/4_Clients.py",
             title="Clients",
             icon="👥"
         ),
 
         st.Page(
-            "pages/rapports.py",
+            "pages/5_Rapports.py",
             title="Rapports",
             icon="📊"
         )
