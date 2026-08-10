@@ -1,74 +1,23 @@
 import streamlit as st
-
-# ============================================================
-# CONFIGURATION
-# ============================================================
+from pathlib import Path
 
 st.set_page_config(
     page_title="TMF LOGISTICS",
     page_icon="🚛",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
-# ============================================================
-# LOGO
-# ============================================================
+st.title("🚛 TMF LOGISTICS")
 
-st.logo(
-    "https://img.icons8.com/color/96/truck.png"
-)
+st.write("### 🔎 Vérification des fichiers")
 
-# ============================================================
-# NAVIGATION
-# ============================================================
+base = Path(__file__).parent
 
-pages = {
-    "🏠 Accueil": [
-        st.Page(
-            "app_home.py",
-            title="Tableau de bord",
-            icon="📊"
-        )
-    ],
+st.write("Dossier de l'application :")
+st.code(str(base))
 
-    "🚛 Gestion Transport": [
-        st.Page(
-            "pages/1_Ordres_de_Mission.py",
-            title="Ordres de Mission",
-            icon="📋"
-        ),
+st.write("### Fichiers présents")
 
-        st.Page(
-            "pages/2_Camions.py",
-            title="Camions",
-            icon="🚚"
-        ),
-
-        st.Page(
-            "pages/3_Chauffeurs.py",
-            title="Chauffeurs",
-            icon="👷"
-        ),
-
-        st.Page(
-            "pages/4_Clients.py",
-            title="Clients",
-            icon="👥"
-        ),
-
-        st.Page(
-            "pages/5_Rapports.py",
-            title="Rapports",
-            icon="📊"
-        )
-    ]
-}
-
-# ============================================================
-# LANCER LA NAVIGATION
-# ============================================================
-
-navigation = st.navigation(pages)
-
-navigation.run()
+for fichier in base.rglob("*"):
+    if fichier.is_file():
+        st.write(str(fichier.relative_to(base)))
