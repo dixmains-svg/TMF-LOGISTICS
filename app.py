@@ -16,7 +16,7 @@ st.set_page_config(
 
 
 # ============================================================
-# INITIALISATION DE LA BASE
+# INITIALISATION
 # ============================================================
 
 init_database()
@@ -32,7 +32,7 @@ st.logo(
 
 
 # ============================================================
-# EN-TÊTE
+# TITRE
 # ============================================================
 
 st.title("🚛 TMF LOGISTICS")
@@ -45,7 +45,7 @@ st.divider()
 
 
 # ============================================================
-# RÉCUPÉRER LES STATISTIQUES
+# STATISTIQUES
 # ============================================================
 
 stats = statistiques()
@@ -67,34 +67,30 @@ col1, col2, col3, col4 = st.columns(4)
 
 
 with col1:
-
     st.metric(
-        label="📋 Ordres de Mission",
-        value=nombre_om
+        "📋 Ordres de Mission",
+        nombre_om
     )
 
 
 with col2:
-
     st.metric(
-        label="🚚 Camions",
-        value=nombre_camions
+        "🚚 Camions",
+        nombre_camions
     )
 
 
 with col3:
-
     st.metric(
-        label="👷 Chauffeurs",
-        value=nombre_chauffeurs
+        "👷 Chauffeurs",
+        nombre_chauffeurs
     )
 
 
 with col4:
-
     st.metric(
-        label="👥 Clients",
-        value=nombre_clients
+        "👥 Clients",
+        nombre_clients
     )
 
 
@@ -114,10 +110,6 @@ de transport de TMF LOGISTICS.
 """
 )
 
-
-# ============================================================
-# MODULES
-# ============================================================
 
 col1, col2 = st.columns(2)
 
@@ -167,19 +159,11 @@ with col2:
 st.divider()
 
 
-# ============================================================
-# INFORMATIONS
-# ============================================================
-
 st.info(
     "💡 Utilisez le menu situé à gauche pour accéder "
-    "aux différents modules de l'application."
+    "aux différents modules."
 )
 
-
-# ============================================================
-# PIED DE PAGE
-# ============================================================
 
 st.markdown(
     """
