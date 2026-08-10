@@ -1,6 +1,10 @@
 import streamlit as st
-import pandas as pd
-import os
+
+from database.database import (
+    init_database,
+    statistiques
+)
+
 
 # ============================================================
 # CONFIGURATION
@@ -13,164 +17,180 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+
 # ============================================================
-# STYLE
+# INITIALISATION DE LA BASE
 # ============================================================
 
-st.markdown("""
-<style>
+init_database()
 
-.main-title {
-    font-size: 36px;
-    font-weight: bold;
-}
-
-.subtitle {
-    font-size: 18px;
-    color: #666;
-}
-
-</style>
-""", unsafe_allow_html=True)
 
 # ============================================================
 # LOGO
 # ============================================================
 
-try:
-    st.logo("https://img.icons8.com/color/96/truck.png")
-except Exception:
-    pass
-
-# ============================================================
-# TITRE
-# ============================================================
-
-st.markdown(
-    '<div class="main-title">🚛 TMF LOGISTICS</div>',
-    unsafe_allow_html=True
+st.logo(
+    "https://img.icons8.com/color/96/truck.png"
 )
 
-st.markdown(
-    '<div class="subtitle">Système de Gestion du Transport et des Ordres de Mission</div>',
-    unsafe_allow_html=True
+
+# ============================================================
+# EN-TÊTE
+# ============================================================
+
+st.title("🚛 TMF LOGISTICS")
+
+st.subheader(
+    "Système de Gestion du Transport et des Ordres de Mission"
 )
 
 st.divider()
 
-# ============================================================
-# CHARGEMENT DES DONNÉES
-# ============================================================
-
-def charger_excel(fichier):
-
-    chemin = os.path.join("data", fichier)
-
-    if os.path.exists(chemin):
-        try:
-            df = pd.read_excel(chemin)
-            df.columns = df.columns.astype(str).str.strip()
-            return df
-
-        except Exception as e:
-            st.error(f"Erreur lors de la lecture de {fichier} : {e}")
-            return pd.DataFrame()
-
-    return pd.DataFrame()
-
-
-df_om = charger_excel("OM.xlsx")
-df_camions = charger_excel("camion.xlsx")
-df_chauffeurs = charger_excel("chauffeurs.xlsx")
-df_clients = charger_excel("clients.xlsx")
 
 # ============================================================
-# CALCUL DES INDICATEURS
+# RÉCUPÉRER LES STATISTIQUES
 # ============================================================
 
-nombre_om = len(df_om)
+stats = statistiques()
 
-if "Camion" in df_camions.columns:
-    nombre_camions = df_camions["Camion"].nunique()
-elif "Numero Camion" in df_camions.columns:
-    nombre_camions = df_camions["Numero Camion"].nunique()
-else:
-    nombre_camions = len(df_camions)
+nombre_om = stats["ordres_mission"]
+nombre_camions = stats["camions"]
+nombre_chauffeurs = stats["chauffeurs"]
+nombre_clients = stats["clients"]
 
-nombre_chauffeurs = len(df_chauffeurs)
-nombre_clients = len(df_clients)
 
 # ============================================================
 # TABLEAU DE BORD
 # ============================================================
 
-st.subheader("📊 Tableau de bord")
+st.header("📊 Tableau de bord")
+
 
 col1, col2, col3, col4 = st.columns(4)
 
+
 with col1:
+
     st.metric(
-        "📋 Ordres de Mission",
-        nombre_om
+        label="📋 Ordres de Mission",
+        value=nombre_om
     )
+
 
 with col2:
+
     st.metric(
-        "🚚 Camions",
-        nombre_camions
+        label="🚚 Camions",
+        value=nombre_camions
     )
+
 
 with col3:
+
     st.metric(
-        "👷 Chauffeurs",
-        nombre_chauffeurs
+        label="👷 Chauffeurs",
+        value=nombre_chauffeurs
     )
 
+
 with col4:
+
     st.metric(
-        "👥 Clients",
-        nombre_clients
+        label="👥 Clients",
+        value=nombre_clients
     )
+
 
 st.divider()
 
+
 # ============================================================
-# INFORMATIONS
+# BIENVENUE
 # ============================================================
 
-st.subheader("Bienvenue dans TMF LOGISTICS 👋")
+st.header("Bienvenue dans TMF LOGISTICS 👋")
 
 st.write(
     """
-    Cette application permet de gérer les principales opérations
-    de transport de TMF LOGISTICS.
-    """
+Cette application permet de gérer les principales opérations
+de transport de TMF LOGISTICS.
+"""
 )
+
+
+# ============================================================
+# MODULES
+# ============================================================
 
 col1, col2 = st.columns(2)
 
+
 with col1:
 
-    st.info(
-        """
-        📋 **Ordres de Mission**
+    st.subheader("📋 Ordres de Mission")
 
+    st.write(
+        """
         Gestion des missions, camions, chauffeurs,
         clients, dates et kilométrages.
         """
     )
 
-with col2:
+    st.subheader("🚚 Gestion du parc")
 
-    st.success(
+    st.write(
         """
-        🚚 **Gestion du parc**
-
-        Suivi des camions, remorques,
-        chauffeurs et affectations.
+        Suivi des camions, remorques, chauffeurs
+        et affectations.
         """
     )
 
+
+with col2:
+
+    st.subheader("👷 Gestion des Chauffeurs")
+
+    st.write(
+        """
+        Gestion des badges, fonctions,
+        affectations et superviseurs.
+        """
+    )
+
+    st.subheader("👥 Gestion des Clients")
+
+    st.write(
+        """
+        Gestion des clients, coordonnées,
+        contacts et informations commerciales.
+        """
+    )
+
+
 st.divider()
 
-st.caption("TMF LOGISTICS — Système de Gestion du Transport — Version 2.0")
+
+# ============================================================
+# INFORMATIONS
+# ============================================================
+
+st.info(
+    "💡 Utilisez le menu situé à gauche pour accéder "
+    "aux différents modules de l'application."
+)
+
+
+# ============================================================
+# PIED DE PAGE
+# ============================================================
+
+st.markdown(
+    """
+    <div style="text-align:center; padding:20px;">
+        <b>TMF LOGISTICS</b><br>
+        Système de Gestion du Transport<br>
+        Version 2.0
+    </div>
+    """,
+    unsafe_allow_html=True
+)
