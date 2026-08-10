@@ -8,7 +8,7 @@ from database import (
 
 st.title("🚚 Gestion des Camions")
 
-df_camions = get_camions()
+df_camions = Camions()
 
 st.data_editor(
     df_camions,
