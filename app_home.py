@@ -1,5 +1,6 @@
 import streamlit as st
 from pathlib import Path
+import base64
 
 from database import init_database, statistiques
 
@@ -20,6 +21,8 @@ st.set_page_config(
 # ============================================================
 
 init_database()
+
+
 # ============================================================
 # ARRIÈRE-PLAN
 # ============================================================
@@ -62,8 +65,7 @@ if BACKGROUND_PATH.exists():
 else:
 
     st.warning(
-        "⚠️ Image d'arrière-plan introuvable : "
-        "assets/background.jpg"
+        f"⚠️ Image d'arrière-plan introuvable : {BACKGROUND_PATH}"
     )
 
 
@@ -90,6 +92,7 @@ col1, col2, col3, col4 = st.columns(4)
 
 
 with col1:
+
     st.metric(
         "📋 Ordres de Mission",
         stats["ordres_mission"]
@@ -97,6 +100,7 @@ with col1:
 
 
 with col2:
+
     st.metric(
         "🚚 Camions",
         stats["camions"]
@@ -104,6 +108,7 @@ with col2:
 
 
 with col3:
+
     st.metric(
         "👷 Chauffeurs",
         stats["chauffeurs"]
@@ -111,6 +116,7 @@ with col3:
 
 
 with col4:
+
     st.metric(
         "👥 Clients",
         stats["clients"]
