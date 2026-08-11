@@ -25,7 +25,7 @@ st.logo(
 
 Pages = {
     "🏠 Accueil": [
-        st.Pages(
+        st.Page(
             "app_home.py",
             title="Tableau de bord",
             icon="📊"
@@ -33,13 +33,13 @@ Pages = {
     ],
 
     "🚛 Gestion Transport": [
-        st.Pages(
+        st.Page(
             "Pages/1_Ordres_de_Mission.py",
             title="Ordres de Mission",
             icon="📋"
         ),
 
-        st.Pages(
+        st.Page(
             "Pages/2_Camions.py",
             title="Camions",
             icon="🚚"
