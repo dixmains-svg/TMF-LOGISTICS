@@ -1,40 +1,81 @@
 import streamlit as st
 import pandas as pd
-from navision_api import get_navision_data
 
-df_camions = get_navision_data(
-    URL_CAMIONS,
-    USERNAME,
-    PASSWORD
-)
-
-st.dataframe(
-    df_camions,
-    use_container_width=True
+st.set_page_config(
+    page_title="Camions - TMF LOGISTICS",
+    page_icon="🚚",
+    layout="wide"
 )
 
 st.title("🚚 Gestion des Camions")
 
+st.caption("TMF LOGISTICS — Parc véhicules")
+
+
 # ============================================================
-# CHARGER LES CAMIONS
+# DONNÉES CAMIONS
 # ============================================================
 
-df_camions = get_camions()
+# Pour le moment, lecture depuis la base SQLite
+try:
+    from database import get_connection
+
+    conn = get_connection()
+
+    df_camions = pd.read_sql_query(
+        """
+        SELECT
+            id,
+            camion,
+            remorque,
+            chauffeur,
+            statut,
+            client,
+            mission
+        FROM camions
+        ORDER BY id
+        """,
+        conn
+    )
+
+    conn.close()
+
+except Exception as e:
+
+    st.error("Impossible de charger les camions.")
+
+    st.code(str(e))
+
+    df_camions = pd.DataFrame(
+        columns=[
+            "id",
+            "camion",
+            "remorque",
+            "chauffeur",
+            "statut",
+            "client",
+            "mission"
+        ]
+    )
+
 
 # ============================================================
 # RECHERCHE
 # ============================================================
 
 recherche = st.text_input(
-    "🔍 Rechercher un camion",
-    placeholder="Numéro camion, chauffeur, client..."
+    "🔎 Rechercher un camion",
+    placeholder="Camion, chauffeur, client..."
 )
 
+
 if recherche:
+
     masque = (
         df_camions.astype(str)
         .apply(
-            lambda colonne: colonne.str.contains(
+            lambda colonne:
+            colonne.str.contains(
                 recherche,
                 case=False,
                 na=False
@@ -45,14 +86,40 @@ if recherche:
 
     df_camions = df_camions[masque]
 
+
 # ============================================================
 # AFFICHAGE
 # ============================================================
 
-st.data_editor(
-    df_camions,
-    key="tableau_camions",
-    use_container_width=True,
-    hide_index=True,
-    num_rows="dynamic"
-)
+if df_camions.empty:
+
+    st.info("🚚 Aucun camion trouvé.")
+
+else:
+
+    st.dataframe(
+        df_camions,
+        use_container_width=True,
+        hide_index=True
+    )
+
+
+# ============================================================
+# STATISTIQUES
+# ============================================================
+
+st.divider()
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.metric(
+        "🚚 Nombre de camions",
+        df_camions["camion"].nunique()
+    )
+
+with col2:
+    st.metric(
+        "📋 Camions affichés",
+        len(df_camions)
+    )
