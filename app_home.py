@@ -42,7 +42,7 @@ else:
 # TITRE
 # ============================================================
 
-st.title("🚛 TMF LOGISTICS")
+st.title(" TMF LOGISTICS")
 
 st.subheader(
     "Système de Gestion du Transport et des Ordres de Mission"
