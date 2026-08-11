@@ -32,7 +32,7 @@ LOGO_PATH = BASE_DIR / "logo.png"
 if LOGO_PATH.exists():
     st.image(
         str(LOGO_PATH),
-        width=120
+        width=200
     )
 else:
     st.warning("⚠️ Logo introuvable")
