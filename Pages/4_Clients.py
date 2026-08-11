@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 
-from database.database import (
+from database import (
     get_clients,
     ajouter_client,
     supprimer_client
