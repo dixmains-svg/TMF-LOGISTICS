@@ -1,8 +1,11 @@
 import streamlit as st
 import pandas as pd
 
-from database import get_ordres_mission, get_camions
-
+from database import (
+    get_ordres_mission,
+    get_camions,
+    ajouter_ordre_mission
+)
 st.title("📋 Ordres de Mission")
 
 # Récupérer les OM
