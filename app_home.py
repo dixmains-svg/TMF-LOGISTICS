@@ -1,9 +1,8 @@
 import streamlit as st
-from pathlib import Path
 import base64
+from pathlib import Path
 
 from database import init_database, statistiques
-
 
 # ============================================================
 # CONFIGURATION
