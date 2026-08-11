@@ -1,6 +1,19 @@
 import streamlit as st
+from pathlib import Path
 from database import init_database, statistiques
 
+# Initialiser la base
+init_database()
+
+# Chemin du logo
+BASE_DIR = Path(__file__).resolve().parent
+LOGO_PATH = BASE_DIR / "logo.png"
+
+# Logo
+if LOGO_PATH.exists():
+    st.image(str(LOGO_PATH), width=120)
+else:
+    st.warning("⚠️ logo.png introuvable")
 # ============================================================
 # CONFIGURATION
 # ============================================================
