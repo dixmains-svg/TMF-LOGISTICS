@@ -1,8 +1,7 @@
 import streamlit as st
 import base64
+import pandas as pd
 from pathlib import Path
-
-from database import init_database, statistiques
 
 
 # ============================================================
@@ -17,19 +16,18 @@ st.set_page_config(
 
 
 # ============================================================
-# BASE DE DONNÉES
+# CHEMINS
 # ============================================================
 
-init_database()
+BASE_DIR = Path(__file__).resolve().parent
+
+EXCEL_OM = BASE_DIR / "Data" / "OM.xlsx"
+BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
 
 
 # ============================================================
 # ARRIÈRE-PLAN
 # ============================================================
-
-BASE_DIR = Path(__file__).resolve().parent
-
-BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
 
 if BACKGROUND_PATH.exists():
 
@@ -62,11 +60,44 @@ if BACKGROUND_PATH.exists():
         unsafe_allow_html=True
     )
 
-else:
 
-    st.warning(
-        f"⚠️ Image d'arrière-plan introuvable : {BACKGROUND_PATH}"
-    )
+# ============================================================
+# LECTURE DU FICHIER OM.XLSX
+# ============================================================
+
+@st.cache_data
+def charger_om():
+
+    if not EXCEL_OM.exists():
+
+        return pd.DataFrame()
+
+    try:
+
+        df = pd.read_excel(
+            EXCEL_OM,
+            engine="openpyxl"
+        )
+
+        return df
+
+    except Exception as e:
+
+        st.error(
+            f"❌ Erreur lors de la lecture de OM.xlsx : {e}"
+        )
+
+        return pd.DataFrame()
+
+
+df_om = charger_om()
+
+
+# ============================================================
+# STATISTIQUES
+# ============================================================
+
+nombre_om = len(df_om)
 
 
 # ============================================================
@@ -83,35 +114,44 @@ st.divider()
 
 
 # ============================================================
-# STATISTIQUES
+# TABLEAU DE BORD
 # ============================================================
 
-stats = statistiques()
+st.header("📊 Tableau de bord")
+
 
 col1, col2, col3, col4 = st.columns(4)
 
+
 with col1:
+
     st.metric(
         "📋 Ordres de Mission",
-        stats["ordres_mission"]
+        nombre_om
     )
+
 
 with col2:
+
     st.metric(
         "🚚 Camions",
-        stats["camions"]
+        "—"
     )
+
 
 with col3:
+
     st.metric(
         "👷 Chauffeurs",
-        stats["chauffeurs"]
+        "—"
     )
 
+
 with col4:
+
     st.metric(
         "👥 Clients",
-        stats["clients"]
+        "—"
     )
 
 
@@ -138,6 +178,7 @@ st.write(
 
 col1, col2 = st.columns(2)
 
+
 with col1:
 
     st.subheader("📋 Ordres de Mission")
@@ -155,8 +196,7 @@ with col1:
         """
         Suivi des camions, remorques, chauffeurs
         et affectations.
-        """
-    )
+        """)
 
 
 with col2:
@@ -176,11 +216,30 @@ with col2:
         """
         Gestion des clients, coordonnées,
         contacts et informations commerciales.
-        """
+        """)
+
+
+# ============================================================
+# APERÇU DES ORDRES DE MISSION
+# ============================================================
+
+if not df_om.empty:
+
+    st.divider()
+
+    st.header("📋 Derniers Ordres de Mission")
+
+    st.dataframe(
+        df_om.head(10),
+        use_container_width=True,
+        hide_index=True
     )
 
+else:
 
-st.divider()
+    st.warning(
+        f"⚠️ Aucun ordre de mission trouvé dans : {EXCEL_OM}"
+    )
 
 
 # ============================================================
