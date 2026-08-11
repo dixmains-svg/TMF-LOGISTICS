@@ -9,6 +9,11 @@ from database import init_database, statistiques
 st.set_page_config(
     page_title="TMF LOGISTICS",
     page_icon="🚛",
+    st.image(
+        "logo.png",
+        width=120
+    )
+
     layout="wide",
     initial_sidebar_state="expanded"
 )
