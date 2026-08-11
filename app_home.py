@@ -28,7 +28,7 @@ init_database()
 
 BASE_DIR = Path(__file__).resolve().parent
 LOGO_PATH = BASE_DIR / "logo.png"
-
+page_title="TMF LOGISTICS",
 if LOGO_PATH.exists():
     st.image(
         str(LOGO_PATH),
