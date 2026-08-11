@@ -78,7 +78,7 @@ col_logo, col_titre = st.columns([1, 6])
 with col_logo:
 
     st.image(
-        "assets/logo.png",
+        "logo.png",
         width=120
     )
 
