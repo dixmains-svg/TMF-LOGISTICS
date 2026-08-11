@@ -5,15 +5,13 @@ from database import init_database, statistiques
 # ============================================================
 # CONFIGURATION
 # ============================================================
-
-st.set_page_config(
-    page_title="TMF LOGISTICS",
-    page_icon="🚛",
-    st.image(
+  st.image(
         "logo.png",
         width=120
     )
-
+st.set_page_config(
+    page_title="TMF LOGISTICS",
+    page_icon="🚛",
     layout="wide",
     initial_sidebar_state="expanded"
 )
