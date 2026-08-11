@@ -5,11 +5,7 @@ from database import init_database, statistiques
 # ============================================================
 # CONFIGURATION
 # ============================================================
-  st.image(
-        "logo.png",
-        width=120
-    )
-st.set_page_config(
+ st.set_page_config(
     page_title="TMF LOGISTICS",
     page_icon="🚛",
     layout="wide",
@@ -83,7 +79,7 @@ with col_logo:
 
     st.image(
         "logo.png",
-        width=120
+        width=100
     )
 
 with col_titre:
