@@ -1,10 +1,16 @@
 import streamlit as st
 import pandas as pd
+from navision_api import get_navision_data
 
-from database import (
-    get_camions,
-    ajouter_camion,
-    supprimer_camion
+df_camions = get_navision_data(
+    URL_CAMIONS,
+    USERNAME,
+    PASSWORD
+)
+
+st.dataframe(
+    df_camions,
+    use_container_width=True
 )
 
 st.title("🚚 Gestion des Camions")
