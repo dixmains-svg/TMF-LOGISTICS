@@ -36,23 +36,6 @@ st.subheader(
 
 
 # ============================================================
-# INFORMATIONS FICHIER
-# ============================================================
-
-with st.expander("📁 Informations sur le fichier"):
-
-    st.write(
-        f"**Fichier recherché :**  \n"
-        f"`{FICHIER_CAMIONS}`"
-    )
-
-    if FICHIER_CAMIONS.exists():
-        st.success("✅ Camions.xlsx existe.")
-    else:
-        st.error("❌ Camions.xlsx est introuvable.")
-
-
-# ============================================================
 # LECTURE EXCEL
 # ============================================================
 
