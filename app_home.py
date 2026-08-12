@@ -16,13 +16,35 @@ st.set_page_config(
 
 
 # ============================================================
-# CHEMINS
+# CHEMIN PRINCIPAL DU PROJET
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent
 
-EXCEL_OM = BASE_DIR / "Data" / "OM.xlsx"
+DATA_DIR = BASE_DIR / "Data"
+
+EXCEL_OM = DATA_DIR / "OM.xlsx"
+
 BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
+
+
+# ============================================================
+# VÉRIFICATION DES CHEMINS
+# ============================================================
+
+st.sidebar.markdown("### 🔧 Informations système")
+
+st.sidebar.write(
+    f"📁 Projet : `{BASE_DIR}`"
+)
+
+st.sidebar.write(
+    f"📄 OM : `{EXCEL_OM}`"
+)
+
+st.sidebar.write(
+    f"🖼️ Image : `{BACKGROUND_PATH}`"
+)
 
 
 # ============================================================
@@ -31,33 +53,53 @@ BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
 
 if BACKGROUND_PATH.exists():
 
-    with open(BACKGROUND_PATH, "rb") as image_file:
+    try:
 
-        encoded_image = base64.b64encode(
-            image_file.read()
-        ).decode("utf-8")
+        with open(
+            BACKGROUND_PATH,
+            "rb"
+        ) as image_file:
 
-    st.markdown(
-        f"""
-        <style>
+            encoded_image = base64.b64encode(
+                image_file.read()
+            ).decode("utf-8")
 
-        .stApp {{
-            background-image:
-                linear-gradient(
-                    rgba(255, 255, 255, 0.88),
-                    rgba(255, 255, 255, 0.88)
-                ),
-                url("data:image/jpeg;base64,{encoded_image}");
+        st.markdown(
+            f"""
+            <style>
 
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-        }}
+            .stApp {{
+                background-image:
+                    linear-gradient(
+                        rgba(255, 255, 255, 0.88),
+                        rgba(255, 255, 255, 0.88)
+                    ),
+                    url(
+                        "data:image/jpeg;base64,{encoded_image}"
+                    );
 
-        </style>
-        """,
-        unsafe_allow_html=True
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+            }}
+
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+    except Exception as e:
+
+        st.warning(
+            f"⚠️ Impossible de charger TMF.jpg : {e}"
+        )
+
+else:
+
+    st.warning(
+        f"⚠️ Image d'arrière-plan introuvable : "
+        f"{BACKGROUND_PATH}"
     )
 
 
@@ -68,27 +110,83 @@ if BACKGROUND_PATH.exists():
 @st.cache_data
 def charger_om():
 
+    # --------------------------------------------------------
+    # Vérification du fichier
+    # --------------------------------------------------------
+
     if not EXCEL_OM.exists():
 
         return pd.DataFrame()
 
+    # --------------------------------------------------------
+    # Lecture Excel
+    # --------------------------------------------------------
+
     try:
+
+        # Vérification OpenPyXL
+
+        import openpyxl
 
         df = pd.read_excel(
             EXCEL_OM,
             engine="openpyxl"
         )
 
+        # ----------------------------------------------------
+        # Nettoyage des colonnes
+        # ----------------------------------------------------
+
+        df.columns = (
+            df.columns
+            .astype(str)
+            .str.strip()
+        )
+
+        # ----------------------------------------------------
+        # Supprimer les lignes complètement vides
+        # ----------------------------------------------------
+
+        df = df.dropna(
+            how="all"
+        )
+
         return df
 
-    except Exception as e:
+    except ImportError:
 
         st.error(
-            f"❌ Erreur lors de la lecture de OM.xlsx : {e}"
+            """
+            ❌ OpenPyXL n'est pas installé.
+
+            Ajoutez cette ligne dans requirements.txt :
+
+            openpyxl>=3.1.5
+            """
         )
 
         return pd.DataFrame()
 
+    except Exception as e:
+
+        st.error(
+            f"""
+            ❌ Erreur lors de la lecture de OM.xlsx :
+
+            {e}
+
+            Fichier :
+
+            {EXCEL_OM}
+            """
+        )
+
+        return pd.DataFrame()
+
+
+# ============================================================
+# CHARGEMENT OM
+# ============================================================
 
 df_om = charger_om()
 
@@ -104,7 +202,9 @@ nombre_om = len(df_om)
 # TITRE
 # ============================================================
 
-st.title("🚛 TMF LOGISTICS")
+st.title(
+    "🚛 TMF LOGISTICS"
+)
 
 st.subheader(
     "Système de Gestion du Transport et des Ordres de Mission"
@@ -117,7 +217,9 @@ st.divider()
 # TABLEAU DE BORD
 # ============================================================
 
-st.header("📊 Tableau de bord")
+st.header(
+    "📊 Tableau de bord"
+)
 
 
 col1, col2, col3, col4 = st.columns(4)
@@ -162,7 +264,9 @@ st.divider()
 # BIENVENUE
 # ============================================================
 
-st.header("Azul Felawen dans TMF LOGISTICS 👋")
+st.header(
+    "Azul Felawen dans TMF LOGISTICS 👋"
+)
 
 st.write(
     """
@@ -181,7 +285,9 @@ col1, col2 = st.columns(2)
 
 with col1:
 
-    st.subheader("📋 Ordres de Mission")
+    st.subheader(
+        "📋 Ordres de Mission"
+    )
 
     st.write(
         """
@@ -190,18 +296,23 @@ with col1:
         """
     )
 
-    st.subheader("🚚 Gestion du parc")
+    st.subheader(
+        "🚚 Gestion du parc"
+    )
 
     st.write(
         """
         Suivi des camions, remorques, chauffeurs
         et affectations.
-        """)
+        """
+    )
 
 
 with col2:
 
-    st.subheader("👷 Gestion des Chauffeurs")
+    st.subheader(
+        "👷 Gestion des Chauffeurs"
+    )
 
     st.write(
         """
@@ -210,13 +321,16 @@ with col2:
         """
     )
 
-    st.subheader("👥 Gestion des Clients")
+    st.subheader(
+        "👥 Gestion des Clients"
+    )
 
     st.write(
         """
         Gestion des clients, coordonnées,
         contacts et informations commerciales.
-        """)
+        """
+    )
 
 
 # ============================================================
@@ -227,7 +341,9 @@ if not df_om.empty:
 
     st.divider()
 
-    st.header("📋 Derniers Ordres de Mission")
+    st.header(
+        "📋 Derniers Ordres de Mission"
+    )
 
     st.dataframe(
         df_om.head(10),
@@ -237,8 +353,16 @@ if not df_om.empty:
 
 else:
 
-    st.warning(
-        f"⚠️ Aucun ordre de mission trouvé dans : {EXCEL_OM}"
+    st.divider()
+
+    st.error(
+        f"""
+        ❌ Aucun ordre de mission trouvé.
+
+        Fichier recherché :
+
+        `{EXCEL_OM}`
+        """
     )
 
 
