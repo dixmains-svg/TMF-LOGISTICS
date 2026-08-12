@@ -1,20 +1,5 @@
 import streamlit as st
-import sys
 
-st.write("Python :", sys.version)
-
-try:
-    import openpyxl
-
-    st.success(
-        f"OPENPYXL OK : {openpyxl.__version__}"
-    )
-
-except Exception as e:
-
-    st.error(
-        f"OPENPYXL ERREUR : {e}"
-    )
 # ============================================================
 # CONFIGURATION
 # ============================================================
