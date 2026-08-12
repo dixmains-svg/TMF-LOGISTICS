@@ -18,7 +18,7 @@ UTILISATEURS = {
 
 def connexion():
 
-    # Si déjà connecté
+    # Déjà connecté
     if st.session_state.get("connecte", False):
         return True
 
@@ -63,10 +63,6 @@ def connexion():
 
     st.divider()
 
-    # --------------------------------------------------------
-    # FORMULAIRE
-    # --------------------------------------------------------
-
     with st.form("login_form"):
 
         utilisateur = st.text_input(
@@ -78,12 +74,12 @@ def connexion():
             type="password"
         )
 
-        connexion_button = st.form_submit_button(
+        bouton = st.form_submit_button(
             "🔐 Se connecter",
             use_container_width=True
         )
 
-        if connexion_button:
+        if bouton:
 
             if (
                 utilisateur in UTILISATEURS
@@ -108,3 +104,35 @@ def connexion():
     )
 
     return False
+
+
+# ============================================================
+# FONCTION DÉCONNEXION
+# ============================================================
+
+def deconnexion():
+
+    st.sidebar.divider()
+
+    utilisateur = st.session_state.get(
+        "utilisateur",
+        ""
+    )
+
+    st.sidebar.write(
+        f"👤 Connecté : **{utilisateur}**"
+    )
+
+    if st.sidebar.button(
+        "🚪 Déconnexion",
+        use_container_width=True
+    ):
+
+        # Supprimer les informations de connexion
+        st.session_state.connecte = False
+
+        if "utilisateur" in st.session_state:
+            del st.session_state["utilisateur"]
+
+        # Revenir à la page de connexion
+        st.rerun()
