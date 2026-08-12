@@ -1,6 +1,5 @@
 import streamlit as st
 import base64
-import pandas as pd
 from pathlib import Path
 
 
@@ -16,35 +15,12 @@ st.set_page_config(
 
 
 # ============================================================
-# CHEMIN PRINCIPAL DU PROJET
+# CHEMINS
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent
 
-DATA_DIR = BASE_DIR / "Data"
-
-EXCEL_OM = DATA_DIR / "OM.xlsx"
-
 BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
-
-
-# ============================================================
-# VÉRIFICATION DES CHEMINS
-# ============================================================
-
-st.sidebar.markdown("### 🔧 Informations système")
-
-st.sidebar.write(
-    f"📁 Projet : `{BASE_DIR}`"
-)
-
-st.sidebar.write(
-    f"📄 OM : `{EXCEL_OM}`"
-)
-
-st.sidebar.write(
-    f"🖼️ Image : `{BACKGROUND_PATH}`"
-)
 
 
 # ============================================================
@@ -53,47 +29,34 @@ st.sidebar.write(
 
 if BACKGROUND_PATH.exists():
 
-    try:
+    with open(BACKGROUND_PATH, "rb") as image_file:
 
-        with open(
-            BACKGROUND_PATH,
-            "rb"
-        ) as image_file:
+        encoded_image = base64.b64encode(
+            image_file.read()
+        ).decode("utf-8")
 
-            encoded_image = base64.b64encode(
-                image_file.read()
-            ).decode("utf-8")
+    st.markdown(
+        f"""
+        <style>
 
-        st.markdown(
-            f"""
-            <style>
+        .stApp {{
+            background-image:
+                linear-gradient(
+                    rgba(255, 255, 255, 0.88),
+                    rgba(255, 255, 255, 0.88)
+                ),
+                url("data:image/jpeg;base64,{encoded_image}");
 
-            .stApp {{
-                background-image:
-                    linear-gradient(
-                        rgba(255, 255, 255, 0.88),
-                        rgba(255, 255, 255, 0.88)
-                    ),
-                    url(
-                        "data:image/jpeg;base64,{encoded_image}"
-                    );
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
 
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-                background-attachment: fixed;
-            }}
-
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
-
-    except Exception as e:
-
-        st.warning(
-            f"⚠️ Impossible de charger TMF.jpg : {e}"
-        )
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 else:
 
@@ -104,107 +67,10 @@ else:
 
 
 # ============================================================
-# LECTURE DU FICHIER OM.XLSX
-# ============================================================
-
-@st.cache_data
-def charger_om():
-
-    # --------------------------------------------------------
-    # Vérification du fichier
-    # --------------------------------------------------------
-
-    if not EXCEL_OM.exists():
-
-        return pd.DataFrame()
-
-    # --------------------------------------------------------
-    # Lecture Excel
-    # --------------------------------------------------------
-
-    try:
-
-        # Vérification OpenPyXL
-
-        import openpyxl
-
-        df = pd.read_excel(
-            EXCEL_OM,
-            engine="openpyxl"
-        )
-
-        # ----------------------------------------------------
-        # Nettoyage des colonnes
-        # ----------------------------------------------------
-
-        df.columns = (
-            df.columns
-            .astype(str)
-            .str.strip()
-        )
-
-        # ----------------------------------------------------
-        # Supprimer les lignes complètement vides
-        # ----------------------------------------------------
-
-        df = df.dropna(
-            how="all"
-        )
-
-        return df
-
-    except ImportError:
-
-        st.error(
-            """
-            ❌ OpenPyXL n'est pas installé.
-
-            Ajoutez cette ligne dans requirements.txt :
-
-            openpyxl>=3.1.5
-            """
-        )
-
-        return pd.DataFrame()
-
-    except Exception as e:
-
-        st.error(
-            f"""
-            ❌ Erreur lors de la lecture de OM.xlsx :
-
-            {e}
-
-            Fichier :
-
-            {EXCEL_OM}
-            """
-        )
-
-        return pd.DataFrame()
-
-
-# ============================================================
-# CHARGEMENT OM
-# ============================================================
-
-df_om = charger_om()
-
-
-# ============================================================
-# STATISTIQUES
-# ============================================================
-
-nombre_om = len(df_om)
-
-
-# ============================================================
 # TITRE
 # ============================================================
 
-st.title(
-    "🚛 TMF LOGISTICS"
-)
+st.title("🚛 TMF LOGISTICS")
 
 st.subheader(
     "Système de Gestion du Transport et des Ordres de Mission"
@@ -217,10 +83,7 @@ st.divider()
 # TABLEAU DE BORD
 # ============================================================
 
-st.header(
-    "📊 Tableau de bord"
-)
-
+st.header("📊 Tableau de bord")
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -229,7 +92,7 @@ with col1:
 
     st.metric(
         "📋 Ordres de Mission",
-        nombre_om
+        "—"
     )
 
 
@@ -304,8 +167,7 @@ with col1:
         """
         Suivi des camions, remorques, chauffeurs
         et affectations.
-        """
-    )
+        """)
 
 
 with col2:
@@ -329,41 +191,10 @@ with col2:
         """
         Gestion des clients, coordonnées,
         contacts et informations commerciales.
-        """
-    )
+        """)
 
 
-# ============================================================
-# APERÇU DES ORDRES DE MISSION
-# ============================================================
-
-if not df_om.empty:
-
-    st.divider()
-
-    st.header(
-        "📋 Derniers Ordres de Mission"
-    )
-
-    st.dataframe(
-        df_om.head(10),
-        use_container_width=True,
-        hide_index=True
-    )
-
-else:
-
-    st.divider()
-
-    st.error(
-        f"""
-        ❌ Aucun ordre de mission trouvé.
-
-        Fichier recherché :
-
-        `{EXCEL_OM}`
-        """
-    )
+st.divider()
 
 
 # ============================================================
