@@ -1,57 +1,196 @@
 import streamlit as st
 import pandas as pd
+from pathlib import Path
 from io import BytesIO
-
-from database import (
-    get_chauffeurs,
-    ajouter_chauffeur,
-    supprimer_chauffeur
-)
 
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
-st.title("👷 Gestion des Chauffeurs")
-
-st.caption(
-    "Gestion des chauffeurs TMF LOGISTICS"
+st.set_page_config(
+    page_title="TMF LOGISTICS - Chauffeurs",
+    page_icon="👷",
+    layout="wide"
 )
 
-st.divider()
+
+# ============================================================
+# CHEMIN DU FICHIER
+# ============================================================
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+FICHIER_CHAUFFEURS = BASE_DIR / "Data" / "Chauffeurs.xlsx"
 
 
 # ============================================================
-# CHARGER LES CHAUFFEURS
+# LECTURE DU FICHIER EXCEL
 # ============================================================
 
-df = get_chauffeurs()
+@st.cache_data
+def charger_chauffeurs():
+
+    if not FICHIER_CHAUFFEURS.exists():
+        return pd.DataFrame()
+
+    try:
+
+        df = pd.read_excel(
+            FICHIER_CHAUFFEURS,
+            sheet_name="Chauffeurs",
+            engine="openpyxl"
+        )
+
+        # Nettoyage des noms de colonnes
+        df.columns = (
+            df.columns
+            .astype(str)
+            .str.strip()
+        )
+
+        # Nettoyage des données texte
+        for colonne in df.columns:
+
+            if df[colonne].dtype == "object":
+
+                df[colonne] = (
+                    df[colonne]
+                    .fillna("")
+                    .astype(str)
+                    .str.strip()
+                )
+
+        return df
+
+    except Exception as e:
+
+        st.error(
+            f"❌ Erreur lors de la lecture de Chauffeurs.xlsx : {e}"
+        )
+
+        return pd.DataFrame()
 
 
 # ============================================================
-# INDICATEURS
+# CHARGEMENT
 # ============================================================
 
-nombre_chauffeurs = len(df)
+df_chauffeurs = charger_chauffeurs()
 
-col1, col2 = st.columns(2)
 
-with col1:
-    st.metric(
-        "👷 Nombre de chauffeurs",
-        nombre_chauffeurs
+# ============================================================
+# TITRE
+# ============================================================
+
+st.title("👷 Gestion des Chauffeurs")
+
+st.subheader(
+    "Gestion du personnel roulant - TMF LOGISTICS"
+)
+
+
+# ============================================================
+# VÉRIFICATION DU FICHIER
+# ============================================================
+
+if df_chauffeurs.empty:
+
+    st.error(
+        f"""
+        ❌ Le fichier Chauffeurs.xlsx est introuvable ou vide.
+
+        Fichier recherché :
+
+        `{FICHIER_CHAUFFEURS}`
+        """
     )
 
-with col2:
-    if not df.empty and "fonction" in df.columns:
-        nombre_fonctions = df["fonction"].nunique()
-    else:
-        nombre_fonctions = 0
+    st.stop()
+
+
+# ============================================================
+# STATISTIQUES
+# ============================================================
+
+total_chauffeurs = len(df_chauffeurs)
+
+
+if "Fonction" in df_chauffeurs.columns:
+
+    nombre_fonctions = (
+        df_chauffeurs["Fonction"]
+        .replace("", pd.NA)
+        .nunique()
+    )
+
+else:
+
+    nombre_fonctions = 0
+
+
+if "Section/Affectation" in df_chauffeurs.columns:
+
+    nombre_affectations = (
+        df_chauffeurs["Section/Affectation"]
+        .replace("", pd.NA)
+        .nunique()
+    )
+
+else:
+
+    nombre_affectations = 0
+
+
+if "Superviseur" in df_chauffeurs.columns:
+
+    nombre_superviseurs = (
+        df_chauffeurs["Superviseur"]
+        .replace("", pd.NA)
+        .nunique()
+    )
+
+else:
+
+    nombre_superviseurs = 0
+
+
+# ============================================================
+# CARTES STATISTIQUES
+# ============================================================
+
+col1, col2, col3, col4 = st.columns(4)
+
+
+with col1:
 
     st.metric(
-        "📋 Fonctions",
+        "👷 Total Chauffeurs",
+        total_chauffeurs
+    )
+
+
+with col2:
+
+    st.metric(
+        "🪪 Fonctions",
         nombre_fonctions
+    )
+
+
+with col3:
+
+    st.metric(
+        "📍 Affectations",
+        nombre_affectations
+    )
+
+
+with col4:
+
+    st.metric(
+        "👤 Superviseurs",
+        nombre_superviseurs
     )
 
 
@@ -62,16 +201,123 @@ st.divider()
 # RECHERCHE
 # ============================================================
 
+st.subheader("🔎 Recherche d'un chauffeur")
+
 recherche = st.text_input(
-    "🔍 Rechercher un chauffeur",
-    placeholder="Nom, badge, fonction, section..."
+    "Rechercher",
+    placeholder=(
+        "Nom, matricule, fonction, affectation ou superviseur..."
+    )
 )
 
 
-if recherche and not df.empty:
+# ============================================================
+# FILTRES
+# ============================================================
+
+col1, col2, col3 = st.columns(3)
+
+
+# ------------------------------------------------------------
+# FILTRE FONCTION
+# ------------------------------------------------------------
+
+with col1:
+
+    if "Fonction" in df_chauffeurs.columns:
+
+        fonctions = sorted(
+            [
+                str(x)
+                for x in df_chauffeurs["Fonction"]
+                .dropna()
+                .unique()
+                if str(x).strip()
+            ]
+        )
+
+        filtre_fonction = st.multiselect(
+            "🪪 Fonction",
+            fonctions
+        )
+
+    else:
+
+        filtre_fonction = []
+
+
+# ------------------------------------------------------------
+# FILTRE AFFECTATION
+# ------------------------------------------------------------
+
+with col2:
+
+    if "Section/Affectation" in df_chauffeurs.columns:
+
+        affectations = sorted(
+            [
+                str(x)
+                for x in df_chauffeurs["Section/Affectation"]
+                .dropna()
+                .unique()
+                if str(x).strip()
+            ]
+        )
+
+        filtre_affectation = st.multiselect(
+            "📍 Section / Affectation",
+            affectations
+        )
+
+    else:
+
+        filtre_affectation = []
+
+
+# ------------------------------------------------------------
+# FILTRE SUPERVISEUR
+# ------------------------------------------------------------
+
+with col3:
+
+    if "Superviseur" in df_chauffeurs.columns:
+
+        superviseurs = sorted(
+            [
+                str(x)
+                for x in df_chauffeurs["Superviseur"]
+                .dropna()
+                .unique()
+                if str(x).strip()
+            ]
+        )
+
+        filtre_superviseur = st.multiselect(
+            "👤 Superviseur",
+            superviseurs
+        )
+
+    else:
+
+        filtre_superviseur = []
+
+
+# ============================================================
+# APPLICATION DES FILTRES
+# ============================================================
+
+df_filtre = df_chauffeurs.copy()
+
+
+# ------------------------------------------------------------
+# RECHERCHE GÉNÉRALE
+# ------------------------------------------------------------
+
+if recherche:
 
     masque = (
-        df.astype(str)
+        df_filtre
+        .astype(str)
         .apply(
             lambda colonne:
             colonne.str.contains(
@@ -83,185 +329,119 @@ if recherche and not df.empty:
         .any(axis=1)
     )
 
-    df = df[masque]
+    df_filtre = df_filtre[masque]
+
+
+# ------------------------------------------------------------
+# FONCTION
+# ------------------------------------------------------------
+
+if filtre_fonction:
+
+    df_filtre = df_filtre[
+        df_filtre["Fonction"].isin(
+            filtre_fonction
+        )
+    ]
+
+
+# ------------------------------------------------------------
+# AFFECTATION
+# ------------------------------------------------------------
+
+if filtre_affectation:
+
+    df_filtre = df_filtre[
+        df_filtre["Section/Affectation"].isin(
+            filtre_affectation
+        )
+    ]
+
+
+# ------------------------------------------------------------
+# SUPERVISEUR
+# ------------------------------------------------------------
+
+if filtre_superviseur:
+
+    df_filtre = df_filtre[
+        df_filtre["Superviseur"].isin(
+            filtre_superviseur
+        )
+    ]
 
 
 # ============================================================
-# AJOUTER UN CHAUFFEUR
-# ============================================================
-
-with st.expander("➕ Ajouter un chauffeur"):
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        badge = st.text_input(
-            "🪪 Badge"
-        )
-
-        chauffeur = st.text_input(
-            "👷 Nom et prénom"
-        )
-
-        fonction = st.selectbox(
-            "📋 Fonction",
-            [
-                "Chauffeur PL",
-                "Chauffeur SPL",
-                "Chauffeur SR",
-                "Chauffeur SP",
-                "Autre"
-            ]
-        )
-
-    with col2:
-
-        section_affectation = st.text_input(
-            "📍 Section / Affectation"
-        )
-
-        superviseur = st.text_input(
-            "👤 Superviseur"
-        )
-
-    if st.button(
-        "💾 Ajouter le chauffeur",
-        type="primary"
-    ):
-
-        if not chauffeur.strip():
-
-            st.error(
-                "⚠️ Veuillez saisir le nom du chauffeur."
-            )
-
-        else:
-
-            try:
-
-                ajouter_chauffeur(
-                    badge=badge,
-                    chauffeur=chauffeur,
-                    fonction=fonction,
-                    section_affectation=section_affectation,
-                    superviseur=superviseur
-                )
-
-                st.success(
-                    f"✅ {chauffeur} a été ajouté."
-                )
-
-                st.rerun()
-
-            except Exception as e:
-
-                st.error(
-                    f"❌ Erreur : {e}"
-                )
-
-
-# ============================================================
-# LISTE DES CHAUFFEURS
-# ============================================================
-
-st.subheader("👷 Liste des chauffeurs")
-
-
-if df.empty:
-
-    st.info(
-        "Aucun chauffeur enregistré dans la base de données."
-    )
-
-else:
-
-    df_affichage = df.copy()
-
-    # Renommer les colonnes
-    renommage = {
-        "id": "ID",
-        "badge": "Badge",
-        "chauffeur": "Chauffeur",
-        "fonction": "Fonction",
-        "section_affectation": "Section / Affectation",
-        "superviseur": "Superviseur",
-        "created_at": "Date création"
-    }
-
-    df_affichage.rename(
-        columns=renommage,
-        inplace=True
-    )
-
-    # Numérotation
-    df_affichage.insert(
-        0,
-        "N°",
-        range(1, len(df_affichage) + 1)
-    )
-
-    st.dataframe(
-        df_affichage,
-        use_container_width=True,
-        hide_index=True
-    )
-
-
-# ============================================================
-# EXPORT
+# RÉSULTAT
 # ============================================================
 
 st.divider()
 
-if not df.empty:
+st.subheader(
+    f"👷 Liste des chauffeurs ({len(df_filtre)})"
+)
 
-    col1, col2 = st.columns(2)
 
-    # --------------------------------------------------------
-    # EXPORT EXCEL
-    # --------------------------------------------------------
+# ============================================================
+# TABLEAU
+# ============================================================
 
-    with col1:
+st.dataframe(
+    df_filtre,
+    use_container_width=True,
+    hide_index=True
+)
 
-        buffer = BytesIO()
 
-        with pd.ExcelWriter(
-            buffer,
-            engine="openpyxl"
-        ) as writer:
+# ============================================================
+# EXPORT EXCEL
+# ============================================================
 
-            df_affichage.to_excel(
-                writer,
-                index=False,
-                sheet_name="Chauffeurs"
-            )
+st.divider()
 
-        buffer.seek(0)
+st.subheader("📥 Export des données")
 
-        st.download_button(
-            label="📥 Exporter en Excel",
-            data=buffer,
-            file_name="chauffeurs.xlsx",
-            mime=(
-                "application/vnd.openxmlformats-officedocument."
-                "spreadsheetml.sheet"
-            )
+
+def convertir_excel(df):
+
+    buffer = BytesIO()
+
+    with pd.ExcelWriter(
+        buffer,
+        engine="openpyxl"
+    ) as writer:
+
+        df.to_excel(
+            writer,
+            index=False,
+            sheet_name="Chauffeurs"
         )
 
-    # --------------------------------------------------------
-    # EXPORT CSV
-    # --------------------------------------------------------
+    return buffer.getvalue()
 
-    with col2:
 
-        csv = df_affichage.to_csv(
-            index=False
-        ).encode("utf-8")
+fichier_excel = convertir_excel(df_filtre)
 
-        st.download_button(
-            label="📄 Exporter en CSV",
-            data=csv,
-            file_name="chauffeurs.csv",
-            mime="text/csv"
-        )
+
+st.download_button(
+    label="📥 Télécharger la liste des chauffeurs",
+    data=fichier_excel,
+    file_name="Chauffeurs_filtrés.xlsx",
+    mime=(
+        "application/vnd.openxmlformats-officedocument."
+        "spreadsheetml.sheet"
+    )
+)
+
+
+# ============================================================
+# ACTUALISER LES DONNÉES
+# ============================================================
+
+st.divider()
+
+if st.button("🔄 Actualiser les données"):
+
+    st.cache_data.clear()
+
+    st.rerun()
