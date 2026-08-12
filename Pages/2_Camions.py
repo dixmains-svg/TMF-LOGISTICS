@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from pathlib import Path
+from io import BytesIO
 
 
 # ============================================================
@@ -24,6 +25,34 @@ FICHIER_CAMIONS = BASE_DIR / "Data" / "Camions.xlsx"
 
 
 # ============================================================
+# TITRE
+# ============================================================
+
+st.title("🚚 Gestion des Camions")
+
+st.subheader(
+    "Parc automobile - TMF LOGISTICS"
+)
+
+
+# ============================================================
+# INFORMATIONS FICHIER
+# ============================================================
+
+with st.expander("📁 Informations sur le fichier"):
+
+    st.write(
+        f"**Fichier recherché :**  \n"
+        f"`{FICHIER_CAMIONS}`"
+    )
+
+    if FICHIER_CAMIONS.exists():
+        st.success("✅ Camions.xlsx existe.")
+    else:
+        st.error("❌ Camions.xlsx est introuvable.")
+
+
+# ============================================================
 # LECTURE EXCEL
 # ============================================================
 
@@ -37,19 +66,46 @@ def charger_camions():
 
         df = pd.read_excel(
             FICHIER_CAMIONS,
-            sheet_name="Camions",
             engine="openpyxl"
         )
 
-        # Nettoyage des noms de colonnes
-        df.columns = df.columns.astype(str).str.strip()
+        # Nettoyage des colonnes
+        df.columns = (
+            df.columns
+            .astype(str)
+            .str.strip()
+        )
 
-        # Nettoyage des cellules texte
+        # Nettoyage des données
         for colonne in df.columns:
+
             if df[colonne].dtype == "object":
-                df[colonne] = df[colonne].fillna("").astype(str).str.strip()
+
+                df[colonne] = (
+                    df[colonne]
+                    .fillna("")
+                    .astype(str)
+                    .str.strip()
+                )
 
         return df
+
+    except ImportError:
+
+        st.error(
+            """
+            ❌ Le module **openpyxl** n'est pas installé.
+
+            Vérifiez votre `requirements.txt` :
+
+            `openpyxl==3.1.5`
+
+            Ensuite faites un nouveau déploiement
+            de l'application Streamlit.
+            """
+        )
+
+        return pd.DataFrame()
 
     except Exception as e:
 
@@ -68,17 +124,6 @@ df_camions = charger_camions()
 
 
 # ============================================================
-# TITRE
-# ============================================================
-
-st.title("🚚 Gestion des Camions")
-
-st.subheader(
-    "Parc automobile - TMF LOGISTICS"
-)
-
-
-# ============================================================
 # VÉRIFICATION
 # ============================================================
 
@@ -88,7 +133,7 @@ if df_camions.empty:
         f"""
         ❌ Le fichier Camions.xlsx est introuvable ou vide.
 
-        Fichier recherché :
+        **Fichier recherché :**
 
         `{FICHIER_CAMIONS}`
         """
@@ -103,58 +148,6 @@ if df_camions.empty:
 
 total_camions = len(df_camions)
 
-col1, col2, col3, col4 = st.columns(4)
-
-
-with col1:
-
-    st.metric(
-        "🚚 Total Camions",
-        total_camions
-    )
-
-
-with col2:
-
-    if "Affectation" in df_camions.columns:
-        nombre_affectations = df_camions["Affectation"].nunique()
-    else:
-        nombre_affectations = 0
-
-    st.metric(
-        "📍 Affectations",
-        nombre_affectations
-    )
-
-
-with col3:
-
-    if "Marque" in df_camions.columns:
-        nombre_marques = df_camions["Marque"].nunique()
-    else:
-        nombre_marques = 0
-
-    st.metric(
-        "🏭 Marques",
-        nombre_marques
-    )
-
-
-with col4:
-
-    if "Superviseur" in df_camions.columns:
-        nombre_superviseurs = df_camions["Superviseur"].nunique()
-    else:
-        nombre_superviseurs = 0
-
-    st.metric(
-        "👤 Superviseurs",
-        nombre_superviseurs
-    )
-
-
-st.divider()
-
 
 # ============================================================
 # RECHERCHE
@@ -165,83 +158,10 @@ st.subheader("🔎 Recherche")
 recherche = st.text_input(
     "Rechercher un camion",
     placeholder=(
-        "N°, immatriculation, section, affectation, "
-        "genre, marque ou superviseur..."
+        "Matricule, camion, remorque, chauffeur, "
+        "client ou statut..."
     )
 )
-
-
-# ============================================================
-# FILTRES
-# ============================================================
-
-col1, col2, col3 = st.columns(3)
-
-
-with col1:
-
-    if "Section" in df_camions.columns:
-
-        sections = sorted(
-            [
-                x for x in
-                df_camions["Section"].dropna().unique()
-                if str(x).strip()
-            ]
-        )
-
-        section_selection = st.multiselect(
-            "📂 Section",
-            sections
-        )
-
-    else:
-
-        section_selection = []
-
-
-with col2:
-
-    if "Affectation" in df_camions.columns:
-
-        affectations = sorted(
-            [
-                x for x in
-                df_camions["Affectation"].dropna().unique()
-                if str(x).strip()
-            ]
-        )
-
-        affectation_selection = st.multiselect(
-            "📍 Affectation",
-            affectations
-        )
-
-    else:
-
-        affectation_selection = []
-
-
-with col3:
-
-    if "Marque" in df_camions.columns:
-
-        marques = sorted(
-            [
-                x for x in
-                df_camions["Marque"].dropna().unique()
-                if str(x).strip()
-            ]
-        )
-
-        marque_selection = st.multiselect(
-            "🏭 Marque",
-            marques
-        )
-
-    else:
-
-        marque_selection = []
 
 
 # ============================================================
@@ -251,12 +171,11 @@ with col3:
 df_filtre = df_camions.copy()
 
 
-# Recherche générale
-
 if recherche:
 
     masque = (
-        df_filtre.astype(str)
+        df_filtre
+        .astype(str)
         .apply(
             lambda colonne:
             colonne.str.contains(
@@ -271,47 +190,98 @@ if recherche:
     df_filtre = df_filtre[masque]
 
 
-# Section
-
-if section_selection:
-
-    df_filtre = df_filtre[
-        df_filtre["Section"].isin(section_selection)
-    ]
-
-
-# Affectation
-
-if affectation_selection:
-
-    df_filtre = df_filtre[
-        df_filtre["Affectation"].isin(affectation_selection)
-    ]
-
-
-# Marque
-
-if marque_selection:
-
-    df_filtre = df_filtre[
-        df_filtre["Marque"].isin(marque_selection)
-    ]
-
-
 # ============================================================
-# RÉSULTAT
+# STATISTIQUES
 # ============================================================
 
 st.divider()
 
-st.subheader(
-    f"🚛 Liste des camions ({len(df_filtre)})"
-)
+col1, col2, col3, col4 = st.columns(4)
+
+
+with col1:
+
+    st.metric(
+        "🚚 Total Camions",
+        total_camions
+    )
+
+
+# ------------------------------------------------------------
+# STATUT
+# ------------------------------------------------------------
+
+if "Statut" in df_camions.columns:
+
+    nombre_operationnels = (
+        df_camions["Statut"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+        .isin(
+            [
+                "opérationnel",
+                "operationnel",
+                "disponible",
+                "en service"
+            ]
+        )
+        .sum()
+    )
+
+else:
+
+    nombre_operationnels = 0
+
+
+with col2:
+
+    st.metric(
+        "✅ Opérationnels",
+        nombre_operationnels
+    )
+
+
+# ------------------------------------------------------------
+# NON OPÉRATIONNELS
+# ------------------------------------------------------------
+
+if "Statut" in df_camions.columns:
+
+    nombre_non_operationnels = (
+        total_camions - nombre_operationnels
+    )
+
+else:
+
+    nombre_non_operationnels = 0
+
+
+with col3:
+
+    st.metric(
+        "⚠️ Non opérationnels",
+        nombre_non_operationnels
+    )
+
+
+with col4:
+
+    st.metric(
+        "📋 Résultats",
+        len(df_filtre)
+    )
 
 
 # ============================================================
 # TABLEAU
 # ============================================================
+
+st.divider()
+
+st.subheader(
+    f"🚚 Liste des camions ({len(df_filtre)})"
+)
 
 st.dataframe(
     df_filtre,
@@ -326,13 +296,10 @@ st.dataframe(
 
 st.divider()
 
-st.subheader("📥 Export")
+st.subheader("📥 Export des données")
 
 
-@st.cache_data
 def convertir_excel(df):
-
-    from io import BytesIO
 
     buffer = BytesIO()
 
@@ -350,15 +317,35 @@ def convertir_excel(df):
     return buffer.getvalue()
 
 
-fichier_excel = convertir_excel(df_filtre)
+try:
 
+    fichier_excel = convertir_excel(df_filtre)
 
-st.download_button(
-    label="📥 Télécharger la liste des camions",
-    data=fichier_excel,
-    file_name="Camions_filtrés.xlsx",
-    mime=(
-        "application/vnd.openxmlformats-officedocument."
-        "spreadsheetml.sheet"
+    st.download_button(
+        label="📥 Télécharger la liste des camions",
+        data=fichier_excel,
+        file_name="Camions_filtres.xlsx",
+        mime=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        )
     )
-)
+
+except Exception as e:
+
+    st.error(
+        f"❌ Impossible de créer le fichier Excel : {e}"
+    )
+
+
+# ============================================================
+# ACTUALISER
+# ============================================================
+
+st.divider()
+
+if st.button("🔄 Actualiser les données"):
+
+    st.cache_data.clear()
+
+    st.rerun()
