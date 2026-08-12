@@ -4,6 +4,17 @@ from login import connexion, deconnexion
 
 
 # ============================================================
+# CONFIGURATION
+# ============================================================
+
+st.set_page_config(
+    page_title="TMF LOGISTICS",
+    page_icon="🚛",
+    layout="wide"
+)
+
+
+# ============================================================
 # CONNEXION
 # ============================================================
 
@@ -22,8 +33,38 @@ deconnexion()
 # NAVIGATION
 # ============================================================
 
-navigation.run()
+pages = [
+    st.Page("app_home.py", title="Accueil", icon="🏠"),
+    st.Page(
+        "Pages/1_Ordres_de_Mission.py",
+        title="Ordres de Mission",
+        icon="📋"
+    ),
+    st.Page(
+        "Pages/2_Camions.py",
+        title="Camions",
+        icon="🚚"
+    ),
+    st.Page(
+        "Pages/3_Chauffeurs.py",
+        title="Chauffeurs",
+        icon="👷"
+    ),
+    st.Page(
+        "Pages/4_Clients.py",
+        title="Clients",
+        icon="👥"
+    ),
+    st.Page(
+        "Pages/5_Rapports.py",
+        title="Rapports",
+        icon="📊"
+    )
+]
 
+navigation = st.navigation(pages)
+
+navigation.run()
 # ============================================================
 # APPLICATION
 # ============================================================
