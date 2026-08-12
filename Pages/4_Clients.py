@@ -2,12 +2,6 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 from io import BytesIO
-
-from pathlib import Path
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-FICHIER_CLIENTS = BASE_DIR / "Data" / "Clients.xlsx"
 # ============================================================
 # CONFIGURATION
 # ============================================================
