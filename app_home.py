@@ -219,7 +219,7 @@ st.markdown(
     ">
         <b>TMF LOGISTICS</b><br>
         Système de Gestion du Transport<br>
-        Version 2.0
+        Version 1.0 by Midou_Redjdal
     </div>
     """,
     unsafe_allow_html=True
