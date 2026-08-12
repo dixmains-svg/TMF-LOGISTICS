@@ -4,10 +4,19 @@ from pathlib import Path
 
 
 # ============================================================
-# CONFIGURATION
+# CHEMINS DU PROJET
 # ============================================================
 
-DATABASE_FILE = Path("database/tmf.db")
+# import_excel.py se trouve dans :
+# TMF-LOGISTICS/database/import_excel.py
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+DATA_DIR = BASE_DIR / "Data"
+
+DATABASE_DIR = BASE_DIR / "database"
+
+DATABASE_FILE = DATABASE_DIR / "tmf.db"
 
 
 # ============================================================
@@ -15,7 +24,11 @@ DATABASE_FILE = Path("database/tmf.db")
 # ============================================================
 
 def get_connection():
-    DATABASE_FILE.parent.mkdir(exist_ok=True)
+
+    DATABASE_DIR.mkdir(
+        parents=True,
+        exist_ok=True
+    )
 
     return sqlite3.connect(
         DATABASE_FILE,
@@ -24,44 +37,108 @@ def get_connection():
 
 
 # ============================================================
-# IMPORTER UN EXCEL DANS SQLITE
+# LECTURE EXCEL
 # ============================================================
 
-def importer_excel(fichier_excel, table):
+def lire_excel(fichier_excel):
 
-    """
-    Importe un fichier Excel dans une table SQLite.
+    fichier_excel = Path(fichier_excel)
 
-    Paramètres :
-        fichier_excel : fichier Excel
-        table         : nom de la table SQLite
-    """
+    if not fichier_excel.exists():
+
+        raise FileNotFoundError(
+            f"Fichier Excel introuvable : {fichier_excel}"
+        )
+
+    # Vérifier OpenPyXL
+    try:
+
+        import openpyxl
+
+    except ImportError:
+
+        raise ImportError(
+            "OpenPyXL n'est pas installé. "
+            "Ajoutez openpyxl dans requirements.txt."
+        )
+
+    # Lire Excel
+    df = pd.read_excel(
+        fichier_excel,
+        engine="openpyxl"
+    )
+
+    # Nettoyer les noms de colonnes
+    df.columns = (
+        df.columns
+        .astype(str)
+        .str.strip()
+    )
+
+    # Supprimer les lignes complètement vides
+    df = df.dropna(
+        how="all"
+    )
+
+    # Remplacer NaN par None
+    df = df.astype(object).where(
+        pd.notna(df),
+        None
+    )
+
+    return df
+
+
+# ============================================================
+# IMPORT EXCEL → SQLITE
+# ============================================================
+
+def importer_excel(
+    fichier_excel,
+    table
+):
 
     try:
 
-        # Lire Excel
-        df = pd.read_excel(
-            fichier_excel,
-            engine="openpyxl"
+        print()
+        print("=" * 60)
+        print("IMPORT EXCEL → SQLITE")
+        print("=" * 60)
+
+        print(
+            f"📄 Fichier : {fichier_excel}"
         )
 
-        # Nettoyer les colonnes
-        df.columns = (
-            df.columns
-            .astype(str)
-            .str.strip()
+        print(
+            f"🗄️ Table : {table}"
         )
 
-        # Remplacer les valeurs NaN
-        df = df.where(
-            pd.notna(df),
-            None
+        # ----------------------------------------------------
+        # LIRE EXCEL
+        # ----------------------------------------------------
+
+        df = lire_excel(
+            fichier_excel
         )
 
-        # Connexion SQLite
+        print(
+            f"📊 Lignes trouvées : {len(df)}"
+        )
+
+        print(
+            f"📋 Colonnes : {len(df.columns)}"
+        )
+
+        # ----------------------------------------------------
+        # CONNEXION SQLITE
+        # ----------------------------------------------------
+
         conn = get_connection()
 
-        # Importer dans SQLite
+        # ----------------------------------------------------
+        # IMPORTER DANS SQLITE
+        # ----------------------------------------------------
+
         df.to_sql(
             table,
             conn,
@@ -69,20 +146,32 @@ def importer_excel(fichier_excel, table):
             index=False
         )
 
+        conn.commit()
+
         conn.close()
+
+        print(
+            f"✅ Import terminé : {len(df)} lignes"
+        )
 
         return True, len(df)
 
     except Exception as e:
 
+        print(
+            f"❌ Erreur : {e}"
+        )
+
         return False, str(e)
 
 
 # ============================================================
-# IMPORTER LES ORDRES DE MISSION
+# IMPORT ORDRES DE MISSION
 # ============================================================
 
-def importer_ordres_mission(fichier):
+def importer_ordres_mission():
+
+    fichier = DATA_DIR / "OM.xlsx"
 
     return importer_excel(
         fichier,
@@ -91,10 +180,12 @@ def importer_ordres_mission(fichier):
 
 
 # ============================================================
-# IMPORTER LES CAMIONS
+# IMPORT CAMIONS
 # ============================================================
 
-def importer_camions(fichier):
+def importer_camions():
+
+    fichier = DATA_DIR / "Camions.xlsx"
 
     return importer_excel(
         fichier,
@@ -103,10 +194,12 @@ def importer_camions(fichier):
 
 
 # ============================================================
-# IMPORTER LES CHAUFFEURS
+# IMPORT CHAUFFEURS
 # ============================================================
 
-def importer_chauffeurs(fichier):
+def importer_chauffeurs():
+
+    fichier = DATA_DIR / "Chauffeurs.xlsx"
 
     return importer_excel(
         fichier,
@@ -115,10 +208,12 @@ def importer_chauffeurs(fichier):
 
 
 # ============================================================
-# IMPORTER LES CLIENTS
+# IMPORT CLIENTS
 # ============================================================
 
-def importer_clients(fichier):
+def importer_clients():
+
+    fichier = DATA_DIR / "Clients.xlsx"
 
     return importer_excel(
         fichier,
@@ -127,37 +222,105 @@ def importer_clients(fichier):
 
 
 # ============================================================
+# IMPORTER TOUS LES FICHIERS
+# ============================================================
+
+def importer_toutes_les_donnees():
+
+    resultats = {}
+
+    # --------------------------------------------------------
+    # ORDRES DE MISSION
+    # --------------------------------------------------------
+
+    succes, resultat = importer_ordres_mission()
+
+    resultats["ordres_mission"] = (
+        succes,
+        resultat
+    )
+
+    # --------------------------------------------------------
+    # CAMIONS
+    # --------------------------------------------------------
+
+    succes, resultat = importer_camions()
+
+    resultats["camions"] = (
+        succes,
+        resultat
+    )
+
+    # --------------------------------------------------------
+    # CHAUFFEURS
+    # --------------------------------------------------------
+
+    succes, resultat = importer_chauffeurs()
+
+    resultats["chauffeurs"] = (
+        succes,
+        resultat
+    )
+
+    # --------------------------------------------------------
+    # CLIENTS
+    # --------------------------------------------------------
+
+    succes, resultat = importer_clients()
+
+    resultats["clients"] = (
+        succes,
+        resultat
+    )
+
+    return resultats
+
+
+# ============================================================
 # TEST DU PROGRAMME
 # ============================================================
 
 if __name__ == "__main__":
 
-    print("===================================")
+    print()
+    print("=" * 60)
     print(" TMF LOGISTICS")
-    print(" Import Excel → SQLite")
-    print("===================================")
+    print(" IMPORT EXCEL → SQLITE")
+    print("=" * 60)
 
-    fichier = input(
-        "Nom du fichier Excel : "
+    print()
+    print(
+        f"📁 Dossier Data : {DATA_DIR}"
     )
 
-    table = input(
-        "Nom de la table SQLite : "
+    print(
+        f"🗄️ Base SQLite : {DATABASE_FILE}"
     )
 
-    succes, resultat = importer_excel(
-        fichier,
-        table
-    )
+    print()
 
-    if succes:
+    resultats = importer_toutes_les_donnees()
 
-        print(
-            f"✅ Import terminé : {resultat} lignes."
-        )
+    print()
+    print("=" * 60)
+    print(" RÉSULTAT FINAL")
+    print("=" * 60)
 
-    else:
+    for table, resultat in resultats.items():
 
-        print(
-            f"❌ Erreur : {resultat}"
-        )
+        succes, valeur = resultat
+
+        if succes:
+
+            print(
+                f"✅ {table} : {valeur} lignes"
+            )
+
+        else:
+
+            print(
+                f"❌ {table} : {valeur}"
+            )
+
+    print()
+    print("✅ Import terminé.")
