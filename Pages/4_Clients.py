@@ -16,12 +16,48 @@ st.set_page_config(
 
 
 # ============================================================
-# CHEMIN DU FICHIER
+# CHEMIN DU FICHIER EXCEL
 # ============================================================
+
+# Le fichier 4_Clients.py se trouve dans Pages/
+# parent.parent = dossier principal TMF-LOGISTICS
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 FICHIER_CLIENTS = BASE_DIR / "Data" / "Clients.xlsx"
+
+
+# ============================================================
+# TITRE
+# ============================================================
+
+st.title("👥 Gestion des Clients")
+
+st.subheader(
+    "Gestion des clients - TMF LOGISTICS"
+)
+
+
+# ============================================================
+# INFORMATIONS SUR LE FICHIER
+# ============================================================
+
+with st.expander("📁 Informations sur le fichier Excel"):
+
+    st.write(
+        f"**Dossier de l'application :**  \n"
+        f"`{BASE_DIR}`"
+    )
+
+    st.write(
+        f"**Fichier Clients :**  \n"
+        f"`{FICHIER_CLIENTS}`"
+    )
+
+    if FICHIER_CLIENTS.exists():
+        st.success("✅ Le fichier Clients.xlsx existe.")
+    else:
+        st.error("❌ Le fichier Clients.xlsx est introuvable.")
 
 
 # ============================================================
@@ -36,20 +72,26 @@ def charger_clients():
 
     try:
 
+        # Lecture Excel
         df = pd.read_excel(
             FICHIER_CLIENTS,
-            sheet_name="Feuil1",
             engine="openpyxl"
         )
 
-        # Nettoyage des noms de colonnes
+        # ----------------------------------------------------
+        # NETTOYAGE DES NOMS DE COLONNES
+        # ----------------------------------------------------
+
         df.columns = (
             df.columns
             .astype(str)
             .str.strip()
         )
 
-        # Nettoyage des données
+        # ----------------------------------------------------
+        # NETTOYAGE DES DONNÉES
+        # ----------------------------------------------------
+
         for colonne in df.columns:
 
             if df[colonne].dtype == "object":
@@ -62,6 +104,22 @@ def charger_clients():
                 )
 
         return df
+
+    except ImportError:
+
+        st.error(
+            """
+            ❌ Le module **openpyxl** n'est pas installé.
+
+            Ajoutez cette ligne dans `requirements.txt` :
+
+            `openpyxl==3.1.5`
+
+            Puis faites un nouveau déploiement de l'application.
+            """
+        )
+
+        return pd.DataFrame()
 
     except Exception as e:
 
@@ -80,17 +138,6 @@ df_clients = charger_clients()
 
 
 # ============================================================
-# TITRE
-# ============================================================
-
-st.title("👥 Gestion des Clients")
-
-st.subheader(
-    "Gestion des clients - TMF LOGISTICS"
-)
-
-
-# ============================================================
 # VÉRIFICATION
 # ============================================================
 
@@ -100,7 +147,7 @@ if df_clients.empty:
         f"""
         ❌ Le fichier Clients.xlsx est introuvable ou vide.
 
-        Fichier recherché :
+        **Fichier recherché :**
 
         `{FICHIER_CLIENTS}`
         """
@@ -116,11 +163,16 @@ if df_clients.empty:
 total_clients = len(df_clients)
 
 
+# ------------------------------------------------------------
+# NOMBRE DE VILLES
+# ------------------------------------------------------------
+
 if "Ville" in df_clients.columns:
 
     nombre_villes = (
         df_clients["Ville"]
         .replace("", pd.NA)
+        .dropna()
         .nunique()
     )
 
@@ -128,6 +180,10 @@ else:
 
     nombre_villes = 0
 
+
+# ------------------------------------------------------------
+# CLIENTS AVEC REGISTRE DE COMMERCE
+# ------------------------------------------------------------
 
 if "Registre de Commerce" in df_clients.columns:
 
@@ -142,6 +198,10 @@ else:
 
     nombre_rc = 0
 
+
+# ------------------------------------------------------------
+# CLIENTS AVEC TÉLÉPHONE
+# ------------------------------------------------------------
 
 if "N° téléphone" in df_clients.columns:
 
@@ -221,9 +281,9 @@ recherche = st.text_input(
 col1, col2 = st.columns(2)
 
 
-# ------------------------------------------------------------
+# ============================================================
 # FILTRE VILLE
-# ------------------------------------------------------------
+# ============================================================
 
 with col1:
 
@@ -231,7 +291,7 @@ with col1:
 
         villes = sorted(
             [
-                str(x)
+                str(x).strip()
                 for x in df_clients["Ville"]
                 .dropna()
                 .unique()
@@ -249,20 +309,26 @@ with col1:
         filtre_ville = []
 
 
-# ------------------------------------------------------------
-# FILTRE RC
-# ------------------------------------------------------------
+# ============================================================
+# FILTRE REGISTRE DE COMMERCE
+# ============================================================
 
 with col2:
 
-    filtre_rc = st.selectbox(
-        "📄 Registre de Commerce",
-        [
-            "Tous",
-            "Avec Registre de Commerce",
-            "Sans Registre de Commerce"
-        ]
-    )
+    if "Registre de Commerce" in df_clients.columns:
+
+        filtre_rc = st.selectbox(
+            "📄 Registre de Commerce",
+            [
+                "Tous",
+                "Avec Registre de Commerce",
+                "Sans Registre de Commerce"
+            ]
+        )
+
+    else:
+
+        filtre_rc = "Tous"
 
 
 # ============================================================
@@ -272,9 +338,9 @@ with col2:
 df_filtre = df_clients.copy()
 
 
-# ------------------------------------------------------------
+# ============================================================
 # RECHERCHE
-# ------------------------------------------------------------
+# ============================================================
 
 if recherche:
 
@@ -295,22 +361,25 @@ if recherche:
     df_filtre = df_filtre[masque]
 
 
-# ------------------------------------------------------------
-# VILLE
-# ------------------------------------------------------------
+# ============================================================
+# FILTRE VILLE
+# ============================================================
 
-if filtre_ville:
+if filtre_ville and "Ville" in df_filtre.columns:
 
     df_filtre = df_filtre[
         df_filtre["Ville"].isin(filtre_ville)
     ]
 
 
-# ------------------------------------------------------------
-# REGISTRE DE COMMERCE
-# ------------------------------------------------------------
+# ============================================================
+# FILTRE REGISTRE DE COMMERCE
+# ============================================================
 
-if filtre_rc == "Avec Registre de Commerce":
+if (
+    filtre_rc == "Avec Registre de Commerce"
+    and "Registre de Commerce" in df_filtre.columns
+):
 
     df_filtre = df_filtre[
         df_filtre["Registre de Commerce"]
@@ -321,7 +390,10 @@ if filtre_rc == "Avec Registre de Commerce":
     ]
 
 
-elif filtre_rc == "Sans Registre de Commerce":
+elif (
+    filtre_rc == "Sans Registre de Commerce"
+    and "Registre de Commerce" in df_filtre.columns
+):
 
     df_filtre = df_filtre[
         df_filtre["Registre de Commerce"]
@@ -381,18 +453,25 @@ def convertir_excel(df):
     return buffer.getvalue()
 
 
-fichier_excel = convertir_excel(df_filtre)
+try:
 
+    fichier_excel = convertir_excel(df_filtre)
 
-st.download_button(
-    label="📥 Télécharger la liste des clients",
-    data=fichier_excel,
-    file_name="Clients_filtres.xlsx",
-    mime=(
-        "application/vnd.openxmlformats-officedocument."
-        "spreadsheetml.sheet"
+    st.download_button(
+        label="📥 Télécharger la liste des clients",
+        data=fichier_excel,
+        file_name="Clients_filtres.xlsx",
+        mime=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        )
     )
-)
+
+except Exception as e:
+
+    st.error(
+        f"❌ Impossible de créer le fichier Excel : {e}"
+    )
 
 
 # ============================================================
