@@ -15,69 +15,99 @@ UTILISATEURS = {
 
 
 # ============================================================
-# CONFIGURATION
+# CHEMINS
+# ============================================================
+
+BASE_DIR = Path(__file__).resolve().parent
+
+LOGO_PATH = BASE_DIR / "logo.png"
+
+BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
+
+
+# ============================================================
+# CONFIGURATION DE LA PAGE
 # ============================================================
 
 st.set_page_config(
     page_title="TMF LOGISTICS - Connexion",
     page_icon="🚛",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
 
 # ============================================================
-# IMAGE DE FOND
+# ARRIÈRE-PLAN + STYLE
 # ============================================================
 
-BASE_DIR = Path(__file__).resolve().parent
+def appliquer_style():
 
-BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
+    # --------------------------------------------------------
+    # Vérifier l'image d'arrière-plan
+    # --------------------------------------------------------
+
+    if BACKGROUND_PATH.exists():
+
+        with open(
+            BACKGROUND_PATH,
+            "rb"
+        ) as image_file:
+
+            encoded_image = base64.b64encode(
+                image_file.read()
+            ).decode("utf-8")
+
+        background_css = f"""
+        background-image:
+            linear-gradient(
+                rgba(0, 0, 0, 0.58),
+                rgba(0, 0, 0, 0.58)
+            ),
+            url("data:image/jpeg;base64,{encoded_image}");
+        """
+
+    else:
+
+        background_css = """
+        background:
+            linear-gradient(
+                135deg,
+                #0f172a,
+                #1e3a5f
+            );
+        """
 
 
-def image_fond():
-
-    if not BACKGROUND_PATH.exists():
-        return
-
-    with open(BACKGROUND_PATH, "rb") as image_file:
-
-        encoded_image = base64.b64encode(
-            image_file.read()
-        ).decode("utf-8")
+    # --------------------------------------------------------
+    # CSS
+    # --------------------------------------------------------
 
     st.markdown(
         f"""
         <style>
 
-        /* ==========================================
-           ARRIÈRE-PLAN
-           ========================================== */
+        /* ==================================================
+           APPLICATION
+           ================================================== */
 
         .stApp {{
-            background-image:
-                linear-gradient(
-                    rgba(0, 0, 0, 0.55),
-                    rgba(0, 0, 0, 0.55)
-                ),
-                url("data:image/jpeg;base64,{encoded_image}");
+
+            {background_css}
 
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
+
         }}
 
 
-        /* ==========================================
-           CACHER MENU STREAMLIT
-           ========================================== */
+        /* ==================================================
+           CACHER LES ÉLÉMENTS STREAMLIT
+           ================================================== */
 
         #MainMenu {{
-            visibility: hidden;
-        }}
-
-        footer {{
             visibility: hidden;
         }}
 
@@ -85,90 +115,165 @@ def image_fond():
             visibility: hidden;
         }}
 
-
-        /* ==========================================
-           CENTRER LA PAGE
-           ========================================== */
-
-        .block-container {{
-            padding-top: 5rem;
-            padding-bottom: 2rem;
+        footer {{
+            visibility: hidden;
         }}
 
 
-        /* ==========================================
+        /* ==================================================
+           CONTENEUR PRINCIPAL
+           ================================================== */
+
+        .block-container {{
+
+            padding-top: 3rem;
+            padding-bottom: 2rem;
+
+        }}
+
+
+        /* ==================================================
            PANNEAU DE CONNEXION
-           ========================================== */
+           ================================================== */
 
         .login-box {{
 
             max-width: 450px;
 
-            margin: auto;
+            margin: 30px auto;
 
-            padding: 40px;
+            padding: 40px 45px;
 
-            background: rgba(255, 255, 255, 0.95);
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.96
+                );
 
-            border-radius: 20px;
+            border-radius: 22px;
 
             box-shadow:
-                0px 10px 40px
-                rgba(0, 0, 0, 0.35);
+                0px 15px 45px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.40
+                );
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.5
+                );
 
         }}
 
 
-        /* ==========================================
+        /* ==================================================
+           LOGO
+           ================================================== */
+
+        .logo-container {{
+
+            text-align: center;
+
+            margin-bottom: 18px;
+
+        }}
+
+
+        .logo-image {{
+
+            width: 135px;
+
+            height: 135px;
+
+            object-fit: contain;
+
+            border-radius: 18px;
+
+        }}
+
+
+        /* ==================================================
+           LOGO DE SECOURS
+           ================================================== */
+
+        .logo-fallback {{
+
+            font-size: 75px;
+
+            text-align: center;
+
+            margin-bottom: 15px;
+
+        }}
+
+
+        /* ==================================================
            TITRE
-           ========================================== */
+           ================================================== */
 
         .login-title {{
 
             text-align: center;
 
-            font-size: 36px;
+            font-size: 34px;
 
             font-weight: 800;
 
-            color: #1f2937;
+            color: #172033;
 
             margin-bottom: 5px;
 
+            letter-spacing: 1px;
+
         }}
 
+
+        /* ==================================================
+           SOUS-TITRE
+           ================================================== */
 
         .login-subtitle {{
 
             text-align: center;
 
-            font-size: 17px;
+            font-size: 16px;
 
-            color: #6b7280;
+            color: #64748b;
 
-            margin-bottom: 30px;
+            margin-bottom: 28px;
 
         }}
 
 
-        /* ==========================================
-           LOGO
-           ========================================== */
+        /* ==================================================
+           TEXTE SÉCURITÉ
+           ================================================== */
 
-        .logo {{
+        .security-text {{
 
             text-align: center;
 
-            font-size: 70px;
+            color: #64748b;
 
-            margin-bottom: 10px;
+            font-size: 13px;
+
+            margin-top: 20px;
 
         }}
 
 
-        /* ==========================================
-           MESSAGE BAS DE PAGE
-           ========================================== */
+        /* ==================================================
+           FOOTER
+           ================================================== */
 
         .login-footer {{
 
@@ -178,10 +283,61 @@ def image_fond():
 
             font-size: 14px;
 
-            margin-top: 25px;
+            margin-top: 20px;
 
             text-shadow:
-                0px 1px 3px rgba(0,0,0,0.8);
+                0px 2px 5px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.8
+                );
+
+        }}
+
+
+        /* ==================================================
+           BOUTON
+           ================================================== */
+
+        div.stButton > button {{
+
+            border-radius: 10px;
+
+            font-weight: 600;
+
+        }}
+
+
+        /* ==================================================
+           MOBILE
+           ================================================== */
+
+        @media (max-width: 600px) {{
+
+            .login-box {{
+
+                margin: 15px;
+
+                padding:
+                    30px 25px;
+
+            }}
+
+            .login-title {{
+
+                font-size: 28px;
+
+            }}
+
+            .logo-image {{
+
+                width: 110px;
+
+                height: 110px;
+
+            }}
 
         }}
 
@@ -198,7 +354,7 @@ def image_fond():
 def connexion():
 
     # --------------------------------------------------------
-    # Déjà connecté
+    # SI DÉJÀ CONNECTÉ
     # --------------------------------------------------------
 
     if st.session_state.get(
@@ -210,14 +366,14 @@ def connexion():
 
 
     # --------------------------------------------------------
-    # Arrière-plan
+    # APPLIQUER LE STYLE
     # --------------------------------------------------------
 
-    image_fond()
+    appliquer_style()
 
 
     # --------------------------------------------------------
-    # ESPACE HAUT
+    # ESPACE
     # --------------------------------------------------------
 
     st.markdown(
@@ -236,46 +392,90 @@ def connexion():
     )
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # LOGO
-    # --------------------------------------------------------
+    # ========================================================
 
-    st.markdown(
-        '<div class="logo">🚛</div>',
-        unsafe_allow_html=True
-    )
+    if LOGO_PATH.exists():
+
+        with open(
+            LOGO_PATH,
+            "rb"
+        ) as image_file:
+
+            logo_base64 = base64.b64encode(
+                image_file.read()
+            ).decode("utf-8")
 
 
-    # --------------------------------------------------------
+        st.markdown(
+            f"""
+            <div class="logo-container">
+
+                <img
+                    src="data:image/png;base64,{logo_base64}"
+                    class="logo-image"
+                >
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    else:
+
+        st.markdown(
+            """
+            <div class="logo-fallback">
+                🚛
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+    # ========================================================
     # TITRE
-    # --------------------------------------------------------
+    # ========================================================
 
     st.markdown(
-        '<div class="login-title">'
-        'TMF LOGISTICS'
-        '</div>',
+        """
+        <div class="login-title">
+            TMF LOGISTICS
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
 
+    # ========================================================
+    # SOUS-TITRE
+    # ========================================================
+
     st.markdown(
-        '<div class="login-subtitle">'
-        'Système de Gestion du Transport'
-        '</div>',
+        """
+        <div class="login-subtitle">
+            Système de Gestion du Transport
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # FORMULAIRE
-    # --------------------------------------------------------
+    # ========================================================
 
-    with st.form("login_form"):
+    with st.form(
+        "login_form",
+        clear_on_submit=False
+    ):
 
         utilisateur = st.text_input(
             "👤 Nom d'utilisateur",
             placeholder="Entrez votre nom d'utilisateur"
         )
+
 
         mot_de_passe = st.text_input(
             "🔑 Mot de passe",
@@ -283,19 +483,21 @@ def connexion():
             placeholder="Entrez votre mot de passe"
         )
 
+
         bouton = st.form_submit_button(
             "🔐  SE CONNECTER",
             use_container_width=True
         )
 
 
-        # ----------------------------------------------------
+        # ====================================================
         # VALIDATION
-        # ----------------------------------------------------
+        # ====================================================
 
         if bouton:
 
             utilisateur = utilisateur.strip()
+
 
             if (
                 utilisateur in UTILISATEURS
@@ -304,24 +506,38 @@ def connexion():
                 == mot_de_passe
             ):
 
+                # --------------------------------------------
+                # Connexion réussie
+                # --------------------------------------------
+
                 st.session_state.connecte = True
 
                 st.session_state.utilisateur = (
                     utilisateur
                 )
 
-                st.session_state.login_error = False
+                # Supprimer ancienne erreur
+
+                if "login_error" in st.session_state:
+
+                    del st.session_state[
+                        "login_error"
+                    ]
+
+
+                # Actualiser
 
                 st.rerun()
+
 
             else:
 
                 st.session_state.login_error = True
 
 
-    # --------------------------------------------------------
-    # ERREUR
-    # --------------------------------------------------------
+    # ========================================================
+    # MESSAGE D'ERREUR
+    # ========================================================
 
     if st.session_state.get(
         "login_error",
@@ -333,9 +549,25 @@ def connexion():
         )
 
 
-    # --------------------------------------------------------
-    # FIN PANNEAU
-    # --------------------------------------------------------
+    # ========================================================
+    # MESSAGE SÉCURITÉ
+    # ========================================================
+
+    st.markdown(
+        """
+        <div class="security-text">
+
+            🔒 Accès réservé aux utilisateurs autorisés
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+    # ========================================================
+    # FIN DU PANNEAU
+    # ========================================================
 
     st.markdown(
         "</div>",
@@ -343,17 +575,19 @@ def connexion():
     )
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # FOOTER
-    # --------------------------------------------------------
+    # ========================================================
 
     st.markdown(
         """
         <div class="login-footer">
 
-        🔒 Accès sécurisé<br>
+            <b>TMF LOGISTICS</b><br>
 
-        TMF LOGISTICS © 2026
+            Système de Gestion du Transport<br>
+
+            © 2026
 
         </div>
         """,
@@ -365,13 +599,13 @@ def connexion():
 
 
 # ============================================================
-# FONCTION DÉCONNEXION
+# FONCTION DE DÉCONNEXION
 # ============================================================
 
 def deconnexion():
 
     # --------------------------------------------------------
-    # Vérifier la connexion
+    # Vérifier si l'utilisateur est connecté
     # --------------------------------------------------------
 
     if not st.session_state.get(
@@ -382,12 +616,16 @@ def deconnexion():
         return
 
 
+    # ========================================================
+    # SIDEBAR
+    # ========================================================
+
     st.sidebar.divider()
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # UTILISATEUR CONNECTÉ
-    # --------------------------------------------------------
+    # ========================================================
 
     utilisateur = st.session_state.get(
         "utilisateur",
@@ -397,25 +635,28 @@ def deconnexion():
 
     st.sidebar.markdown(
         f"""
-        👤 **Utilisateur**
+        ### 👤 Utilisateur
 
-        `{utilisateur}`
+        **{utilisateur}**
         """
     )
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # BOUTON DÉCONNEXION
-    # --------------------------------------------------------
+    # ========================================================
 
     if st.sidebar.button(
         "🚪 Déconnexion",
         use_container_width=True
     ):
 
+        # --------------------------------------------
         # Supprimer la session
+        # --------------------------------------------
 
         st.session_state.connecte = False
+
 
         if "utilisateur" in st.session_state:
 
@@ -423,12 +664,16 @@ def deconnexion():
                 "utilisateur"
             ]
 
+
         if "login_error" in st.session_state:
 
             del st.session_state[
                 "login_error"
             ]
 
-        # Retour connexion
+
+        # --------------------------------------------
+        # Retour à la connexion
+        # --------------------------------------------
 
         st.rerun()
