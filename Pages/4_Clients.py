@@ -148,7 +148,7 @@ total_clients = len(df_clients)
 if "Lieu de chargement" in df_clients.columns:
 
     nombre_lieux_chargement = (
-        df_clients["Lieu de chargement"]
+        df_clients["ville"]
         .fillna("")
         .astype(str)
         .str.strip()
