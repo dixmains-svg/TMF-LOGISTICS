@@ -16,24 +16,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 FICHIER_CLIENTS = BASE_DIR / "Data" / "Clients.xlsx"
 
-st.write(f"📁 Fichier : `{FICHIER_CLIENTS}`")
-
-# ============================================================
-# VÉRIFICATION DU FICHIER
-# ============================================================
-
-if not FICHIER_CLIENTS.exists():
-
-    st.error(
-        f"""
-        ❌ Le fichier Clients.xlsx est introuvable.
-
-        Chemin recherché :
-
-        `{FICHIER_CLIENTS}`
-        """
-    )
-
     st.stop()
 
 st.success("✅ Clients.xlsx trouvé.")
