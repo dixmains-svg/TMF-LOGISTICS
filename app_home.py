@@ -92,7 +92,7 @@ with col1:
 
     st.metric(
         "📋 Ordres de Mission",
-        "—"
+        total_chauffeurs = len(df_chauffeurs)
     )
 
 
