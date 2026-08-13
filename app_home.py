@@ -1,38 +1,63 @@
 import streamlit as st
-import pandas as pd
 import base64
+import pandas as pd
 from pathlib import Path
 
 
 # ============================================================
-# CONFIGURATION
-# ============================================================
-
-st.set_page_config(
-    page_title="TMF LOGISTICS",
-    page_icon="🚛",
-    layout="wide"
-)
-
-
-# ============================================================
-# CHEMIN DU PROJET
+# CHEMINS
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent
 
 DATA_DIR = BASE_DIR / "Data"
 
-EXCEL_OM = DATA_DIR / "OM.xlsx"
-EXCEL_CAMIONS = DATA_DIR / "Camions.xlsx"
-EXCEL_CHAUFFEURS = DATA_DIR / "Chauffeurs.xlsx"
-EXCEL_CLIENTS = DATA_DIR / "Clients.xlsx"
+FICHIER_OM = DATA_DIR / "OM.xlsx"
+FICHIER_CAMIONS = DATA_DIR / "Camions.xlsx"
+FICHIER_CHAUFFEURS = DATA_DIR / "Chauffeurs.xlsx"
+FICHIER_CLIENTS = DATA_DIR / "Clients.xlsx"
 
 BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
 
 
 # ============================================================
-# FONCTION LECTURE EXCEL
+# ARRIÈRE-PLAN
+# ============================================================
+
+if BACKGROUND_PATH.exists():
+
+    with open(BACKGROUND_PATH, "rb") as image_file:
+
+        encoded_image = base64.b64encode(
+            image_file.read()
+        ).decode("utf-8")
+
+    st.markdown(
+        f"""
+        <style>
+
+        .stApp {{
+            background-image:
+                linear-gradient(
+                    rgba(255, 255, 255, 0.88),
+                    rgba(255, 255, 255, 0.88)
+                ),
+                url("data:image/jpeg;base64,{encoded_image}");
+
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+# ============================================================
+# LECTURE EXCEL
 # ============================================================
 
 @st.cache_data
@@ -43,90 +68,29 @@ def charger_excel(fichier):
 
     try:
 
-        df = pd.read_excel(
+        return pd.read_excel(
             fichier,
             engine="openpyxl"
         )
 
-        # Supprimer les lignes complètement vides
-        df = df.dropna(how="all")
-
-        return df
-
-    except Exception as e:
-
-        st.error(
-            f"❌ Erreur lors de la lecture de {fichier.name} : {e}"
-        )
-
+    except Exception:
         return pd.DataFrame()
 
 
-# ============================================================
-# CHARGEMENT DES DONNÉES
-# ============================================================
-
-df_om = charger_excel(EXCEL_OM)
-
-df_camions = charger_excel(EXCEL_CAMIONS)
-
-df_chauffeurs = charger_excel(EXCEL_CHAUFFEURS)
-
-df_clients = charger_excel(EXCEL_CLIENTS)
+df_om = charger_excel(FICHIER_OM)
+df_camions = charger_excel(FICHIER_CAMIONS)
+df_chauffeurs = charger_excel(FICHIER_CHAUFFEURS)
+df_clients = charger_excel(FICHIER_CLIENTS)
 
 
 # ============================================================
-# NOMBRE D'ÉLÉMENTS
+# STATISTIQUES
 # ============================================================
 
 nombre_om = len(df_om)
-
 nombre_camions = len(df_camions)
-
 nombre_chauffeurs = len(df_chauffeurs)
-
 nombre_clients = len(df_clients)
-
-
-# ============================================================
-# ARRIÈRE-PLAN
-# ============================================================
-
-if BACKGROUND_PATH.exists():
-
-    try:
-
-        with open(BACKGROUND_PATH, "rb") as image_file:
-
-            encoded_image = base64.b64encode(
-                image_file.read()
-            ).decode("utf-8")
-
-        st.markdown(
-            f"""
-            <style>
-
-            .stApp {{
-                background-image:
-                    linear-gradient(
-                        rgba(255, 255, 255, 0.88),
-                        rgba(255, 255, 255, 0.88)
-                    ),
-                    url("data:image/jpeg;base64,{encoded_image}");
-
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-                background-attachment: fixed;
-            }}
-
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
-
-    except Exception:
-        pass
 
 
 # ============================================================
@@ -147,7 +111,6 @@ st.divider()
 # ============================================================
 
 st.header("📊 Tableau de bord")
-
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -191,7 +154,9 @@ st.divider()
 # BIENVENUE
 # ============================================================
 
-st.header("Azul Felawen dans TMF LOGISTICS 👋")
+st.header(
+    "Azul Felawen dans TMF LOGISTICS 👋"
+)
 
 st.write(
     """
@@ -248,12 +213,11 @@ with col2:
         """)
 
 
-st.divider()
-
-
 # ============================================================
 # INFORMATION
 # ============================================================
+
+st.divider()
 
 st.info(
     "💡 Utilisez le menu situé à gauche pour accéder "
@@ -268,8 +232,8 @@ st.info(
 st.markdown(
     """
     <div style="
-        text-align: center;
-        padding: 20px;
+        text-align:center;
+        padding:20px;
     ">
         <b>TMF LOGISTICS</b><br>
         Système de Gestion du Transport<br>
