@@ -16,18 +16,12 @@ st.set_page_config(
 
 
 # ============================================================
-# DOSSIER PRINCIPAL
+# CHEMIN DU PROJET
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent
 
-
-# ============================================================
-# FICHIERS
-# ============================================================
-
 LOGO_PATH = BASE_DIR / "logo.png"
-
 BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
 
 
@@ -53,10 +47,7 @@ def charger_arriere_plan():
 
     try:
 
-        with open(
-            BACKGROUND_PATH,
-            "rb"
-        ) as image_file:
+        with open(BACKGROUND_PATH, "rb") as image_file:
 
             encoded_image = base64.b64encode(
                 image_file.read()
@@ -67,24 +58,16 @@ def charger_arriere_plan():
             <style>
 
             .stApp {{
-
                 background-image:
-
                     linear-gradient(
                         rgba(0, 0, 0, 0.55),
                         rgba(0, 0, 0, 0.55)
                     ),
-
-                    url(
-                        "data:image/jpeg;base64,{encoded_image}"
-                    );
+                    url("data:image/jpeg;base64,{encoded_image}");
 
                 background-size: cover;
-
                 background-position: center;
-
                 background-repeat: no-repeat;
-
                 background-attachment: fixed;
             }}
 
@@ -105,9 +88,17 @@ def page_connexion():
 
     charger_arriere_plan()
 
+    # ========================================================
+    # STYLE
+    # ========================================================
+
     st.markdown(
         """
         <style>
+
+        /* ==========================================
+           CONTENEUR
+           ========================================== */
 
         .login-container {
 
@@ -117,19 +108,26 @@ def page_connexion():
 
             padding: 40px;
 
-            background: rgba(255,255,255,0.96);
+            background: rgba(255, 255, 255, 0.96);
 
             border-radius: 22px;
 
             box-shadow:
-                0 10px 40px rgba(0,0,0,0.35);
+                0 10px 40px rgba(0, 0, 0, 0.35);
+
         }
+
+
+        /* ==========================================
+           LOGO
+           ========================================== */
 
         .logo {
 
             text-align: center;
 
             margin-bottom: 15px;
+
         }
 
         .logo img {
@@ -139,7 +137,13 @@ def page_connexion():
             max-width: 80%;
 
             height: auto;
+
         }
+
+
+        /* ==========================================
+           TITRE
+           ========================================== */
 
         .login-title {
 
@@ -152,7 +156,13 @@ def page_connexion():
             color: #1f2937;
 
             margin-bottom: 5px;
+
         }
+
+
+        /* ==========================================
+           SOUS-TITRE
+           ========================================== */
 
         .login-subtitle {
 
@@ -163,7 +173,13 @@ def page_connexion():
             color: #6b7280;
 
             margin-bottom: 30px;
+
         }
+
+
+        /* ==========================================
+           FOOTER
+           ========================================== */
 
         .login-footer {
 
@@ -174,13 +190,19 @@ def page_connexion():
             font-size: 13px;
 
             margin-top: 25px;
+
         }
+
 
         </style>
         """,
         unsafe_allow_html=True
     )
 
+
+    # ========================================================
+    # CONTENEUR
+    # ========================================================
 
     st.markdown(
         '<div class="login-container">',
@@ -194,10 +216,7 @@ def page_connexion():
 
     if LOGO_PATH.exists():
 
-        with open(
-            LOGO_PATH,
-            "rb"
-        ) as image_file:
+        with open(LOGO_PATH, "rb") as image_file:
 
             logo_base64 = base64.b64encode(
                 image_file.read()
@@ -277,29 +296,52 @@ def page_connexion():
         )
 
 
+        # ====================================================
+        # VÉRIFICATION
+        # ====================================================
+
         if bouton:
 
             utilisateur = utilisateur.strip()
 
             if (
                 utilisateur in UTILISATEURS
-                and
-                UTILISATEURS[utilisateur]
-                == mot_de_passe
+                and UTILISATEURS[utilisateur] == mot_de_passe
             ):
 
                 st.session_state.connecte = True
 
                 st.session_state.utilisateur = utilisateur
 
+                st.session_state.pop(
+                    "login_error",
+                    None
+                )
+
                 st.rerun()
 
             else:
 
-                st.error(
-                    "❌ Nom d'utilisateur ou mot de passe incorrect."
-                )
+                st.session_state.login_error = True
 
+
+    # ========================================================
+    # ERREUR
+    # ========================================================
+
+    if st.session_state.get(
+        "login_error",
+        False
+    ):
+
+        st.error(
+            "❌ Nom d'utilisateur ou mot de passe incorrect."
+        )
+
+
+    # ========================================================
+    # FOOTER
+    # ========================================================
 
     st.markdown(
         """
@@ -324,7 +366,48 @@ def page_connexion():
 
 
 # ============================================================
-# CONTRÔLE DE CONNEXION
+# DÉCONNEXION
+# ============================================================
+
+def afficher_deconnexion():
+
+    st.sidebar.divider()
+
+    utilisateur = st.session_state.get(
+        "utilisateur",
+        ""
+    )
+
+    st.sidebar.markdown(
+        f"""
+        ### 👤 Utilisateur
+
+        **{utilisateur}**
+        """
+    )
+
+    if st.sidebar.button(
+        "🚪 Déconnexion",
+        use_container_width=True
+    ):
+
+        st.session_state.connecte = False
+
+        st.session_state.pop(
+            "utilisateur",
+            None
+        )
+
+        st.session_state.pop(
+            "login_error",
+            None
+        )
+
+        st.rerun()
+
+
+# ============================================================
+# VÉRIFICATION DE LA CONNEXION
 # ============================================================
 
 if not st.session_state.get(
@@ -338,87 +421,10 @@ if not st.session_state.get(
 
 
 # ============================================================
-# DÉCONNEXION
+# UTILISATEUR CONNECTÉ
 # ============================================================
 
-st.sidebar.divider()
-
-utilisateur_connecte = st.session_state.get(
-    "utilisateur",
-    ""
-)
-
-st.sidebar.markdown(
-    f"""
-    ### 👤 Utilisateur connecté
-
-    **{utilisateur_connecte}**
-    """
-)
-
-
-if st.sidebar.button(
-    "🚪 Déconnexion",
-    use_container_width=True
-):
-
-    st.session_state.clear()
-
-    st.rerun()
-
-
-# ============================================================
-# CHEMINS DES PAGES
-# ============================================================
-
-PAGE_HOME = BASE_DIR / "app_home.py"
-
-PAGE_OM = BASE_DIR / "Pages" / "om.py"
-
-PAGE_CAMIONS = BASE_DIR / "Pages" / "camions.py"
-
-PAGE_CHAUFFEURS = BASE_DIR / "Pages" / "chauffeurs.py"
-
-PAGE_CLIENTS = BASE_DIR / "Pages" / "clients.py"
-
-PAGE_RAPPORTS = BASE_DIR / "Pages" / "rapports.py"
-
-
-# ============================================================
-# VÉRIFICATION DES FICHIERS
-# ============================================================
-
-fichiers_pages = {
-
-    "Accueil": PAGE_HOME,
-
-    "Ordres de Mission": PAGE_OM,
-
-    "Camions": PAGE_CAMIONS,
-
-    "Chauffeurs": PAGE_CHAUFFEURS,
-
-    "Clients": PAGE_CLIENTS,
-
-    "Rapports": PAGE_RAPPORTS
-}
-
-
-for nom_page, chemin_page in fichiers_pages.items():
-
-    if not chemin_page.exists():
-
-        st.error(
-            f"""
-            ❌ La page **{nom_page}** est introuvable.
-
-            Fichier recherché :
-
-            `{chemin_page}`
-            """
-        )
-
-        st.stop()
+afficher_deconnexion()
 
 
 # ============================================================
@@ -428,37 +434,37 @@ for nom_page, chemin_page in fichiers_pages.items():
 pages = {
 
     "🏠 Accueil": st.Page(
-        str(PAGE_HOME),
+        "Pages/home.py",
         title="Accueil",
         icon="🏠"
     ),
 
     "📋 Ordres de Mission": st.Page(
-        str(PAGE_OM),
+        "Pages/om.py",
         title="Ordres de Mission",
         icon="📋"
     ),
 
     "🚚 Camions": st.Page(
-        str(PAGE_CAMIONS),
+        "Pages/camions.py",
         title="Camions",
         icon="🚚"
     ),
 
     "👷 Chauffeurs": st.Page(
-        str(PAGE_CHAUFFEURS),
+        "Pages/chauffeurs.py",
         title="Chauffeurs",
         icon="👷"
     ),
 
     "👥 Clients": st.Page(
-        str(PAGE_CLIENTS),
+        "Pages/clients.py",
         title="Clients",
         icon="👥"
     ),
 
     "📊 Rapports": st.Page(
-        str(PAGE_RAPPORTS),
+        "Pages/rapports.py",
         title="Rapports",
         icon="📊"
     )
@@ -466,9 +472,16 @@ pages = {
 
 
 # ============================================================
-# LANCEMENT
+# NAVIGATION
 # ============================================================
 
-navigation = st.navigation(pages)
+navigation = st.navigation(
+    pages
+)
+
+
+# ============================================================
+# LANCEMENT
+# ============================================================
 
 navigation.run()
