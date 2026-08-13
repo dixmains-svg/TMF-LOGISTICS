@@ -432,31 +432,31 @@ pages = {
     ),
 
     "📋 Ordres de Mission": st.Page(
-        "Pages/om.py",
+        "Pages/1_Ordres_de_Mission.py",
         title="Ordres de Mission",
         icon="📋"
     ),
 
     "🚚 Camions": st.Page(
-        "Pages/camions.py",
+        "Pages/2_Camions.py",
         title="Camions",
         icon="🚚"
     ),
 
     "👷 Chauffeurs": st.Page(
-        "Pages/chauffeurs.py",
+        "Pages/3_Chauffeurs.py",
         title="Chauffeurs",
         icon="👷"
     ),
 
     "👥 Clients": st.Page(
-        "Pages/clients.py",
+        "Pages/4_Clients.py",
         title="Clients",
         icon="👥"
     ),
 
     "📊 Rapports": st.Page(
-        "Pages/rapports.py",
+        "Pages/5_Rapports.py",
         title="Rapports",
         icon="📊"
     )
