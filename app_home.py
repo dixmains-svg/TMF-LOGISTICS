@@ -86,7 +86,9 @@ st.divider()
 st.header("📊 Tableau de bord")
 
 col1, col2, col3, col4 = st.columns(4)
+df_chauffeurs = charger_chauffeurs()
 
+nombre_chauffeurs = len(df_chauffeurs)
 
 with col1:
 
