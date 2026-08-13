@@ -437,7 +437,7 @@ pages = {
     "app_home.py",
     title="Accueil",
     icon="🏠"
-),
+
     ),
 
     "📋 Ordres de Mission": st.Page(
