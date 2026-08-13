@@ -208,7 +208,7 @@ def page_connexion():
             <div class="logo">
 
                 <img
-                    src="data:image/png;base64,{logo_base64}"
+                    src="logo.png;base64,{logo_base64}"
                     alt="TMF LOGISTICS"
                 >
 
