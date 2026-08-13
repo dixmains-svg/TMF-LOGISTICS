@@ -410,7 +410,7 @@ afficher_deconnexion()
 pages = {
 
     "🏠 Accueil": st.Page(
-        "Pages/home.py",
+        "app_home.py",
         title="Accueil",
         icon="🏠"
     ),
