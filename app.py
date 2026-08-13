@@ -88,17 +88,11 @@ def page_connexion():
 
     charger_arriere_plan()
 
-    # ========================================================
-    # STYLE
-    # ========================================================
-
     st.markdown(
         """
         <style>
 
-        /* ==========================================
-           CONTENEUR
-           ========================================== */
+        /* CONTENEUR DE CONNEXION */
 
         .login-container {
 
@@ -114,21 +108,18 @@ def page_connexion():
 
             box-shadow:
                 0 10px 40px rgba(0, 0, 0, 0.35);
-
         }
 
 
-        /* ==========================================
-           LOGO
-           ========================================== */
+        /* LOGO */
 
         .logo {
 
             text-align: center;
 
             margin-bottom: 15px;
-
         }
+
 
         .logo img {
 
@@ -137,13 +128,10 @@ def page_connexion():
             max-width: 80%;
 
             height: auto;
-
         }
 
 
-        /* ==========================================
-           TITRE
-           ========================================== */
+        /* TITRE */
 
         .login-title {
 
@@ -156,13 +144,10 @@ def page_connexion():
             color: #1f2937;
 
             margin-bottom: 5px;
-
         }
 
 
-        /* ==========================================
-           SOUS-TITRE
-           ========================================== */
+        /* SOUS-TITRE */
 
         .login-subtitle {
 
@@ -173,13 +158,10 @@ def page_connexion():
             color: #6b7280;
 
             margin-bottom: 30px;
-
         }
 
 
-        /* ==========================================
-           FOOTER
-           ========================================== */
+        /* FOOTER */
 
         .login-footer {
 
@@ -190,9 +172,7 @@ def page_connexion():
             font-size: 13px;
 
             margin-top: 25px;
-
         }
-
 
         </style>
         """,
@@ -296,10 +276,6 @@ def page_connexion():
         )
 
 
-        # ====================================================
-        # VÉRIFICATION
-        # ====================================================
-
         if bouton:
 
             utilisateur = utilisateur.strip()
@@ -326,7 +302,7 @@ def page_connexion():
 
 
     # ========================================================
-    # ERREUR
+    # MESSAGE D'ERREUR
     # ========================================================
 
     if st.session_state.get(
@@ -380,7 +356,7 @@ def afficher_deconnexion():
 
     st.sidebar.markdown(
         f"""
-        ### 👤 Utilisateur
+        ### 👤 Utilisateur connecté
 
         **{utilisateur}**
         """
@@ -407,7 +383,7 @@ def afficher_deconnexion():
 
 
 # ============================================================
-# VÉRIFICATION DE LA CONNEXION
+# CONTRÔLE DE CONNEXION
 # ============================================================
 
 if not st.session_state.get(
@@ -475,9 +451,7 @@ pages = {
 # NAVIGATION
 # ============================================================
 
-navigation = st.navigation(
-    pages
-)
+navigation = st.navigation(pages)
 
 
 # ============================================================
