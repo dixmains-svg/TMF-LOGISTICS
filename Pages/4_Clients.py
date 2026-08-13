@@ -124,9 +124,25 @@ with col1:
 
 with col2:
 
+    if "Lieu de chargement" in df_clients.columns:
+
+        nombre_lieux_chargement = (
+            df_clients["Lieu de chargement"]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+            .replace("", pd.NA)
+            .notna()
+            .sum()
+        )
+
+    else:
+
+        nombre_lieux_chargement = 0
+
     st.metric(
-        "📊 Colonnes",
-        len(df_clients.columns)
+        "📍 Lieux de chargement",
+        nombre_lieux_chargement
     )
 
 st.divider()
