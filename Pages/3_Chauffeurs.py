@@ -42,14 +42,20 @@ def charger_chauffeurs():
             engine="openpyxl"
         )
 
-        # Nettoyage des noms de colonnes
+        # ====================================================
+        # NETTOYAGE DES NOMS DE COLONNES
+        # ====================================================
+
         df.columns = (
             df.columns
             .astype(str)
             .str.strip()
         )
 
-        # Nettoyage des données texte
+        # ====================================================
+        # NETTOYAGE DES DONNÉES
+        # ====================================================
+
         for colonne in df.columns:
 
             if df[colonne].dtype == "object":
@@ -60,6 +66,26 @@ def charger_chauffeurs():
                     .astype(str)
                     .str.strip()
                 )
+
+        # ====================================================
+        # MATRICULE SUR 4 CARACTÈRES
+        # ====================================================
+
+        if "Matricule" in df.columns:
+
+            # Conversion en numérique
+            matricules = pd.to_numeric(
+                df["Matricule"],
+                errors="coerce"
+            )
+
+            # Garder les valeurs vides réellement vides
+            df["Matricule"] = matricules.apply(
+                lambda x:
+                f"{int(x):04d}"
+                if pd.notna(x)
+                else ""
+            )
 
         return df
 
@@ -116,11 +142,16 @@ if df_chauffeurs.empty:
 total_chauffeurs = len(df_chauffeurs)
 
 
+# ------------------------------------------------------------
+# NOMBRE DE FONCTIONS
+# ------------------------------------------------------------
+
 if "Fonction" in df_chauffeurs.columns:
 
     nombre_fonctions = (
         df_chauffeurs["Fonction"]
         .replace("", pd.NA)
+        .dropna()
         .nunique()
     )
 
@@ -129,11 +160,16 @@ else:
     nombre_fonctions = 0
 
 
+# ------------------------------------------------------------
+# NOMBRE D'AFFECTATIONS
+# ------------------------------------------------------------
+
 if "Section/Affectation" in df_chauffeurs.columns:
 
     nombre_affectations = (
         df_chauffeurs["Section/Affectation"]
         .replace("", pd.NA)
+        .dropna()
         .nunique()
     )
 
@@ -142,11 +178,16 @@ else:
     nombre_affectations = 0
 
 
+# ------------------------------------------------------------
+# NOMBRE DE SUPERVISEURS
+# ------------------------------------------------------------
+
 if "Superviseur" in df_chauffeurs.columns:
 
     nombre_superviseurs = (
         df_chauffeurs["Superviseur"]
         .replace("", pd.NA)
+        .dropna()
         .nunique()
     )
 
@@ -206,7 +247,8 @@ st.subheader("🔎 Recherche d'un chauffeur")
 recherche = st.text_input(
     "Rechercher",
     placeholder=(
-        "Nom, matricule, fonction, affectation ou superviseur..."
+        "Matricule, nom, prénom, fonction, "
+        "affectation ou superviseur..."
     )
 )
 
@@ -218,9 +260,9 @@ recherche = st.text_input(
 col1, col2, col3 = st.columns(3)
 
 
-# ------------------------------------------------------------
+# ============================================================
 # FILTRE FONCTION
-# ------------------------------------------------------------
+# ============================================================
 
 with col1:
 
@@ -246,9 +288,9 @@ with col1:
         filtre_fonction = []
 
 
-# ------------------------------------------------------------
+# ============================================================
 # FILTRE AFFECTATION
-# ------------------------------------------------------------
+# ============================================================
 
 with col2:
 
@@ -274,9 +316,9 @@ with col2:
         filtre_affectation = []
 
 
-# ------------------------------------------------------------
+# ============================================================
 # FILTRE SUPERVISEUR
-# ------------------------------------------------------------
+# ============================================================
 
 with col3:
 
@@ -309,9 +351,9 @@ with col3:
 df_filtre = df_chauffeurs.copy()
 
 
-# ------------------------------------------------------------
+# ============================================================
 # RECHERCHE GÉNÉRALE
-# ------------------------------------------------------------
+# ============================================================
 
 if recherche:
 
@@ -332,9 +374,9 @@ if recherche:
     df_filtre = df_filtre[masque]
 
 
-# ------------------------------------------------------------
-# FONCTION
-# ------------------------------------------------------------
+# ============================================================
+# FILTRE FONCTION
+# ============================================================
 
 if filtre_fonction:
 
@@ -345,9 +387,9 @@ if filtre_fonction:
     ]
 
 
-# ------------------------------------------------------------
-# AFFECTATION
-# ------------------------------------------------------------
+# ============================================================
+# FILTRE AFFECTATION
+# ============================================================
 
 if filtre_affectation:
 
@@ -358,9 +400,9 @@ if filtre_affectation:
     ]
 
 
-# ------------------------------------------------------------
-# SUPERVISEUR
-# ------------------------------------------------------------
+# ============================================================
+# FILTRE SUPERVISEUR
+# ============================================================
 
 if filtre_superviseur:
 
@@ -426,11 +468,12 @@ fichier_excel = convertir_excel(df_filtre)
 st.download_button(
     label="📥 Télécharger la liste des chauffeurs",
     data=fichier_excel,
-    file_name="Chauffeurs_filtrés.xlsx",
+    file_name="Chauffeurs_filtres.xlsx",
     mime=(
         "application/vnd.openxmlformats-officedocument."
         "spreadsheetml.sheet"
-    )
+    ),
+    use_container_width=True
 )
 
 
@@ -440,7 +483,10 @@ st.download_button(
 
 st.divider()
 
-if st.button("🔄 Actualiser les données"):
+if st.button(
+    "🔄 Actualiser les données",
+    use_container_width=True
+):
 
     st.cache_data.clear()
 
