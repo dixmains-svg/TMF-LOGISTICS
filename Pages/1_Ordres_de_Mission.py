@@ -27,7 +27,7 @@ FEUILLE_OM = "Input OM fini"
 
 
 # ============================================================
-# COLONNES PRINCIPALES À AFFICHER
+# COLONNES PRINCIPALES
 # ============================================================
 
 COLONNES_OM = [
@@ -67,24 +67,68 @@ COLONNES_OM = [
 
 def charger_om():
 
-    if not EXCEL_OM.exists():
+    # Vérifier que le fichier existe
+    if not FICHIER_OM.exists():
+
+        st.error(
+            f"""
+            ❌ Le fichier OM.xlsx est introuvable.
+
+            Fichier recherché :
+
+            `{FICHIER_OM}`
+            """
+        )
+
         return pd.DataFrame()
 
     try:
 
+        # ----------------------------------------------------
+        # Vérifier OpenPyXL
+        # ----------------------------------------------------
+
+        try:
+            import openpyxl
+        except ImportError:
+
+            st.error(
+                """
+                ❌ Le module OpenPyXL n'est pas installé.
+
+                Ajoutez dans requirements.txt :
+
+                pandas==2.3.1
+                openpyxl==3.1.5
+                """
+            )
+
+            return pd.DataFrame()
+
+        # ----------------------------------------------------
+        # Lire la feuille Input OM fini
+        # ----------------------------------------------------
+
         df = pd.read_excel(
-            EXCEL_OM,
+            FICHIER_OM,
+            sheet_name=FEUILLE_OM,
             engine="openpyxl"
         )
 
-        # Nettoyage des colonnes
+        # ----------------------------------------------------
+        # Nettoyage des noms de colonnes
+        # ----------------------------------------------------
+
         df.columns = (
             df.columns
             .astype(str)
             .str.strip()
         )
 
+        # ----------------------------------------------------
         # Nettoyage des données
+        # ----------------------------------------------------
+
         for colonne in df.columns:
 
             if df[colonne].dtype == "object":
@@ -98,32 +142,25 @@ def charger_om():
 
         return df
 
-    except Exception as e:
+    except ValueError:
 
         st.error(
-            f"❌ Erreur lors de la lecture de OM.xlsx : {e}"
+            f"""
+            ❌ La feuille Excel **{FEUILLE_OM}** n'existe pas
+            dans le fichier OM.xlsx.
+            """
         )
 
         return pd.DataFrame()
 
-        # Nettoyage des données
-        for colonne in df.columns:
-
-            if df[colonne].dtype == "object":
-
-                df[colonne] = (
-                    df[colonne]
-                    .fillna("")
-                    .astype(str)
-                    .str.strip()
-                )
-
-        return df
-
     except Exception as e:
 
         st.error(
-            f"❌ Erreur lors de la lecture du fichier OM.xlsx : {e}"
+            f"""
+            ❌ Erreur lors de la lecture de OM.xlsx :
+
+            {e}
+            """
         )
 
         return pd.DataFrame()
@@ -142,16 +179,6 @@ df_om = charger_om()
 
 if df_om.empty:
 
-    st.error(
-        f"""
-        ❌ Le fichier OM.xlsx est introuvable ou vide.
-
-        Fichier recherché :
-
-        `{FICHIER_OM}`
-        """
-    )
-
     st.stop()
 
 
@@ -165,13 +192,19 @@ st.subheader(
     "Gestion des Ordres de Mission - TMF LOGISTICS"
 )
 
+st.divider()
+
 
 # ============================================================
-# INFORMATIONS SUR LE FICHIER
+# STATISTIQUES
 # ============================================================
 
 col1, col2, col3, col4 = st.columns(4)
 
+
+# ------------------------------------------------------------
+# TOTAL OM
+# ------------------------------------------------------------
 
 with col1:
 
@@ -180,6 +213,10 @@ with col1:
         len(df_om)
     )
 
+
+# ------------------------------------------------------------
+# STATUTS
+# ------------------------------------------------------------
 
 with col2:
 
@@ -201,6 +238,10 @@ with col2:
     )
 
 
+# ------------------------------------------------------------
+# CAMIONS
+# ------------------------------------------------------------
+
 with col3:
 
     if "Numero Camion" in df_om.columns:
@@ -220,6 +261,10 @@ with col3:
         nombre_camions
     )
 
+
+# ------------------------------------------------------------
+# CHAUFFEURS
+# ------------------------------------------------------------
 
 with col4:
 
@@ -267,7 +312,7 @@ col1, col2, col3 = st.columns(3)
 
 
 # ------------------------------------------------------------
-# FILTRE STATUT
+# STATUT
 # ------------------------------------------------------------
 
 with col1:
@@ -295,7 +340,7 @@ with col1:
 
 
 # ------------------------------------------------------------
-# FILTRE CAMION
+# CAMION
 # ------------------------------------------------------------
 
 with col2:
@@ -323,7 +368,7 @@ with col2:
 
 
 # ------------------------------------------------------------
-# FILTRE CLIENT
+# CLIENT
 # ------------------------------------------------------------
 
 with col3:
@@ -462,7 +507,8 @@ if recherche:
             colonne.str.contains(
                 recherche,
                 case=False,
-                na=False
+                na=False,
+                regex=False
             )
         )
         .any(axis=1)
@@ -478,9 +524,7 @@ if recherche:
 if filtre_statut:
 
     df_filtre = df_filtre[
-        df_filtre["Status"].isin(
-            filtre_statut
-        )
+        df_filtre["Status"].isin(filtre_statut)
     ]
 
 
@@ -491,9 +535,7 @@ if filtre_statut:
 if filtre_camion:
 
     df_filtre = df_filtre[
-        df_filtre["Numero Camion"].isin(
-            filtre_camion
-        )
+        df_filtre["Numero Camion"].isin(filtre_camion)
     ]
 
 
@@ -504,9 +546,7 @@ if filtre_camion:
 if filtre_client:
 
     df_filtre = df_filtre[
-        df_filtre["Client"].isin(
-            filtre_client
-        )
+        df_filtre["Client"].isin(filtre_client)
     ]
 
 
@@ -517,9 +557,7 @@ if filtre_client:
 if filtre_chauffeur:
 
     df_filtre = df_filtre[
-        df_filtre["Chauffeur"].isin(
-            filtre_chauffeur
-        )
+        df_filtre["Chauffeur"].isin(filtre_chauffeur)
     ]
 
 
@@ -530,9 +568,7 @@ if filtre_chauffeur:
 if filtre_affectation:
 
     df_filtre = df_filtre[
-        df_filtre["Affectation"].isin(
-            filtre_affectation
-        )
+        df_filtre["Affectation"].isin(filtre_affectation)
     ]
 
 
@@ -543,9 +579,7 @@ if filtre_affectation:
 if filtre_section:
 
     df_filtre = df_filtre[
-        df_filtre["Section"].isin(
-            filtre_section
-        )
+        df_filtre["Section"].isin(filtre_section)
     ]
 
 
@@ -561,7 +595,7 @@ st.subheader(
 
 
 # ============================================================
-# TABLEAU PRINCIPAL
+# TABLEAU
 # ============================================================
 
 colonnes_disponibles = [
@@ -603,182 +637,205 @@ if "Numéro" in df_om.columns:
         if str(x).strip()
     ]
 
-    numero_selectionne = st.selectbox(
-        "Sélectionner un N° OM",
-        numeros_om
-    )
+    if numeros_om:
 
-    if numero_selectionne:
+        numero_selectionne = st.selectbox(
+            "Sélectionner un N° OM",
+            numeros_om
+        )
 
-        detail = df_om[
-            df_om["Numéro"].astype(str)
-            == numero_selectionne
-        ]
+        if numero_selectionne:
 
-        if not detail.empty:
+            detail = df_om[
+                df_om["Numéro"].astype(str)
+                == numero_selectionne
+            ]
 
-            ligne = detail.iloc[0]
+            if not detail.empty:
 
-            col1, col2, col3 = st.columns(3)
+                ligne = detail.iloc[0]
 
-            with col1:
+                # =================================================
+                # MISSION
+                # =================================================
 
-                st.markdown("### 📋 Mission")
+                col1, col2, col3 = st.columns(3)
 
-                st.write(
-                    f"**N° OM :** {ligne.get('Numéro', '')}"
-                )
+                with col1:
 
-                st.write(
-                    f"**Statut :** {ligne.get('Status', '')}"
-                )
+                    st.markdown("### 📋 Mission")
 
-                st.write(
-                    f"**Commande :** {ligne.get('N° Commande', '')}"
-                )
-
-                st.write(
-                    f"**Client :** {ligne.get('Client', '')}"
-                )
-
-                st.write(
-                    f"**Objet :** {ligne.get('Objet de la Mission', '')}"
-                )
-
-            with col2:
-
-                st.markdown("### 🚚 Transport")
-
-                st.write(
-                    f"**Camion :** {ligne.get('Numero Camion', '')}"
-                )
-
-                st.write(
-                    f"**Remorque :** {ligne.get('Remorque', '')}"
-                )
-
-                st.write(
-                    f"**Chauffeur :** {ligne.get('Chauffeur', '')}"
-                )
-
-                st.write(
-                    f"**Matricule :** {ligne.get('Matricule du Chauffeur', '')}"
-                )
-
-                st.write(
-                    f"**Affectation :** {ligne.get('Affectation', '')}"
-                )
-
-            with col3:
-
-                st.markdown("### 📍 Trajet")
-
-                st.write(
-                    f"**Trajet :** {ligne.get('Trajet Réel', '')}"
-                )
-
-                st.write(
-                    f"**Chargement :** {ligne.get('Lieu de Chargement', '')}"
-                )
-
-                st.write(
-                    f"**Déchargement :** {ligne.get('Lieu de DéChargement', '')}"
-                )
-
-                st.write(
-                    f"**Section :** {ligne.get('Section', '')}"
-                )
-
-                st.write(
-                    f"**Destination :** {ligne.get('Adresse destinataire', '')}"
-                )
-
-
-            st.markdown("### 🕐 Dates et horaires")
-
-            col1, col2, col3, col4 = st.columns(4)
-
-            with col1:
-
-                st.write(
-                    f"**Départ :** {ligne.get('Date Depart', '')}"
-                )
-
-            with col2:
-
-                st.write(
-                    f"**Heure départ :** {ligne.get('Time Depart', '')}"
-                )
-
-            with col3:
-
-                st.write(
-                    f"**Retour :** {ligne.get('Date de Retour', '')}"
-                )
-
-            with col4:
-
-                st.write(
-                    f"**Heure retour :** {ligne.get('Time Retour', '')}"
-                )
-
-
-            st.markdown("### 🛣️ Kilométrage")
-
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-
-                st.metric(
-                    "KM Départ",
-                    ligne.get(
-                        "Kilometrage au Depart",
-                        ""
+                    st.write(
+                        f"**N° OM :** {ligne.get('Numéro', '')}"
                     )
-                )
 
-            with col2:
-
-                st.metric(
-                    "KM Retour",
-                    ligne.get(
-                        "Kilometrage au Retour",
-                        ""
+                    st.write(
+                        f"**Statut :** {ligne.get('Status', '')}"
                     )
-                )
 
-            with col3:
-
-                st.metric(
-                    "KM Parcourus",
-                    ligne.get(
-                        "Kilometrage Parcouru",
-                        ""
+                    st.write(
+                        f"**Commande :** {ligne.get('N° Commande', '')}"
                     )
-                )
 
+                    st.write(
+                        f"**Client :** {ligne.get('Client', '')}"
+                    )
 
-            st.markdown("### 📦 Chargement")
+                    st.write(
+                        f"**Objet :** {ligne.get('Objet de la Mission', '')}"
+                    )
 
-            col1, col2, col3 = st.columns(3)
+                # =================================================
+                # TRANSPORT
+                # =================================================
 
-            with col1:
+                with col2:
 
-                st.write(
-                    f"**Tonnage :** {ligne.get('Tonnage', '')}"
-                )
+                    st.markdown("### 🚚 Transport")
 
-            with col2:
+                    st.write(
+                        f"**Camion :** {ligne.get('Numero Camion', '')}"
+                    )
 
-                st.write(
-                    f"**Nature :** {ligne.get('Nature du Chargement', '')}"
-                )
+                    st.write(
+                        f"**Remorque :** {ligne.get('Remorque', '')}"
+                    )
 
-            with col3:
+                    st.write(
+                        f"**Chauffeur :** {ligne.get('Chauffeur', '')}"
+                    )
 
-                st.write(
-                    f"**Produit :** {ligne.get('Produit_Transporté', '')}"
-                )
+                    st.write(
+                        f"**Matricule :** {ligne.get('Matricule du Chauffeur', '')}"
+                    )
+
+                    st.write(
+                        f"**Affectation :** {ligne.get('Affectation', '')}"
+                    )
+
+                # =================================================
+                # TRAJET
+                # =================================================
+
+                with col3:
+
+                    st.markdown("### 📍 Trajet")
+
+                    st.write(
+                        f"**Trajet :** {ligne.get('Trajet Réel', '')}"
+                    )
+
+                    st.write(
+                        f"**Chargement :** {ligne.get('Lieu de Chargement', '')}"
+                    )
+
+                    st.write(
+                        f"**Déchargement :** {ligne.get('Lieu de DéChargement', '')}"
+                    )
+
+                    st.write(
+                        f"**Section :** {ligne.get('Section', '')}"
+                    )
+
+                    st.write(
+                        f"**Destination :** {ligne.get('Adresse destinataire', '')}"
+                    )
+
+                # =================================================
+                # DATES
+                # =================================================
+
+                st.markdown("### 🕐 Dates et horaires")
+
+                col1, col2, col3, col4 = st.columns(4)
+
+                with col1:
+
+                    st.write(
+                        f"**Départ :** {ligne.get('Date Depart', '')}"
+                    )
+
+                with col2:
+
+                    st.write(
+                        f"**Heure départ :** {ligne.get('Time Depart', '')}"
+                    )
+
+                with col3:
+
+                    st.write(
+                        f"**Retour :** {ligne.get('Date de Retour', '')}"
+                    )
+
+                with col4:
+
+                    st.write(
+                        f"**Heure retour :** {ligne.get('Time Retour', '')}"
+                    )
+
+                # =================================================
+                # KILOMÉTRAGE
+                # =================================================
+
+                st.markdown("### 🛣️ Kilométrage")
+
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+
+                    st.metric(
+                        "KM Départ",
+                        ligne.get(
+                            "Kilometrage au Depart",
+                            ""
+                        )
+                    )
+
+                with col2:
+
+                    st.metric(
+                        "KM Retour",
+                        ligne.get(
+                            "Kilometrage au Retour",
+                            ""
+                        )
+                    )
+
+                with col3:
+
+                    st.metric(
+                        "KM Parcourus",
+                        ligne.get(
+                            "Kilometrage Parcouru",
+                            ""
+                        )
+                    )
+
+                # =================================================
+                # CHARGEMENT
+                # =================================================
+
+                st.markdown("### 📦 Chargement")
+
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+
+                    st.write(
+                        f"**Tonnage :** {ligne.get('Tonnage', '')}"
+                    )
+
+                with col2:
+
+                    st.write(
+                        f"**Nature :** {ligne.get('Nature du Chargement', '')}"
+                    )
+
+                with col3:
+
+                    st.write(
+                        f"**Produit :** {ligne.get('Produit_Transporté', '')}"
+                    )
 
 
 # ============================================================
@@ -799,19 +856,10 @@ def convertir_excel(df):
         engine="openpyxl"
     ) as writer:
 
-        # Données filtrées
         df.to_excel(
             writer,
             index=False,
             sheet_name="Ordres de Mission"
-        )
-
-        # Si possible, ajouter les informations complètes
-        # dans une deuxième feuille
-        df.to_excel(
-            writer,
-            index=False,
-            sheet_name="Données"
         )
 
     return buffer.getvalue()
@@ -823,7 +871,7 @@ fichier_excel = convertir_excel(df_filtre)
 st.download_button(
     label="📥 Télécharger les OM filtrés",
     data=fichier_excel,
-    file_name="Ordres_de_Mission_filtrés.xlsx",
+    file_name="Ordres_de_Mission_filtres.xlsx",
     mime=(
         "application/vnd.openxmlformats-officedocument."
         "spreadsheetml.sheet"
@@ -832,13 +880,14 @@ st.download_button(
 
 
 # ============================================================
-# ACTUALISER LES DONNÉES
+# ACTUALISER
 # ============================================================
 
 st.divider()
 
-if st.button("🔄 Actualiser les données"):
-
-    st.cache_data.clear()
+if st.button(
+    "🔄 Actualiser les données depuis OM.xlsx",
+    use_container_width=True
+):
 
     st.rerun()
