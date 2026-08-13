@@ -289,7 +289,7 @@ if LOGO_PATH.exists():
             <div class="home-logo">
 
                 <img
-                    src="data:image/png;base64,{logo_base64}"
+                    src="logo.png;base64,{logo_base64}"
                     alt="TMF LOGISTICS"
                 >
 
