@@ -65,26 +65,46 @@ COLONNES_OM = [
 # LECTURE DU FICHIER EXCEL
 # ============================================================
 
-@st.cache_data
 def charger_om():
 
-    if not FICHIER_OM.exists():
+    if not EXCEL_OM.exists():
         return pd.DataFrame()
 
     try:
 
         df = pd.read_excel(
-            FICHIER_OM,
-            sheet_name=FEUILLE_OM,
+            EXCEL_OM,
             engine="openpyxl"
         )
 
-        # Nettoyage des noms de colonnes
+        # Nettoyage des colonnes
         df.columns = (
             df.columns
             .astype(str)
             .str.strip()
         )
+
+        # Nettoyage des données
+        for colonne in df.columns:
+
+            if df[colonne].dtype == "object":
+
+                df[colonne] = (
+                    df[colonne]
+                    .fillna("")
+                    .astype(str)
+                    .str.strip()
+                )
+
+        return df
+
+    except Exception as e:
+
+        st.error(
+            f"❌ Erreur lors de la lecture de OM.xlsx : {e}"
+        )
+
+        return pd.DataFrame()
 
         # Nettoyage des données
         for colonne in df.columns:
