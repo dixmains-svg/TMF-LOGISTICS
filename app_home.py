@@ -86,39 +86,29 @@ st.divider()
 st.header("📊 Tableau de bord")
 
 col1, col2, col3, col4 = st.columns(4)
-df_chauffeurs = charger_chauffeurs()
-
-nombre_chauffeurs = len(df_chauffeurs)
 
 with col1:
-
     st.metric(
         "📋 Ordres de Mission",
-         "—"
+        nombre_om
     )
-
 
 with col2:
-
     st.metric(
         "🚚 Camions",
-        "—"
+        nombre_camions
     )
 
-
 with col3:
-
     st.metric(
         "👷 Chauffeurs",
         nombre_chauffeurs
     )
 
-
 with col4:
-
     st.metric(
         "👥 Clients",
-        "—"
+        nombre_clients
     )
 
 
