@@ -373,15 +373,15 @@ if st.sidebar.button(
 
 PAGE_HOME = BASE_DIR / "app_home.py"
 
-PAGE_OM = BASE_DIR / "Pages" / "om.py"
+PAGE_OM = BASE_DIR / "Pages" / "1_Ordres_de_Mission.py"
 
-PAGE_CAMIONS = BASE_DIR / "Pages" / "camions.py"
+PAGE_CAMIONS = BASE_DIR / "Pages" / "2_Camions.py"
 
-PAGE_CHAUFFEURS = BASE_DIR / "Pages" / "chauffeurs.py"
+PAGE_CHAUFFEURS = BASE_DIR / "Pages" / "3_Chauffeurs.pyy"
 
-PAGE_CLIENTS = BASE_DIR / "Pages" / "clients.py"
+PAGE_CLIENTS = BASE_DIR / "Pages" / "4_Clients.py"
 
-PAGE_RAPPORTS = BASE_DIR / "Pages" / "rapports.py"
+PAGE_RAPPORTS = BASE_DIR / "Pages" / "5_Rapports.py"
 
 
 # ============================================================
