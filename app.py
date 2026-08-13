@@ -423,44 +423,49 @@ for nom_page, chemin_page in fichiers_pages.items():
 # NAVIGATION
 # ============================================================
 
-pages = {
+pages = [
 
-    "🏠 Accueil": st.Page(
+    st.Page(
         "app_home.py",
         title="Accueil",
         icon="🏠"
     ),
 
-    "📋 Ordres de Mission": st.Page(
+    st.Page(
         "Pages/1_Ordres_de_Mission.py",
         title="Ordres de Mission",
         icon="📋"
     ),
 
-    "🚚 Camions": st.Page(
+    st.Page(
         "Pages/2_Camions.py",
         title="Camions",
         icon="🚚"
     ),
 
-    "👷 Chauffeurs": st.Page(
+    st.Page(
         "Pages/3_Chauffeurs.py",
         title="Chauffeurs",
         icon="👷"
     ),
 
-    "👥 Clients": st.Page(
+    st.Page(
         "Pages/4_Clients.py",
         title="Clients",
         icon="👥"
     ),
 
-    "📊 Rapports": st.Page(
+    st.Page(
         "Pages/5_Rapports.py",
         title="Rapports",
         icon="📊"
     )
-}
+]
+
+
+# ============================================================
+# LANCEMENT
+# ============================================================
 
 navigation = st.navigation(pages)
 
