@@ -377,7 +377,7 @@ PAGE_OM = BASE_DIR / "Pages" / "1_Ordres_de_Mission.py"
 
 PAGE_CAMIONS = BASE_DIR / "Pages" / "2_Camions.py"
 
-PAGE_CHAUFFEURS = BASE_DIR / "Pages" / "3_Chauffeurs.pyy"
+PAGE_CHAUFFEURS = BASE_DIR / "Pages" / "3_Chauffeurs.py"
 
 PAGE_CLIENTS = BASE_DIR / "Pages" / "4_Clients.py"
 
