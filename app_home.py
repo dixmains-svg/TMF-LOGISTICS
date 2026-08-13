@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import base64
 from pathlib import Path
 
@@ -15,12 +16,76 @@ st.set_page_config(
 
 
 # ============================================================
-# CHEMINS
+# CHEMIN DU PROJET
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent
 
+DATA_DIR = BASE_DIR / "Data"
+
+EXCEL_OM = DATA_DIR / "OM.xlsx"
+EXCEL_CAMIONS = DATA_DIR / "Camions.xlsx"
+EXCEL_CHAUFFEURS = DATA_DIR / "Chauffeurs.xlsx"
+EXCEL_CLIENTS = DATA_DIR / "Clients.xlsx"
+
 BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
+
+
+# ============================================================
+# FONCTION LECTURE EXCEL
+# ============================================================
+
+@st.cache_data
+def charger_excel(fichier):
+
+    if not fichier.exists():
+        return pd.DataFrame()
+
+    try:
+
+        df = pd.read_excel(
+            fichier,
+            engine="openpyxl"
+        )
+
+        # Supprimer les lignes complètement vides
+        df = df.dropna(how="all")
+
+        return df
+
+    except Exception as e:
+
+        st.error(
+            f"❌ Erreur lors de la lecture de {fichier.name} : {e}"
+        )
+
+        return pd.DataFrame()
+
+
+# ============================================================
+# CHARGEMENT DES DONNÉES
+# ============================================================
+
+df_om = charger_excel(EXCEL_OM)
+
+df_camions = charger_excel(EXCEL_CAMIONS)
+
+df_chauffeurs = charger_excel(EXCEL_CHAUFFEURS)
+
+df_clients = charger_excel(EXCEL_CLIENTS)
+
+
+# ============================================================
+# NOMBRE D'ÉLÉMENTS
+# ============================================================
+
+nombre_om = len(df_om)
+
+nombre_camions = len(df_camions)
+
+nombre_chauffeurs = len(df_chauffeurs)
+
+nombre_clients = len(df_clients)
 
 
 # ============================================================
@@ -29,41 +94,39 @@ BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
 
 if BACKGROUND_PATH.exists():
 
-    with open(BACKGROUND_PATH, "rb") as image_file:
+    try:
 
-        encoded_image = base64.b64encode(
-            image_file.read()
-        ).decode("utf-8")
+        with open(BACKGROUND_PATH, "rb") as image_file:
 
-    st.markdown(
-        f"""
-        <style>
+            encoded_image = base64.b64encode(
+                image_file.read()
+            ).decode("utf-8")
 
-        .stApp {{
-            background-image:
-                linear-gradient(
-                    rgba(255, 255, 255, 0.88),
-                    rgba(255, 255, 255, 0.88)
-                ),
-                url("data:image/jpeg;base64,{encoded_image}");
+        st.markdown(
+            f"""
+            <style>
 
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-        }}
+            .stApp {{
+                background-image:
+                    linear-gradient(
+                        rgba(255, 255, 255, 0.88),
+                        rgba(255, 255, 255, 0.88)
+                    ),
+                    url("data:image/jpeg;base64,{encoded_image}");
 
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+            }}
 
-else:
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
 
-    st.warning(
-        f"⚠️ Image d'arrière-plan introuvable : "
-        f"{BACKGROUND_PATH}"
-    )
+    except Exception:
+        pass
 
 
 # ============================================================
@@ -85,27 +148,36 @@ st.divider()
 
 st.header("📊 Tableau de bord")
 
+
 col1, col2, col3, col4 = st.columns(4)
 
+
 with col1:
+
     st.metric(
         "📋 Ordres de Mission",
         nombre_om
     )
 
+
 with col2:
+
     st.metric(
         "🚚 Camions",
         nombre_camions
     )
 
+
 with col3:
+
     st.metric(
         "👷 Chauffeurs",
         nombre_chauffeurs
     )
 
+
 with col4:
+
     st.metric(
         "👥 Clients",
         nombre_clients
@@ -119,9 +191,7 @@ st.divider()
 # BIENVENUE
 # ============================================================
 
-st.header(
-    "Azul Felawen dans TMF LOGISTICS 👋"
-)
+st.header("Azul Felawen dans TMF LOGISTICS 👋")
 
 st.write(
     """
@@ -140,9 +210,7 @@ col1, col2 = st.columns(2)
 
 with col1:
 
-    st.subheader(
-        "📋 Ordres de Mission"
-    )
+    st.subheader("📋 Ordres de Mission")
 
     st.write(
         """
@@ -151,9 +219,7 @@ with col1:
         """
     )
 
-    st.subheader(
-        "🚚 Gestion du parc"
-    )
+    st.subheader("🚚 Gestion du parc")
 
     st.write(
         """
@@ -164,9 +230,7 @@ with col1:
 
 with col2:
 
-    st.subheader(
-        "👷 Gestion des Chauffeurs"
-    )
+    st.subheader("👷 Gestion des Chauffeurs")
 
     st.write(
         """
@@ -175,9 +239,7 @@ with col2:
         """
     )
 
-    st.subheader(
-        "👥 Gestion des Clients"
-    )
+    st.subheader("👥 Gestion des Clients")
 
     st.write(
         """
@@ -211,7 +273,7 @@ st.markdown(
     ">
         <b>TMF LOGISTICS</b><br>
         Système de Gestion du Transport<br>
-        Version 1.0 by Midou_Redjdal
+        Version 2.0
     </div>
     """,
     unsafe_allow_html=True
