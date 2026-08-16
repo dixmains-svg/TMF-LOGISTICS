@@ -296,27 +296,18 @@ with col_logo:
 
 with col_titre:
 
-    st.markdown(
-        """
-        <div style="
-            padding-top: 10px;
-        ">
+   st.markdown(
+    """
+    <div class="tmf-title">
+        🚛 TMF LOGISTICS
+    </div>
 
-            <div class="tmf-title">
-                🚛 TMF LOGISTICS
-            </div>
-
-            <div class="tmf-subtitle">
-                Système de Gestion du Transport et des Ordres de Mission
-            </div>
-
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-
-st.divider()
+    <div class="tmf-subtitle">
+        Système de Gestion du Transport et des Ordres de Mission
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 
 # ============================================================
