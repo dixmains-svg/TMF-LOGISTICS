@@ -275,37 +275,7 @@ with col_logo:
 # TITRE
 # ------------------------------------------------------------
 
-with col_titre:
 
-    st.markdown(
-        """
-        <div style="
-            padding-top:10px;
-        ">
-
-            <div style="
-                font-size:32px;
-                font-weight:bold;
-                color:#1f4e79;
-            ">
-                🚛 TMF LOGISTICS
-            </div>
-
-            <div style="
-                font-size:18px;
-                color:#555;
-                margin-top:5px;
-            ">
-                Système de Gestion du Transport et des Ordres de Mission
-            </div>
-
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-
-st.divider()
 
 
 # ============================================================
