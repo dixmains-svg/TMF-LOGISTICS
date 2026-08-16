@@ -23,8 +23,6 @@ BASE_DIR = Path(__file__).resolve().parent
 
 DATA_DIR = BASE_DIR / "Data"
 
-LOGO_PATH = BASE_DIR / "logo.png"
-
 BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
 
 
@@ -264,44 +262,6 @@ nombre_camions = len(df_camions)
 nombre_chauffeurs = len(df_chauffeurs)
 
 nombre_clients = len(df_clients)
-
-
-# ============================================================
-# LOGO
-# ============================================================
-
-if LOGO_PATH.exists():
-
-    try:
-
-        with open(
-            LOGO_PATH,
-            "rb"
-        ) as image_file:
-
-            logo_base64 = base64.b64encode(
-                image_file.read()
-            ).decode("utf-8")
-
-
-        st.markdown(
-            f"""
-            <div class="home-logo">
-
-                <img
-                    src="logo.png;base64,{logo_base64}"
-                    alt="TMF LOGISTICS"
-                >
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    except Exception:
-
-        pass
-
 
 # ============================================================
 # TITRE
