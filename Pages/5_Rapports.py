@@ -246,13 +246,13 @@ if not dates_valides.empty:
     date_min = dates_valides.min().date()
     date_max = dates_valides.max().date()
 
-    periode = st.sidebar.date_input(
-        "📅 Période",
-        value=(date_min, date_max),
-        min_value=date_min,
-        max_value=date_max,
-        key="rapport_periode"
-    )
+   periode = st.sidebar.date_input(
+    "📅 Période",
+    value=(date_min, date_max),
+    min_value=date_min,
+    max_value=date_max,
+    key="rapport_5_periode_principale"
+)
 
 else:
 
