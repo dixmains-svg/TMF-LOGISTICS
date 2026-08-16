@@ -131,7 +131,7 @@ def afficher_connexion():
 
         .login-container {
 
-            max-width: 600px;
+            max-width: 200px;
 
             margin-left: auto;
             margin-right: auto;
