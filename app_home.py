@@ -267,27 +267,49 @@ nombre_clients = len(df_clients)
 # TITRE
 # ============================================================
 
-st.markdown(
-    """
-    <div class="main-title">
-        🚛 TMF LOGISTICS
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+from pathlib import Path
+import streamlit as st
 
+BASE_DIR = Path(__file__).resolve().parent
+LOGO = BASE_DIR / "logo.png"
 
-st.markdown(
-    """
-    <div class="main-subtitle">
-        Système de Gestion du Transport et des Ordres de Mission
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# ============================================================
+# LOGO + TITRE
+# ============================================================
 
+col_logo, col_titre = st.columns([1, 5])
 
-st.divider()
+with col_logo:
+    if LOGO.exists():
+        st.image(
+            str(LOGO),
+            width=90
+        )
+
+with col_titre:
+    st.markdown(
+        """
+        <div style="
+            padding-top:10px;
+        ">
+            <div style="
+                font-size:32px;
+                font-weight:bold;
+            ">
+                🚛 TMF LOGISTICS
+            </div>
+
+            <div style="
+                font-size:18px;
+                color:#666;
+                margin-top:5px;
+            ">
+                Système de Gestion du Transport et des Ordres de Mission
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 
 # ============================================================
