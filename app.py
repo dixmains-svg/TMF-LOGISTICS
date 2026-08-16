@@ -131,7 +131,7 @@ def afficher_connexion():
 
         .login-container {
 
-            max-width: 200px;
+            max-width: 600px;
 
             margin-left: auto;
             margin-right: auto;
@@ -548,45 +548,62 @@ afficher_deconnexion()
 # NAVIGATION
 # ============================================================
 
-pages = {
+pages = [
 
-    "🏠 Accueil": st.Page(
+    st.Page(
         "app_home.py",
         title="Accueil",
         icon="🏠"
     ),
 
-    "📋 Ordres de Mission": st.Page(
+    st.Page(
         "Pages/1_Ordres_de_Mission.py",
         title="Ordres de Mission",
         icon="📋"
     ),
 
-    "🚚 Camions": st.Page(
+    st.Page(
         "Pages/2_Camions.py",
         title="Camions",
         icon="🚚"
     ),
 
-    "👷 Chauffeurs": st.Page(
+    st.Page(
         "Pages/3_Chauffeurs.py",
         title="Chauffeurs",
         icon="👷"
     ),
 
-    "👥 Clients": st.Page(
+    st.Page(
         "Pages/4_Clients.py",
         title="Clients",
         icon="👥"
     ),
 
-    "📊 Rapports": st.Page(
+    st.Page(
         "Pages/5_Rapports.py",
         title="Rapports",
         icon="📊"
     )
-}
+]
 
+
+# ============================================================
+# CRÉATION DE LA NAVIGATION
+# ============================================================
+
+navigation = st.navigation(
+    pages,
+    position="sidebar",
+    expanded=True
+)
+
+
+# ============================================================
+# LANCEMENT
+# ============================================================
+
+navigation.run()
 
 # ============================================================
 # NAVIGATION STREAMLIT
