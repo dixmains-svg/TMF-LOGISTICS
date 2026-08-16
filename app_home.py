@@ -115,7 +115,7 @@ if BACKGROUND_PATH.exists():
 
             .tmf-title {{
 
-                font-size: 32px;
+                font-size: 50px;
 
                 font-weight: bold;
 
@@ -125,7 +125,7 @@ if BACKGROUND_PATH.exists():
 
             .tmf-subtitle {{
 
-                font-size: 18px;
+                font-size: 25px;
 
                 color: #555;
 
