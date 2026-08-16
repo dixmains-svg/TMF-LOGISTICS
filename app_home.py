@@ -500,17 +500,17 @@ st.info(
 st.markdown(
     """
     <div style="
-        text-align:center;
-        margin-top:30px;
-        padding:15px;
-        color:#666;
-        font-size:13px;
-        line-height:1.6;
+        text-align: center;
+        margin-top: 30px;
+        padding: 15px;
+        color: #666;
+        font-size: 13px;
+        line-height: 1.6;
     ">
 
         <b style="
-            font-size:18px;
-            color:#1f4e79;
+            font-size: 18px;
+            color: #1f4e79;
         ">
             TMF LOGISTICS
         </b>
@@ -522,7 +522,7 @@ st.markdown(
         <br>
 
         <span style="
-            font-size:12px;
+            font-size: 12px;
         ">
             Version 1.0 — By H.Redjdal
         </span>
