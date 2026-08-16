@@ -528,9 +528,8 @@ st.info(
 # ============================================================
 # FOOTER
 # ============================================================
-with col_footer:
 st.markdown(
-    """
+  
     <div class="tmf-footer">
 
         <div class="tmf-footer-title">
@@ -546,6 +545,5 @@ st.markdown(
         </div>
 
     </div>
-    """,
     unsafe_allow_html=True
 )
