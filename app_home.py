@@ -529,7 +529,7 @@ st.info(
 # FOOTER
 # ============================================================
 st.markdown(
-  
+  """
     <div class="tmf-footer">
 
         <div class="tmf-footer-title">
@@ -545,5 +545,6 @@ st.markdown(
         </div>
 
     </div>
+    """,
     unsafe_allow_html=True
 )
