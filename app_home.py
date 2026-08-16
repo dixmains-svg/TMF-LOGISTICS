@@ -8,57 +8,22 @@ from pathlib import Path
 # CONFIGURATION
 # ============================================================
 
-from pathlib import Path
-import streamlit as st
+st.set_page_config(
+    page_title="TMF LOGISTICS - Accueil",
+    page_icon="🚛",
+    layout="wide"
+)
 
-BASE_DIR = Path(__file__).resolve().parent
-LOGO = BASE_DIR / "logo.png"
-
-# ============================================================
-# LOGO + TITRE
-# ============================================================
-
-col_logo, col_titre = st.columns([1, 5])
-
-with col_logo:
-    if LOGO.exists():
-        st.image(
-            str(LOGO),
-            width=90
-        )
-
-with col_titre:
-    st.markdown(
-        """
-        <div style="
-            padding-top:10px;
-        ">
-            <div style="
-                font-size:32px;
-                font-weight:bold;
-            ">
-                🚛 TMF LOGISTICS
-            </div>
-
-            <div style="
-                font-size:18px;
-                color:#666;
-                margin-top:5px;
-            ">
-                Système de Gestion du Transport et des Ordres de Mission
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
 # ============================================================
-# CHEMIN PRINCIPAL
+# CHEMINS PRINCIPAUX
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent
 
 DATA_DIR = BASE_DIR / "Data"
+
+LOGO = BASE_DIR / "logo.png"
 
 BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
 
@@ -77,7 +42,7 @@ FICHIER_CLIENTS = DATA_DIR / "Clients.xlsx"
 
 
 # ============================================================
-# ARRIÈRE-PLAN
+# ARRIÈRE-PLAN + STYLE
 # ============================================================
 
 if BACKGROUND_PATH.exists():
@@ -93,37 +58,35 @@ if BACKGROUND_PATH.exists():
                 image_file.read()
             ).decode("utf-8")
 
-
         st.markdown(
             f"""
             <style>
 
+            /* =================================================
+               ARRIÈRE-PLAN
+               ================================================= */
+
             .stApp {{
 
                 background-image:
-
                     linear-gradient(
                         rgba(255,255,255,0.88),
                         rgba(255,255,255,0.88)
                     ),
-
                     url(
                         "data:image/jpeg;base64,{encoded_image}"
                     );
 
                 background-size: cover;
-
                 background-position: center;
-
                 background-repeat: no-repeat;
-
                 background-attachment: fixed;
             }}
 
 
-            /* ================================
-               TITRE PRINCIPAL
-               ================================ */
+            /* =================================================
+               TITRES
+               ================================================= */
 
             .main-title {{
 
@@ -137,6 +100,7 @@ if BACKGROUND_PATH.exists():
 
                 margin-bottom: 5px;
 
+                color: #1f4e79;
             }}
 
 
@@ -149,36 +113,12 @@ if BACKGROUND_PATH.exists():
                 color: #555;
 
                 margin-bottom: 25px;
-
             }}
 
 
-            /* ================================
-               LOGO
-               ================================ */
-
-            .home-logo {{
-
-                text-align: center;
-
-                margin-bottom: 5px;
-
-            }}
-
-            .home-logo img {{
-
-                width: 150px;
-
-                max-width: 80%;
-
-                height: auto;
-
-            }}
-
-
-            /* ================================
+            /* =================================================
                CARTES
-               ================================ */
+               ================================================= */
 
             .info-box {{
 
@@ -195,13 +135,12 @@ if BACKGROUND_PATH.exists():
                 box-shadow:
                     0 3px 15px
                     rgba(0,0,0,0.10);
-
             }}
 
 
-            /* ================================
+            /* =================================================
                FOOTER
-               ================================ */
+               ================================================= */
 
             .footer {{
 
@@ -214,7 +153,6 @@ if BACKGROUND_PATH.exists():
                 color: #666;
 
                 font-size: 14px;
-
             }}
 
             </style>
@@ -227,21 +165,22 @@ if BACKGROUND_PATH.exists():
 
 
 # ============================================================
-# FONCTION LECTURE EXCEL
+# FONCTION DE LECTURE EXCEL
 # ============================================================
 
 def lire_excel(fichier):
 
     """
-    Lit un fichier Excel sans utiliser le cache.
-    Les modifications du fichier Excel sont donc
-    récupérées lors du rechargement de la page.
+    Lit un fichier Excel sans utiliser st.cache_data.
+
+    Les modifications enregistrées dans les fichiers Excel
+    seront donc prises en compte lors du prochain
+    rechargement de la page Streamlit.
     """
 
     if not fichier.exists():
 
         return pd.DataFrame()
-
 
     try:
 
@@ -250,8 +189,9 @@ def lire_excel(fichier):
             engine="openpyxl"
         )
 
-
-        # Nettoyage des colonnes
+        # ----------------------------------------------------
+        # Nettoyage des noms de colonnes
+        # ----------------------------------------------------
 
         df.columns = (
             df.columns
@@ -259,16 +199,15 @@ def lire_excel(fichier):
             .str.strip()
         )
 
-
+        # ----------------------------------------------------
         # Suppression des lignes complètement vides
+        # ----------------------------------------------------
 
         df = df.dropna(
             how="all"
         )
 
-
         return df
-
 
     except Exception:
 
@@ -276,16 +215,24 @@ def lire_excel(fichier):
 
 
 # ============================================================
-# CHARGEMENT DES 4 FICHIERS
+# LECTURE DES 4 FICHIERS
 # ============================================================
 
-df_om = lire_excel(FICHIER_OM)
+df_om = lire_excel(
+    FICHIER_OM
+)
 
-df_camions = lire_excel(FICHIER_CAMIONS)
+df_camions = lire_excel(
+    FICHIER_CAMIONS
+)
 
-df_chauffeurs = lire_excel(FICHIER_CHAUFFEURS)
+df_chauffeurs = lire_excel(
+    FICHIER_CHAUFFEURS
+)
 
-df_clients = lire_excel(FICHIER_CLIENTS)
+df_clients = lire_excel(
+    FICHIER_CLIENTS
+)
 
 
 # ============================================================
@@ -300,64 +247,84 @@ nombre_chauffeurs = len(df_chauffeurs)
 
 nombre_clients = len(df_clients)
 
-# ============================================================
-# TITRE
-# ============================================================
-
-from pathlib import Path
-import streamlit as st
-
-BASE_DIR = Path(__file__).resolve().parent
-LOGO = BASE_DIR / "logo.png"
 
 # ============================================================
 # LOGO + TITRE
 # ============================================================
 
-col_logo, col_titre = st.columns([1, 5])
+col_logo, col_titre = st.columns(
+    [1, 5]
+)
+
+
+# ------------------------------------------------------------
+# LOGO
+# ------------------------------------------------------------
 
 with col_logo:
+
     if LOGO.exists():
+
         st.image(
             str(LOGO),
-            width=90
+            width=100
         )
 
+
+# ------------------------------------------------------------
+# TITRE
+# ------------------------------------------------------------
+
 with col_titre:
+
     st.markdown(
         """
         <div style="
             padding-top:10px;
         ">
+
             <div style="
                 font-size:32px;
                 font-weight:bold;
+                color:#1f4e79;
             ">
                 🚛 TMF LOGISTICS
             </div>
 
             <div style="
                 font-size:18px;
-                color:#666;
+                color:#555;
                 margin-top:5px;
             ">
                 Système de Gestion du Transport et des Ordres de Mission
             </div>
+
         </div>
         """,
         unsafe_allow_html=True
     )
 
 
+st.divider()
+
+
 # ============================================================
 # TABLEAU DE BORD
 # ============================================================
 
-st.header("📊 Tableau de bord")
+st.header(
+    "📊 Tableau de bord"
+)
 
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4 = st.columns(
+    4
+)
 
+
+# ============================================================
+# ORDRES DE MISSION
+# ============================================================
 
 with col1:
 
@@ -367,6 +334,10 @@ with col1:
     )
 
 
+# ============================================================
+# CAMIONS
+# ============================================================
+
 with col2:
 
     st.metric(
@@ -375,6 +346,10 @@ with col2:
     )
 
 
+# ============================================================
+# CHAUFFEURS
+# ============================================================
+
 with col3:
 
     st.metric(
@@ -382,6 +357,10 @@ with col3:
         nombre_chauffeurs
     )
 
+
+# ============================================================
+# CLIENTS
+# ============================================================
 
 with col4:
 
@@ -418,11 +397,19 @@ st.write(
 # MODULES
 # ============================================================
 
-st.subheader("📌 Modules de l'application")
+st.subheader(
+    "📌 Modules de l'application"
+)
 
 
-col1, col2 = st.columns(2)
+col1, col2 = st.columns(
+    2
+)
 
+
+# ============================================================
+# COLONNE 1
+# ============================================================
 
 with col1:
 
@@ -436,7 +423,6 @@ with col1:
         """
     )
 
-
     st.markdown(
         """
         ### 🚚 Gestion du parc
@@ -445,7 +431,6 @@ with col1:
         affectations et disponibilité du parc.
         """
     )
-
 
     st.markdown(
         """
@@ -457,6 +442,10 @@ with col1:
         """
     )
 
+
+# ============================================================
+# COLONNE 2
+# ============================================================
 
 with col2:
 
@@ -470,7 +459,6 @@ with col2:
         """
     )
 
-
     st.markdown(
         """
         ### 📊 Rapports
@@ -481,7 +469,6 @@ with col2:
         et utilisation de la flotte.
         """
     )
-
 
     st.markdown(
         """
@@ -496,14 +483,19 @@ with col2:
 
 st.divider()
 
+
 # ============================================================
-# ACTUALISATION
+# ACTUALISATION DES DONNÉES
 # ============================================================
 
-st.divider()
+st.subheader(
+    "🔄 Actualisation"
+)
 
 
-col1, col2, col3 = st.columns([1, 2, 1])
+col1, col2, col3 = st.columns(
+    [1, 2, 1]
+)
 
 
 with col2:
@@ -545,15 +537,26 @@ st.markdown(
         font-size:13px;
         line-height:1.6;
     ">
-        <b style="font-size:18px; color:#1f4e79;">
+
+        <b style="
+            font-size:18px;
+            color:#1f4e79;
+        ">
             TMF LOGISTICS
         </b>
+
         <br>
+
         Système de Gestion du Transport
+
         <br>
-        <span style="font-size:12px;">
+
+        <span style="
+            font-size:12px;
+        ">
             Version 1.0 — By H.Redjdal
         </span>
+
     </div>
     """,
     unsafe_allow_html=True
