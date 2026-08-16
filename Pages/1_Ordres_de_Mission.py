@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 from io import BytesIO
+import time
 
 
 # ============================================================
@@ -65,45 +66,58 @@ COLONNES_OM = [
 # LECTURE DU FICHIER EXCEL
 # ============================================================
 
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+FICHIER_OM = BASE_DIR / "Data" / "OM.xlsx"
+
+FEUILLE_OM = "Input OM fini"
+
+
 def charger_om():
 
-    # Vérifier que le fichier existe
     if not FICHIER_OM.exists():
-
-        st.error(
-            f"""
-            ❌ Le fichier OM.xlsx est introuvable.
-
-            Fichier recherché :
-
-            `{FICHIER_OM}`
-            """
-        )
-
         return pd.DataFrame()
 
     try:
 
-        # ----------------------------------------------------
-        # Vérifier OpenPyXL
-        # ----------------------------------------------------
+        df = pd.read_excel(
+            FICHIER_OM,
+            sheet_name=FEUILLE_OM,
+            engine="openpyxl"
+        )
 
-        try:
-            import openpyxl
-        except ImportError:
+        # Nettoyage des noms de colonnes
+        df.columns = (
+            df.columns
+            .astype(str)
+            .str.strip()
+        )
 
-            st.error(
-                """
-                ❌ Le module OpenPyXL n'est pas installé.
+        # Nettoyage des données
+        for colonne in df.columns:
 
-                Ajoutez dans requirements.txt :
+            if df[colonne].dtype == "object":
 
-                pandas==2.3.1
-                openpyxl==3.1.5
-                """
-            )
+                df[colonne] = (
+                    df[colonne]
+                    .fillna("")
+                    .astype(str)
+                    .str.strip()
+                )
 
-            return pd.DataFrame()
+        return df
+
+    except Exception as e:
+
+        st.error(
+            f"❌ Erreur lors de la lecture de OM.xlsx : {e}"
+        )
+
+        return pd.DataFrame()
+
+
+# Lecture du fichier à chaque exécution
+df_om = charger_om()
 
         # ----------------------------------------------------
         # Lire la feuille Input OM fini
