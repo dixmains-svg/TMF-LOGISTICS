@@ -255,37 +255,37 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 # ============================================================
 # LOGO
 # ============================================================
 
-if logo_base64:
+if LOGO_PATH.exists():
 
-    st.markdown(
-        f"""
-        <img
-            src="data:image/png;base64,{logo_base64}"
-            class="logo-image"
-        >
-        """,
-        unsafe_allow_html=True
-    )
+    try:
 
-else:
+        with open(LOGO_PATH, "rb") as image_file:
 
-    st.markdown(
-        """
-        <div style="
-            font-size: 70px;
-            margin-bottom: 10px;
-        ">
-            🚛
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+            logo_base64 = base64.b64encode(
+                image_file.read()
+            ).decode("utf-8")
 
+        st.markdown(
+            f"""
+            <div class="home-logo">
+                <img
+                    src="data:image/png;base64,{logo_base64}"
+                    alt="TMF LOGISTICS"
+                >
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    except Exception as e:
+
+        st.error(
+            f"❌ Impossible de charger le logo : {e}"
+        )
 
 # ============================================================
 # TITRE
