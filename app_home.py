@@ -437,61 +437,6 @@ with col2:
 
 st.divider()
 
-
-# ============================================================
-# ÉTAT DES FICHIERS
-# ============================================================
-
-st.subheader("📁 État des données")
-
-
-col1, col2, col3, col4 = st.columns(4)
-
-
-with col1:
-
-    if FICHIER_OM.exists():
-
-        st.success("📋 OM.xlsx")
-
-    else:
-
-        st.error("❌ OM.xlsx")
-
-
-with col2:
-
-    if FICHIER_CAMIONS.exists():
-
-        st.success("🚚 Camions.xlsx")
-
-    else:
-
-        st.error("❌ Camions.xlsx")
-
-
-with col3:
-
-    if FICHIER_CHAUFFEURS.exists():
-
-        st.success("👷 Chauffeurs.xlsx")
-
-    else:
-
-        st.error("❌ Chauffeurs.xlsx")
-
-
-with col4:
-
-    if FICHIER_CLIENTS.exists():
-
-        st.success("👥 Clients.xlsx")
-
-    else:
-
-        st.error("❌ Clients.xlsx")
-
-
 # ============================================================
 # ACTUALISATION
 # ============================================================
