@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 from io import BytesIO
-import time
 
 
 # ============================================================
@@ -66,63 +65,26 @@ COLONNES_OM = [
 # LECTURE DU FICHIER EXCEL
 # ============================================================
 
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-FICHIER_OM = BASE_DIR / "Data" / "OM.xlsx"
-
-FEUILLE_OM = "Input OM fini"
-
-
 def charger_om():
 
     if not FICHIER_OM.exists():
+
+        st.error(
+            f"""
+            ❌ Le fichier OM.xlsx est introuvable.
+
+            Fichier recherché :
+
+            `{FICHIER_OM}`
+            """
+        )
+
         return pd.DataFrame()
 
     try:
 
-        df = pd.read_excel(
-            FICHIER_OM,
-            sheet_name=FEUILLE_OM,
-            engine="openpyxl"
-        )
-
-        # Nettoyage des noms de colonnes
-        df.columns = (
-            df.columns
-            .astype(str)
-            .str.strip()
-        )
-
-        # Nettoyage des données
-        for colonne in df.columns:
-
-            if df[colonne].dtype == "object":
-
-                df[colonne] = (
-                    df[colonne]
-                    .fillna("")
-                    .astype(str)
-                    .str.strip()
-                )
-
-        return df
-
-    except Exception as e:
-
-        st.error(
-            f"❌ Erreur lors de la lecture de OM.xlsx : {e}"
-        )
-
-        return pd.DataFrame()
-
-
-# Lecture du fichier à chaque exécution
-df_om = charger_om()
-
-        # ----------------------------------------------------
-        # Lire la feuille Input OM fini
-        # ----------------------------------------------------
-
+        # Lecture directe du fichier Excel
+        # AUCUN CACHE
         df = pd.read_excel(
             FICHIER_OM,
             sheet_name=FEUILLE_OM,
@@ -160,8 +122,8 @@ df_om = charger_om()
 
         st.error(
             f"""
-            ❌ La feuille Excel **{FEUILLE_OM}** n'existe pas
-            dans le fichier OM.xlsx.
+            ❌ La feuille Excel **{FEUILLE_OM}**
+            n'existe pas dans OM.xlsx.
             """
         )
 
@@ -192,6 +154,10 @@ df_om = charger_om()
 # ============================================================
 
 if df_om.empty:
+
+    st.warning(
+        "⚠️ Aucune donnée disponible dans OM.xlsx."
+    )
 
     st.stop()
 
@@ -314,7 +280,8 @@ recherche = st.text_input(
     placeholder=(
         "N° OM, commande, camion, chauffeur, client, "
         "mission, trajet..."
-    )
+    ),
+    key="om_recherche"
 )
 
 
@@ -345,7 +312,8 @@ with col1:
 
         filtre_statut = st.multiselect(
             "📊 Statut",
-            statuts
+            statuts,
+            key="om_filtre_statut"
         )
 
     else:
@@ -373,7 +341,8 @@ with col2:
 
         filtre_camion = st.multiselect(
             "🚚 Camion",
-            camions
+            camions,
+            key="om_filtre_camion"
         )
 
     else:
@@ -401,7 +370,8 @@ with col3:
 
         filtre_client = st.multiselect(
             "👥 Client",
-            clients
+            clients,
+            key="om_filtre_client"
         )
 
     else:
@@ -436,7 +406,8 @@ with col1:
 
         filtre_chauffeur = st.multiselect(
             "👷 Chauffeur",
-            chauffeurs
+            chauffeurs,
+            key="om_filtre_chauffeur"
         )
 
     else:
@@ -464,7 +435,8 @@ with col2:
 
         filtre_affectation = st.multiselect(
             "📍 Affectation",
-            affectations
+            affectations,
+            key="om_filtre_affectation"
         )
 
     else:
@@ -492,7 +464,8 @@ with col3:
 
         filtre_section = st.multiselect(
             "🏢 Section",
-            sections
+            sections,
+            key="om_filtre_section"
         )
 
     else:
@@ -655,7 +628,8 @@ if "Numéro" in df_om.columns:
 
         numero_selectionne = st.selectbox(
             "Sélectionner un N° OM",
-            numeros_om
+            numeros_om,
+            key="om_numero_selection"
         )
 
         if numero_selectionne:
@@ -889,7 +863,8 @@ st.download_button(
     mime=(
         "application/vnd.openxmlformats-officedocument."
         "spreadsheetml.sheet"
-    )
+    ),
+    key="download_om"
 )
 
 
@@ -901,7 +876,8 @@ st.divider()
 
 if st.button(
     "🔄 Actualiser les données depuis OM.xlsx",
-    use_container_width=True
+    use_container_width=True,
+    key="refresh_om"
 ):
 
     st.rerun()
