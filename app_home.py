@@ -550,7 +550,7 @@ st.markdown(
 
         Système de Gestion du Transport
 
-        <br>
+        </br>
 
         <span style="
             font-size: 12px;
