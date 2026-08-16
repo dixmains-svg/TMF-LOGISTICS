@@ -293,6 +293,27 @@ if LOGO_PATH.exists():
 
 st.markdown(
     """
+    <style>
+    .login-title {
+        text-align: center;
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .login-subtitle {
+        text-align: center;
+        font-size: 24px;
+        font-weight: 500;
+        margin-bottom: 30px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
     <div class="login-title">
         TMF LOGISTICS
     </div>
@@ -308,7 +329,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
 
 # ============================================================
 # FORMULAIRE DE CONNEXION
