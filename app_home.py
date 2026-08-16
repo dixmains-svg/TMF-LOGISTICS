@@ -533,13 +533,23 @@ st.info(
 
 st.markdown(
     """
-    <div class="footer">
-
-        <b>TMF LOGISTICS</b>
-        <br>Système de Gestion du Transport<br>
-
-        Version 1.0 By H.Redjdal
-
+    <div style="
+        text-align:center;
+        margin-top:30px;
+        padding:15px;
+        color:#666;
+        font-size:13px;
+        line-height:1.6;
+    ">
+        <b style="font-size:18px; color:#1f4e79;">
+            TMF LOGISTICS
+        </b>
+        <br>
+        Système de Gestion du Transport
+        <br>
+        <span style="font-size:12px;">
+            Version 1.0 — By H.Redjdal
+        </span>
     </div>
     """,
     unsafe_allow_html=True
