@@ -535,11 +535,10 @@ st.markdown(
     """
     <div class="footer">
 
-        <b>TMF LOGISTICS</b><br>
+        <b>TMF LOGISTICS</b>
+        <br>Système de Gestion du Transport<br>
 
-        Système de Gestion du Transport<br>
-
-        Version 2.0
+        Version 1.0 By H.Redjdal
 
     </div>
     """,
