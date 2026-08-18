@@ -548,59 +548,44 @@ afficher_deconnexion()
 # NAVIGATION
 # ============================================================
 
-pages = [
+pages = {
 
-    st.Page(
+    "🏠 Accueil": st.Page(
         "app_home.py",
         title="Accueil",
         icon="🏠"
     ),
 
-    st.Page(
+    "📋 Ordres de Mission": st.Page(
         "Pages/1_Ordres_de_Mission.py",
         title="Ordres de Mission",
         icon="📋"
     ),
 
-    st.Page(
+    "🚚 Camions": st.Page(
         "Pages/2_Camions.py",
         title="Camions",
         icon="🚚"
     ),
 
-    st.Page(
+    "👷 Chauffeurs": st.Page(
         "Pages/3_Chauffeurs.py",
         title="Chauffeurs",
         icon="👷"
     ),
 
-    st.Page(
+    "👥 Clients": st.Page(
         "Pages/4_Clients.py",
         title="Clients",
         icon="👥"
     ),
 
-    st.Page(
+    "📊 Rapports": st.Page(
         "Pages/5_Rapports.py",
         title="Rapports",
         icon="📊"
     )
-]
-
-
-# ============================================================
-# CRÉATION DE LA NAVIGATION
-# ============================================================
-
-navigation = st.navigation(
-    pages,
-    position="sidebar",
-    expanded=True
-)
-
-# ============================================================
-# NAVIGATION STREAMLIT
-# ============================================================
+}
 
 navigation = st.navigation(
     pages,
