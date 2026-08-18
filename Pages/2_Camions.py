@@ -1,4 +1,4 @@
-
+```python
 import streamlit as st
 import pandas as pd
 from pathlib import Path
@@ -21,7 +21,6 @@ st.set_page_config(
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 DATA_DIR = BASE_DIR / "Data"
 
 FICHIER_CAMIONS = DATA_DIR / "Camions.xlsx"
@@ -32,19 +31,24 @@ FEUILLE_OM = "Input OM fini"
 
 
 # ============================================================
-# COLONNES UTILISÉES
+# COLONNES OM
 # ============================================================
 
 COLONNE_CAMION_OM = "Numero Camion"
 COLONNE_COMMANDE_OM = "N° Commande"
 COLONNE_KM = "Kilometrage Parcouru"
 
+
+# ============================================================
+# COLONNES CV
+# ============================================================
+
 COLONNE_COMMANDE_CV = "N° Commande"
 COLONNE_MONTANT_CV = "Montant ligne HT"
 
 
 # ============================================================
-# FONCTION DE LECTURE EXCEL
+# FONCTION LECTURE EXCEL
 # ============================================================
 
 def lire_excel(fichier, feuille=None):
@@ -76,10 +80,10 @@ def lire_excel(fichier, feuille=None):
             .str.strip()
         )
 
-        # Suppression des lignes complètement vides
+        # Suppression des lignes vides
         df = df.dropna(how="all")
 
-        # Nettoyage des colonnes texte
+        # Nettoyage des données texte
         for colonne in df.columns:
 
             if df[colonne].dtype == "object":
@@ -96,24 +100,28 @@ def lire_excel(fichier, feuille=None):
     except Exception as e:
 
         st.error(
-            f"❌ Erreur de lecture de `{fichier.name}` : {e}"
+            f"❌ Erreur de lecture de {fichier.name} : {e}"
         )
 
         return pd.DataFrame()
 
 
 # ============================================================
-# CHARGEMENT DES DONNÉES
+# CHARGEMENT DES FICHIERS
 # ============================================================
 
-df_camions = lire_excel(FICHIER_CAMIONS)
+df_camions = lire_excel(
+    FICHIER_CAMIONS
+)
 
 df_om = lire_excel(
     FICHIER_OM,
     FEUILLE_OM
 )
 
-df_cv = lire_excel(FICHIER_CV)
+df_cv = lire_excel(
+    FICHIER_CV
+)
 
 
 # ============================================================
@@ -156,16 +164,18 @@ if df_om.empty:
 
 
 # ============================================================
-# VÉRIFICATION DES COLONNES OM
+# VÉRIFICATION COLONNES OM
 # ============================================================
+
+colonnes_om_requises = [
+    COLONNE_CAMION_OM,
+    COLONNE_COMMANDE_OM,
+    COLONNE_KM
+]
 
 colonnes_om_manquantes = [
     colonne
-    for colonne in [
-        COLONNE_CAMION_OM,
-        COLONNE_COMMANDE_OM,
-        COLONNE_KM
-    ]
+    for colonne in colonnes_om_requises
     if colonne not in df_om.columns
 ]
 
@@ -180,45 +190,11 @@ if colonnes_om_manquantes:
 
 
 # ============================================================
-# VÉRIFICATION CV
-# ============================================================
-
-if df_cv.empty:
-
-    st.warning(
-        f"""
-        ⚠️ Le fichier **CV.xlsx** est introuvable ou vide.
-
-        Les informations suivantes seront donc calculées :
-
-        ✅ Nombre de missions
-        ✅ Kilométrage parcouru
-
-        ❌ Montant ligne HT
-
-        Fichier recherché :
-
-        `{FICHIER_CV}`
-        """
-    )
-
-    cv_disponible = False
-
-else:
-
-    cv_disponible = True
-
-
-# ============================================================
 # PRÉPARATION OM
 # ============================================================
 
 df_om_analyse = df_om.copy()
 
-
-# ------------------------------------------------------------
-# Nettoyage camion
-# ------------------------------------------------------------
 
 df_om_analyse[COLONNE_CAMION_OM] = (
     df_om_analyse[COLONNE_CAMION_OM]
@@ -228,10 +204,6 @@ df_om_analyse[COLONNE_CAMION_OM] = (
 )
 
 
-# ------------------------------------------------------------
-# Nettoyage commande
-# ------------------------------------------------------------
-
 df_om_analyse[COLONNE_COMMANDE_OM] = (
     df_om_analyse[COLONNE_COMMANDE_OM]
     .fillna("")
@@ -240,10 +212,6 @@ df_om_analyse[COLONNE_COMMANDE_OM] = (
 )
 
 
-# ------------------------------------------------------------
-# Conversion kilométrage
-# ------------------------------------------------------------
-
 df_om_analyse[COLONNE_KM] = pd.to_numeric(
     df_om_analyse[COLONNE_KM],
     errors="coerce"
@@ -251,7 +219,7 @@ df_om_analyse[COLONNE_KM] = pd.to_numeric(
 
 
 # ============================================================
-# ANALYSE DES MISSIONS PAR CAMION
+# ANALYSE OM PAR CAMION
 # ============================================================
 
 analyse_om = (
@@ -274,135 +242,19 @@ analyse_om = (
 
 
 # ============================================================
-# PRÉPARATION COMMANDE DE VENTE
+# MONTANT CV
 # ============================================================
 
-if cv_disponible:
+if df_cv.empty:
 
-    if (
-        COLONNE_COMMANDE_CV not in df_cv.columns
-        or COLONNE_MONTANT_CV not in df_cv.columns
-    ):
+    st.warning(
+        """
+        ⚠️ Le fichier **CV.xlsx** n'est pas disponible.
 
-        st.warning(
-            f"""
-            ⚠️ Les colonnes nécessaires ne sont pas présentes
-            dans CV.xlsx.
-
-            Colonnes recherchées :
-
-            • **{COLONNE_COMMANDE_CV}**
-            • **{COLONNE_MONTANT_CV}**
-
-            Le montant sera donc affiché à **0**.
-            """
-        )
-
-        cv_disponible = False
-
-
-# ============================================================
-# CALCUL DU MONTANT PAR COMMANDE
-# ============================================================
-
-if cv_disponible:
-
-    df_cv_analyse = df_cv.copy()
-
-    # Nettoyage numéro commande
-    df_cv_analyse[COLONNE_COMMANDE_CV] = (
-        df_cv_analyse[COLONNE_COMMANDE_CV]
-        .fillna("")
-        .astype(str)
-        .str.strip()
+        Le nombre de missions et le kilométrage seront
+        calculés, mais le montant HT sera égal à zéro.
+        """
     )
-
-    # Conversion montant
-    df_cv_analyse[COLONNE_MONTANT_CV] = (
-        df_cv_analyse[COLONNE_MONTANT_CV]
-        .astype(str)
-        .str.replace(
-            "\u00a0",
-            "",
-            regex=False
-        )
-        .str.replace(
-            " ",
-            "",
-            regex=False
-        )
-        .str.replace(
-            ",",
-            ".",
-            regex=False
-        )
-    )
-
-    df_cv_analyse[COLONNE_MONTANT_CV] = pd.to_numeric(
-        df_cv_analyse[COLONNE_MONTANT_CV],
-        errors="coerce"
-    ).fillna(0)
-
-    # --------------------------------------------------------
-    # Total CV par commande
-    # --------------------------------------------------------
-
-    montant_par_commande = (
-        df_cv_analyse[
-            df_cv_analyse[COLONNE_COMMANDE_CV] != ""
-        ]
-        .groupby(COLONNE_COMMANDE_CV)[
-            COLONNE_MONTANT_CV
-        ]
-        .sum()
-        .reset_index()
-    )
-
-    # --------------------------------------------------------
-    # Renommage pour liaison
-    # --------------------------------------------------------
-
-    montant_par_commande = montant_par_commande.rename(
-        columns={
-            COLONNE_COMMANDE_CV: COLONNE_COMMANDE_OM,
-            COLONNE_MONTANT_CV: "Montant_Ligne_HT"
-        }
-    )
-
-    # --------------------------------------------------------
-    # Liaison OM → CV
-    # --------------------------------------------------------
-
-    df_om_analyse = df_om_analyse.merge(
-        montant_par_commande,
-        on=COLONNE_COMMANDE_OM,
-        how="left"
-    )
-
-    df_om_analyse["Montant_Ligne_HT"] = (
-        pd.to_numeric(
-            df_om_analyse["Montant_Ligne_HT"],
-            errors="coerce"
-        )
-        .fillna(0)
-    )
-
-    # --------------------------------------------------------
-    # Total montant par camion
-    # --------------------------------------------------------
-
-    analyse_montant = (
-        df_om_analyse[
-            df_om_analyse[COLONNE_CAMION_OM] != ""
-        ]
-        .groupby(COLONNE_CAMION_OM)[
-            "Montant_Ligne_HT"
-        ]
-        .sum()
-        .reset_index()
-    )
-
-else:
 
     analyse_montant = pd.DataFrame(
         columns=[
@@ -411,9 +263,135 @@ else:
         ]
     )
 
+else:
+
+    colonnes_cv_manquantes = []
+
+    if COLONNE_COMMANDE_CV not in df_cv.columns:
+        colonnes_cv_manquantes.append(
+            COLONNE_COMMANDE_CV
+        )
+
+    if COLONNE_MONTANT_CV not in df_cv.columns:
+        colonnes_cv_manquantes.append(
+            COLONNE_MONTANT_CV
+        )
+
+    if colonnes_cv_manquantes:
+
+        st.warning(
+            "⚠️ Colonnes manquantes dans CV.xlsx : "
+            + ", ".join(colonnes_cv_manquantes)
+        )
+
+        analyse_montant = pd.DataFrame(
+            columns=[
+                COLONNE_CAMION_OM,
+                "Montant_Ligne_HT"
+            ]
+        )
+
+    else:
+
+        df_cv_analyse = df_cv.copy()
+
+        # ----------------------------------------------------
+        # Nettoyage commande
+        # ----------------------------------------------------
+
+        df_cv_analyse[COLONNE_COMMANDE_CV] = (
+            df_cv_analyse[COLONNE_COMMANDE_CV]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+        )
+
+        # ----------------------------------------------------
+        # Conversion montant
+        # ----------------------------------------------------
+
+        df_cv_analyse[COLONNE_MONTANT_CV] = (
+            df_cv_analyse[COLONNE_MONTANT_CV]
+            .astype(str)
+            .str.replace(
+                "\u00a0",
+                "",
+                regex=False
+            )
+            .str.replace(
+                " ",
+                "",
+                regex=False
+            )
+            .str.replace(
+                ",",
+                ".",
+                regex=False
+            )
+        )
+
+        df_cv_analyse[COLONNE_MONTANT_CV] = pd.to_numeric(
+            df_cv_analyse[COLONNE_MONTANT_CV],
+            errors="coerce"
+        ).fillna(0)
+
+        # ----------------------------------------------------
+        # Montant total par commande
+        # ----------------------------------------------------
+
+        montant_commandes = (
+            df_cv_analyse[
+                df_cv_analyse[COLONNE_COMMANDE_CV] != ""
+            ]
+            .groupby(COLONNE_COMMANDE_CV)[
+                COLONNE_MONTANT_CV
+            ]
+            .sum()
+            .reset_index()
+        )
+
+        montant_commandes = montant_commandes.rename(
+            columns={
+                COLONNE_COMMANDE_CV:
+                    COLONNE_COMMANDE_OM,
+                COLONNE_MONTANT_CV:
+                    "Montant_Ligne_HT"
+            }
+        )
+
+        # ----------------------------------------------------
+        # Liaison OM avec CV
+        # ----------------------------------------------------
+
+        df_om_analyse = df_om_analyse.merge(
+            montant_commandes,
+            on=COLONNE_COMMANDE_OM,
+            how="left"
+        )
+
+        df_om_analyse["Montant_Ligne_HT"] = pd.to_numeric(
+            df_om_analyse["Montant_Ligne_HT"],
+            errors="coerce"
+        ).fillna(0)
+
+        # ----------------------------------------------------
+        # Total montant par camion
+        # ----------------------------------------------------
+
+        analyse_montant = (
+            df_om_analyse[
+                df_om_analyse[COLONNE_CAMION_OM] != ""
+            ]
+            .groupby(COLONNE_CAMION_OM)[
+                "Montant_Ligne_HT"
+            ]
+            .sum()
+            .reset_index()
+        )
+
 
 # ============================================================
-# FUSION ANALYSE
+# FUSION OM + MONTANT
 # ============================================================
 
 analyse = analyse_om.merge(
@@ -423,23 +401,19 @@ analyse = analyse_om.merge(
 )
 
 
-analyse["Montant_Ligne_HT"] = (
-    pd.to_numeric(
-        analyse["Montant_Ligne_HT"],
-        errors="coerce"
-    )
-    .fillna(0)
-)
+analyse["Montant_Ligne_HT"] = pd.to_numeric(
+    analyse["Montant_Ligne_HT"],
+    errors="coerce"
+).fillna(0)
 
 
 # ============================================================
-# LIAISON AVEC CAMIONS.XLSX
+# IDENTIFICATION DE LA COLONNE CAMION
 # ============================================================
 
-# Recherche automatique de la colonne camion
 colonne_camion = None
 
-possibilites_camion = [
+colonnes_possibles = [
     "Numero Camion",
     "Numéro Camion",
     "Camion",
@@ -448,13 +422,17 @@ possibilites_camion = [
     "N° Camion"
 ]
 
-for colonne in possibilites_camion:
+for colonne in colonnes_possibles:
 
     if colonne in df_camions.columns:
 
         colonne_camion = colonne
         break
 
+
+# ============================================================
+# FUSION AVEC LE PARC CAMIONS
+# ============================================================
 
 if colonne_camion:
 
@@ -467,7 +445,8 @@ if colonne_camion:
 
     analyse = analyse.rename(
         columns={
-            COLONNE_CAMION_OM: colonne_camion
+            COLONNE_CAMION_OM:
+                colonne_camion
         }
     )
 
@@ -481,10 +460,8 @@ else:
 
     st.warning(
         """
-        ⚠️ La colonne permettant d'identifier le camion
-        n'a pas été trouvée dans Camions.xlsx.
-
-        L'analyse des missions est néanmoins disponible.
+        ⚠️ Impossible de trouver la colonne permettant
+        d'identifier le camion dans Camions.xlsx.
         """
     )
 
@@ -492,7 +469,7 @@ else:
 
 
 # ============================================================
-# REMPLACEMENT DES VALEURS VIDES
+# NETTOYAGE DES VALEURS
 # ============================================================
 
 for colonne in [
@@ -503,20 +480,19 @@ for colonne in [
 
     if colonne in df_resultat.columns:
 
-        df_resultat[colonne] = (
-            pd.to_numeric(
-                df_resultat[colonne],
-                errors="coerce"
-            )
-            .fillna(0)
-        )
+        df_resultat[colonne] = pd.to_numeric(
+            df_resultat[colonne],
+            errors="coerce"
+        ).fillna(0)
 
 
 # ============================================================
 # TITRE
 # ============================================================
 
-st.title("🚚 Gestion des Camions")
+st.title(
+    "🚚 Gestion des Camions"
+)
 
 st.subheader(
     "Parc automobile et analyse de l'activité - TMF LOGISTICS"
@@ -527,7 +503,7 @@ st.divider()
 
 
 # ============================================================
-# STATISTIQUES GÉNÉRALES
+# INDICATEURS
 # ============================================================
 
 total_camions = len(df_camions)
@@ -559,24 +535,33 @@ with col1:
 with col2:
 
     st.metric(
-        "📋 Total Missions",
-        f"{total_missions:,}".replace(",", " ")
+        "📋 Nombre de Missions",
+        f"{total_missions:,}".replace(
+            ",",
+            " "
+        )
     )
 
 
 with col3:
 
     st.metric(
-        "🛣️ Kilométrage",
-        f"{total_km:,.0f} km".replace(",", " ")
+        "🛣️ Kilométrage Parcouru",
+        f"{total_km:,.0f} km".replace(
+            ",",
+            " "
+        )
     )
 
 
 with col4:
 
     st.metric(
-        "💰 Montant HT",
-        f"{total_montant:,.2f}".replace(",", " ")
+        "💰 Montant Parc HT",
+        f"{total_montant:,.2f}".replace(
+            ",",
+            " "
+        )
     )
 
 
@@ -586,13 +571,14 @@ with col4:
 
 st.divider()
 
-st.subheader("🔎 Recherche")
+st.subheader(
+    "🔎 Recherche"
+)
 
 recherche = st.text_input(
     "Rechercher un camion",
     placeholder=(
-        "Camion, matricule, chauffeur, client, "
-        "statut..."
+        "Camion, matricule, chauffeur, client, statut..."
     )
 )
 
@@ -625,7 +611,7 @@ if recherche:
 
 
 # ============================================================
-# TABLEAU ANALYTIQUE
+# TABLEAU
 # ============================================================
 
 st.divider()
@@ -635,13 +621,9 @@ st.subheader(
 )
 
 
-# ============================================================
-# COLONNES D'AFFICHAGE
-# ============================================================
+colonnes_affichage = []
 
-colonnes_analyse = []
-
-for colonne in df_resultat.columns:
+for colonne in df_filtre.columns:
 
     if colonne not in [
         "Nombre_Missions",
@@ -649,25 +631,27 @@ for colonne in df_resultat.columns:
         "Montant_Ligne_HT"
     ]:
 
-        colonnes_analyse.append(colonne)
+        colonnes_affichage.append(colonne)
 
 
-colonnes_analyse += [
-    "Nombre_Missions",
-    "Kilometrage_Parcouru",
-    "Montant_Ligne_HT"
-]
+colonnes_affichage.extend(
+    [
+        "Nombre_Missions",
+        "Kilometrage_Parcouru",
+        "Montant_Ligne_HT"
+    ]
+)
 
 
-colonnes_analyse = [
+colonnes_affichage = [
     colonne
-    for colonne in colonnes_analyse
+    for colonne in colonnes_affichage
     if colonne in df_filtre.columns
 ]
 
 
 df_affichage = df_filtre[
-    colonnes_analyse
+    colonnes_affichage
 ].copy()
 
 
@@ -677,15 +661,20 @@ df_affichage = df_filtre[
 
 df_affichage = df_affichage.rename(
     columns={
-        "Nombre_Missions": "Nombre de Missions",
-        "Kilometrage_Parcouru": "Kilométrage Parcouru",
-        "Montant_Ligne_HT": "Montant Parc HT"
+        "Nombre_Missions":
+            "Nombre de Missions",
+
+        "Kilometrage_Parcouru":
+            "Kilométrage Parcouru",
+
+        "Montant_Ligne_HT":
+            "Montant Parc HT"
     }
 )
 
 
 # ============================================================
-# AFFICHAGE FORMATÉ
+# FORMAT NUMÉRIQUE
 # ============================================================
 
 if "Kilométrage Parcouru" in df_affichage.columns:
@@ -715,7 +704,7 @@ st.dataframe(
 
 
 # ============================================================
-# CLASSEMENT DES CAMIONS
+# CLASSEMENT
 # ============================================================
 
 st.divider()
@@ -725,17 +714,16 @@ st.subheader(
 )
 
 
-classement = df_resultat.copy()
-
-
-# ------------------------------------------------------------
+# ============================================================
 # TOP MISSIONS
-# ------------------------------------------------------------
+# ============================================================
 
-st.markdown("### 📋 Plus grand nombre de missions")
+st.markdown(
+    "### 📋 Camions avec le plus de missions"
+)
 
 top_missions = (
-    classement
+    df_resultat
     .sort_values(
         "Nombre_Missions",
         ascending=False
@@ -744,7 +732,7 @@ top_missions = (
 )
 
 
-if colonne_camion and colonne_camion in top_missions.columns:
+if colonne_camion:
 
     st.dataframe(
         top_missions[
@@ -754,8 +742,11 @@ if colonne_camion and colonne_camion in top_missions.columns:
             ]
         ].rename(
             columns={
-                colonne_camion: "Camion",
-                "Nombre_Missions": "Nombre de Missions"
+                colonne_camion:
+                    "Camion",
+
+                "Nombre_Missions":
+                    "Nombre de Missions"
             }
         ),
         use_container_width=True,
@@ -763,14 +754,16 @@ if colonne_camion and colonne_camion in top_missions.columns:
     )
 
 
-# ------------------------------------------------------------
+# ============================================================
 # TOP KILOMÉTRAGE
-# ------------------------------------------------------------
+# ============================================================
 
-st.markdown("### 🛣️ Plus grand kilométrage")
+st.markdown(
+    "### 🛣️ Camions avec le plus de kilomètres"
+)
 
 top_km = (
-    classement
+    df_resultat
     .sort_values(
         "Kilometrage_Parcouru",
         ascending=False
@@ -779,7 +772,7 @@ top_km = (
 )
 
 
-if colonne_camion and colonne_camion in top_km.columns:
+if colonne_camion:
 
     st.dataframe(
         top_km[
@@ -789,7 +782,9 @@ if colonne_camion and colonne_camion in top_km.columns:
             ]
         ].rename(
             columns={
-                colonne_camion: "Camion",
+                colonne_camion:
+                    "Camion",
+
                 "Kilometrage_Parcouru":
                     "Kilométrage Parcouru"
             }
@@ -799,14 +794,16 @@ if colonne_camion and colonne_camion in top_km.columns:
     )
 
 
-# ------------------------------------------------------------
+# ============================================================
 # TOP MONTANT
-# ------------------------------------------------------------
+# ============================================================
 
-st.markdown("### 💰 Plus grand montant HT")
+st.markdown(
+    "### 💰 Camions avec le plus grand montant HT"
+)
 
 top_montant = (
-    classement
+    df_resultat
     .sort_values(
         "Montant_Ligne_HT",
         ascending=False
@@ -815,7 +812,7 @@ top_montant = (
 )
 
 
-if colonne_camion and colonne_camion in top_montant.columns:
+if colonne_camion:
 
     st.dataframe(
         top_montant[
@@ -825,7 +822,9 @@ if colonne_camion and colonne_camion in top_montant.columns:
             ]
         ].rename(
             columns={
-                colonne_camion: "Camion",
+                colonne_camion:
+                    "Camion",
+
                 "Montant_Ligne_HT":
                     "Montant Parc HT"
             }
@@ -841,7 +840,9 @@ if colonne_camion and colonne_camion in top_montant.columns:
 
 st.divider()
 
-st.subheader("📥 Export")
+st.subheader(
+    "📥 Export"
+)
 
 
 def convertir_excel(df):
@@ -882,7 +883,7 @@ try:
 except Exception as e:
 
     st.error(
-        f"❌ Impossible de créer le fichier Excel : {e}"
+        f"❌ Erreur lors de la création du fichier Excel : {e}"
     )
 
 
