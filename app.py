@@ -1,6 +1,7 @@
 import streamlit as st
-import base64
+import pandas as pd
 from pathlib import Path
+from io import BytesIO
 
 
 # ============================================================
@@ -8,10 +9,9 @@ from pathlib import Path
 # ============================================================
 
 st.set_page_config(
-    page_title="TMF LOGISTICS",
-    page_icon="🚛",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="TMF LOGISTICS - Camions",
+    page_icon="🚚",
+    layout="wide"
 )
 
 
@@ -19,577 +19,1024 @@ st.set_page_config(
 # CHEMINS
 # ============================================================
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
+DATA_DIR = BASE_DIR / "Data"
 
-
-# ============================================================
-# UTILISATEURS
-# ============================================================
-
-UTILISATEURS = {
-    "admin": "1234",
-    "transport": "tmf2026",
-    "direction": "tmf@2026"
-}
+FICHIER_CAMIONS = DATA_DIR / "Camions.xlsx"
+FICHIER_OM = DATA_DIR / "OM.xlsx"
 
 
 # ============================================================
-# INITIALISATION SESSION
+# RECHERCHE DU FICHIER COMMANDE DE VENTE
 # ============================================================
 
-if "connecte" not in st.session_state:
-    st.session_state.connecte = False
+FICHIERS_CV = [
+    DATA_DIR / "CV.xlsx",
+    DATA_DIR / "Commande_de_Vente.xlsx",
+    DATA_DIR / "Commande de Vente.xlsx",
+    DATA_DIR / "Commande_Vente.xlsx",
+    DATA_DIR / "CommandeVente.xlsx"
+]
 
-if "utilisateur" not in st.session_state:
-    st.session_state.utilisateur = ""
+
+def trouver_fichier_cv():
+
+    for fichier in FICHIERS_CV:
+
+        if fichier.exists():
+            return fichier
+
+    return None
+
+
+FICHIER_CV = trouver_fichier_cv()
 
 
 # ============================================================
-# ARRIÈRE-PLAN
+# TITRE
 # ============================================================
 
-def charger_arriere_plan():
+st.title("🚚 Gestion des Camions")
 
-    if not BACKGROUND_PATH.exists():
-        return ""
+st.subheader(
+    "Parc automobile - TMF LOGISTICS"
+)
+
+
+# ============================================================
+# FONCTION DE LECTURE EXCEL
+# ============================================================
+
+def lire_excel(fichier, feuille=None):
+
+    if fichier is None:
+        return pd.DataFrame()
+
+    if not fichier.exists():
+        return pd.DataFrame()
 
     try:
 
-        with open(BACKGROUND_PATH, "rb") as fichier:
-
-            image_base64 = base64.b64encode(
-                fichier.read()
-            ).decode("utf-8")
-
-        return image_base64
-
-    except Exception:
-        return ""
-
-
-BACKGROUND_BASE64 = charger_arriere_plan()
-
-
-# ============================================================
-# PAGE DE CONNEXION
-# ============================================================
-
-def afficher_connexion():
-
-    # --------------------------------------------------------
-    # CSS
-    # --------------------------------------------------------
-
-    st.markdown(
-        """
-        <style>
-
-        /* ==================================================
-           PAGE COMPLÈTE
-           ================================================== */
-
-        .stApp {
-
-            background-size: cover;
-            background-position: center center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-
-        }
-
-
-        /* ==================================================
-           COUCHE SOMBRE
-           ================================================== */
-
-        .login-overlay {
-
-            position: fixed;
-
-            top: 0;
-            left: 0;
-
-            width: 100%;
-            height: 100%;
-
-            background:
-                linear-gradient(
-                    rgba(0, 0, 0, 0.48),
-                    rgba(0, 0, 0, 0.48)
-                );
-
-            z-index: -1;
-
-        }
-
-
-        /* ==================================================
-           CONTENEUR PRINCIPAL
-           ================================================== */
-
-        .login-container {
-
-            max-width: 600px;
-
-            margin-left: auto;
-            margin-right: auto;
-
-            padding-top: 70px;
-
-        }
-
-
-        /* ==================================================
-           TITRE
-           ================================================== */
-
-        .login-title {
-
-            text-align: center;
-
-            font-size: 72px;
-
-            font-weight: 800;
-
-            color: white;
-
-            letter-spacing: 2px;
-
-            text-shadow:
-                2px 2px 8px rgba(0, 0, 0, 0.8);
-
-            margin-bottom: 5px;
-
-        }
-
-
-        /* ==================================================
-           SOUS-TITRE
-           ================================================== */
-
-        .login-subtitle {
-
-            text-align: center;
-
-            font-size: 30px;
-
-            font-weight: 400;
-
-            color: white;
-
-            text-shadow:
-                2px 2px 6px rgba(0, 0, 0, 0.9);
-
-            margin-bottom: 45px;
-
-        }
-
-
-        /* ==================================================
-           LABELS
-           ================================================== */
-
-        div[data-testid="stTextInput"] label {
-
-            color: white !important;
-
-            font-size: 18px !important;
-
-            font-weight: 600 !important;
-
-        }
-
-
-        /* ==================================================
-           CHAMPS
-           ================================================== */
-
-        div[data-testid="stTextInput"] input {
-
-            background-color:
-                rgba(20, 20, 20, 0.45) !important;
-
-            color: white !important;
-
-            border:
-                1px solid rgba(255, 255, 255, 0.65) !important;
-
-            border-radius: 14px !important;
-
-            height: 60px !important;
-
-            font-size: 18px !important;
-
-            padding-left: 18px !important;
-
-        }
-
-
-        div[data-testid="stTextInput"] input::placeholder {
-
-            color:
-                rgba(255, 255, 255, 0.70) !important;
-
-        }
-
-
-        /* ==================================================
-           BOUTON CONNEXION
-           ================================================== */
-
-        div.stButton > button {
-
-            width: 100%;
-
-            height: 60px;
-
-            border-radius: 14px;
-
-            border: none;
-
-            background:
-                linear-gradient(
-                    90deg,
-                    #ff6a00,
-                    #ff4b00
-                );
-
-            color: white;
-
-            font-size: 20px;
-
-            font-weight: 700;
-
-            box-shadow:
-                0 5px 15px
-                rgba(0, 0, 0, 0.35);
-
-            transition: 0.2s;
-
-        }
-
-
-        div.stButton > button:hover {
-
-            background:
-                linear-gradient(
-                    90deg,
-                    #ff7b1a,
-                    #ff5a0a
-                );
-
-            transform: scale(1.01);
-
-        }
-
-
-        /* ==================================================
-           FORMULAIRE
-           ================================================== */
-
-        [data-testid="stForm"] {
-
-            background:
-                rgba(0, 0, 0, 0.18);
-
-            border:
-                1px solid
-                rgba(255, 255, 255, 0.20);
-
-            border-radius: 18px;
-
-            padding: 25px;
-
-        }
-
-
-        /* ==================================================
-           MESSAGE SÉCURITÉ
-           ================================================== */
-
-        .security-text {
-
-            text-align: center;
-
-            color: white;
-
-            font-size: 18px;
-
-            margin-top: 25px;
-
-            text-shadow:
-                1px 1px 5px
-                rgba(0, 0, 0, 0.8);
-
-        }
-
-
-        /* ==================================================
-           ERREUR
-           ================================================== */
-
-        div[data-testid="stAlert"] {
-
-            border-radius: 12px;
-
-        }
-
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-
-    # --------------------------------------------------------
-    # BACKGROUND
-    # --------------------------------------------------------
-
-    if BACKGROUND_BASE64:
-
-        st.markdown(
-            f"""
-            <style>
-
-            .stApp {{
-
-                background-image:
-                    linear-gradient(
-                        rgba(0, 0, 0, 0.48),
-                        rgba(0, 0, 0, 0.48)
-                    ),
-                    url(
-                        "data:image/jpeg;base64,{BACKGROUND_BASE64}"
-                    );
-
-                background-size: cover;
-
-                background-position:
-                    center center;
-
-                background-repeat: no-repeat;
-
-                background-attachment: fixed;
-
-            }}
-
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
-
-    else:
-
-        st.warning(
-            f"⚠️ Image d'arrière-plan introuvable : "
-            f"{BACKGROUND_PATH}"
-        )
-
-
-    # --------------------------------------------------------
-    # ESPACE
-    # --------------------------------------------------------
-
-    st.markdown(
-        "<div style='height:30px'></div>",
-        unsafe_allow_html=True
-    )
-
-
-    # --------------------------------------------------------
-    # TITRE
-    # --------------------------------------------------------
-
-    st.markdown(
-        """
-        <div class="login-title">
-            TMF LOGISTICS
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-
-    st.markdown(
-        """
-        <div class="login-subtitle">
-            Système de Gestion du Transport
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-
-    # --------------------------------------------------------
-    # FORMULAIRE
-    # --------------------------------------------------------
-
-    with st.form("login_form"):
-
-        utilisateur = st.text_input(
-            "👤 Nom d'utilisateur",
-            placeholder="Entrez votre nom d'utilisateur"
-        )
-
-        mot_de_passe = st.text_input(
-            "🔑 Mot de passe",
-            type="password",
-            placeholder="Entrez votre mot de passe"
-        )
-
-        connexion = st.form_submit_button(
-            "🔐  Se connecter",
-            use_container_width=True
-        )
-
+        if feuille:
+
+            df = pd.read_excel(
+                fichier,
+                sheet_name=feuille,
+                engine="openpyxl"
+            )
+
+        else:
+
+            df = pd.read_excel(
+                fichier,
+                engine="openpyxl"
+            )
 
         # ----------------------------------------------------
-        # VALIDATION
+        # Nettoyage des noms de colonnes
         # ----------------------------------------------------
 
-        if connexion:
+        df.columns = (
+            df.columns
+            .astype(str)
+            .str.strip()
+        )
 
-            utilisateur = utilisateur.strip()
+        # ----------------------------------------------------
+        # Suppression lignes totalement vides
+        # ----------------------------------------------------
 
-            if (
-                utilisateur in UTILISATEURS
-                and
-                UTILISATEURS[utilisateur] == mot_de_passe
-            ):
+        df = df.dropna(
+            how="all"
+        )
 
-                st.session_state.connecte = True
+        # ----------------------------------------------------
+        # Nettoyage texte
+        # ----------------------------------------------------
 
-                st.session_state.utilisateur = utilisateur
+        for colonne in df.columns:
 
-                st.rerun()
+            if df[colonne].dtype == "object":
 
-            else:
-
-                st.error(
-                    "❌ Nom d'utilisateur ou mot de passe incorrect."
+                df[colonne] = (
+                    df[colonne]
+                    .fillna("")
+                    .astype(str)
+                    .str.strip()
                 )
 
+        return df
 
-    # --------------------------------------------------------
-    # SÉCURITÉ
-    # --------------------------------------------------------
+    except Exception as e:
 
-    st.markdown(
-        """
-        <div class="security-text">
-            🔒 Accès sécurisé
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+        st.error(
+            f"❌ Erreur de lecture de `{fichier.name}` : {e}"
+        )
+
+        return pd.DataFrame()
 
 
 # ============================================================
-# DÉCONNEXION
+# FONCTION POUR TROUVER UNE COLONNE
 # ============================================================
 
-def afficher_deconnexion():
+def trouver_colonne(df, candidats):
 
-    st.sidebar.divider()
+    if df.empty:
+        return None
 
-    st.sidebar.markdown(
+    colonnes = {
+        str(col).strip().lower(): col
+        for col in df.columns
+    }
+
+    for candidat in candidats:
+
+        candidat_normalise = (
+            candidat
+            .strip()
+            .lower()
+        )
+
+        if candidat_normalise in colonnes:
+
+            return colonnes[candidat_normalise]
+
+    return None
+
+
+# ============================================================
+# CHARGEMENT DES DONNÉES
+# ============================================================
+
+df_camions = lire_excel(
+    FICHIER_CAMIONS
+)
+
+df_om = lire_excel(
+    FICHIER_OM,
+    feuille="Input OM fini"
+)
+
+df_cv = lire_excel(
+    FICHIER_CV
+)
+
+
+# ============================================================
+# VÉRIFICATION CAMIONS
+# ============================================================
+
+if df_camions.empty:
+
+    st.error(
         f"""
-        <div style="
-            padding: 10px;
-            border-radius: 10px;
-            background: rgba(128,128,128,0.10);
-        ">
+        ❌ Le fichier Camions.xlsx est introuvable ou vide.
 
-        👤 <b>Utilisateur connecté</b><br>
+        Fichier recherché :
 
-        <span style="font-size:18px;">
-        {st.session_state.utilisateur}
-        </span>
-
-        </div>
-        """,
-        unsafe_allow_html=True
+        `{FICHIER_CAMIONS}`
+        """
     )
-
-    st.sidebar.write("")
-
-    if st.sidebar.button(
-        "🚪 Déconnexion",
-        use_container_width=True
-    ):
-
-        st.session_state.connecte = False
-
-        st.session_state.utilisateur = ""
-
-        st.rerun()
-
-
-# ============================================================
-# SI PAS CONNECTÉ
-# ============================================================
-
-if not st.session_state.connecte:
-
-    afficher_connexion()
 
     st.stop()
 
 
 # ============================================================
-# UTILISATEUR CONNECTÉ
+# IDENTIFICATION DES COLONNES CAMIONS
 # ============================================================
 
-afficher_deconnexion()
-
-
-# ============================================================
-# NAVIGATION
-# ============================================================
-
-pages = {
-
-    "🏠 Accueil": st.Page(
-        "app_home.py",
-        title="Accueil",
-        icon="🏠"
-    ),
-
-    "📋 Ordres de Mission": st.Page(
-        "Pages/1_Ordres_de_Mission.py",
-        title="Ordres de Mission",
-        icon="📋"
-    ),
-
-    "🚚 Camions": st.Page(
-        "Pages/2_Camions.py",
-        title="Camions",
-        icon="🚚"
-    ),
-
-    "👷 Chauffeurs": st.Page(
-        "Pages/3_Chauffeurs.py",
-        title="Chauffeurs",
-        icon="👷"
-    ),
-
-    "👥 Clients": st.Page(
-        "Pages/4_Clients.py",
-        title="Clients",
-        icon="👥"
-    ),
-
-    "📊 Rapports": st.Page(
-        "Pages/5_Rapports.py",
-        title="Rapports",
-        icon="📊"
-    )
-}
-
-navigation = st.navigation(
-    pages,
-    position="sidebar"
+col_camion = trouver_colonne(
+    df_camions,
+    [
+        "Numero Camion",
+        "Numéro Camion",
+        "N° Camion",
+        "Camion",
+        "Matricule",
+        "Immatriculation"
+    ]
 )
 
-navigation.run()
+
+if col_camion is None:
+
+    st.error(
+        """
+        ❌ Impossible de trouver la colonne identifiant le camion
+        dans Camions.xlsx.
+
+        Colonnes recherchées :
+        Numero Camion, Numéro Camion, N° Camion,
+        Camion, Matricule ou Immatriculation.
+        """
+    )
+
+    st.stop()
+
+
+# ============================================================
+# IDENTIFICATION DES COLONNES OM
+# ============================================================
+
+col_om_camion = trouver_colonne(
+    df_om,
+    [
+        "Numero Camion",
+        "Numéro Camion",
+        "N° Camion",
+        "Camion"
+    ]
+)
+
+col_om_commande = trouver_colonne(
+    df_om,
+    [
+        "N° Commande",
+        "No Commande",
+        "Numero Commande",
+        "Numéro Commande",
+        "Commande"
+    ]
+)
+
+col_om_numero = trouver_colonne(
+    df_om,
+    [
+        "Numéro",
+        "N° OM",
+        "Numero OM",
+        "OM"
+    ]
+)
+
+col_om_km = trouver_colonne(
+    df_om,
+    [
+        "Kilometrage Parcouru",
+        "Kilométrage Parcouru",
+        "KM Parcourus",
+        "KM Parcouru",
+        "Kilometrage parcouru"
+    ]
+)
+
+
+# ============================================================
+# IDENTIFICATION DES COLONNES CV
+# ============================================================
+
+col_cv_commande = trouver_colonne(
+    df_cv,
+    [
+        "N° Commande",
+        "No Commande",
+        "Numero Commande",
+        "Numéro Commande",
+        "Commande",
+        "N° commande de vente",
+        "N° Commande de Vente"
+    ]
+)
+
+col_cv_montant = trouver_colonne(
+    df_cv,
+    [
+        "Montant ligne HT",
+        "Montant Ligne HT",
+        "Montant ligne HT ",
+        "Montant HT",
+        "Montant"
+    ]
+)
+
+
+# ============================================================
+# INFORMATIONS SUR LES SOURCES
+# ============================================================
+
+with st.expander("ℹ️ Informations sur les fichiers utilisés"):
+
+    st.write(
+        f"**Camions :** {FICHIER_CAMIONS.name}"
+    )
+
+    st.write(
+        f"**Ordres de Mission :** {FICHIER_OM.name}"
+    )
+
+    if FICHIER_CV:
+
+        st.write(
+            f"**Commande de Vente :** {FICHIER_CV.name}"
+        )
+
+    else:
+
+        st.warning(
+            "⚠️ Aucun fichier Commande de Vente trouvé."
+        )
+
+    st.write(
+        f"**Colonne camion :** {col_camion}"
+    )
+
+    st.write(
+        f"**OM - camion :** {col_om_camion}"
+    )
+
+    st.write(
+        f"**OM - commande :** {col_om_commande}"
+    )
+
+    st.write(
+        f"**OM - N° OM :** {col_om_numero}"
+    )
+
+    st.write(
+        f"**OM - KM :** {col_om_km}"
+    )
+
+    st.write(
+        f"**CV - commande :** {col_cv_commande}"
+    )
+
+    st.write(
+        f"**CV - Montant ligne HT :** {col_cv_montant}"
+    )
+
+
+# ============================================================
+# PRÉPARATION DU PARC CAMIONS
+# ============================================================
+
+df_resultat = df_camions.copy()
+
+
+# ============================================================
+# NORMALISATION DU NUMÉRO CAMION
+# ============================================================
+
+df_resultat["_CAMION_KEY"] = (
+    df_resultat[col_camion]
+    .fillna("")
+    .astype(str)
+    .str.strip()
+)
+
+
+# ============================================================
+# INITIALISATION DES INDICATEURS
+# ============================================================
+
+df_resultat["Nombre de Missions"] = 0
+
+df_resultat["Kilometrage Parcouru"] = 0.0
+
+df_resultat["Montant Parc Camion HT"] = 0.0
+
+
+# ============================================================
+# ANALYSE DES ORDRES DE MISSION
+# ============================================================
+
+if (
+    not df_om.empty
+    and col_om_camion
+):
+
+    df_analyse_om = df_om.copy()
+
+    # --------------------------------------------------------
+    # Clé camion
+    # --------------------------------------------------------
+
+    df_analyse_om["_CAMION_KEY"] = (
+        df_analyse_om[col_om_camion]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+
+
+    # --------------------------------------------------------
+    # KILOMÉTRAGE
+    # --------------------------------------------------------
+
+    if col_om_km:
+
+        df_analyse_om["_KM"] = pd.to_numeric(
+            df_analyse_om[col_om_km],
+            errors="coerce"
+        ).fillna(0)
+
+    else:
+
+        df_analyse_om["_KM"] = 0
+
+
+    # --------------------------------------------------------
+    # NOMBRE DE MISSIONS
+    # --------------------------------------------------------
+
+    if col_om_numero:
+
+        missions_par_camion = (
+            df_analyse_om
+            .groupby("_CAMION_KEY")[col_om_numero]
+            .nunique()
+            .reset_index(name="Nombre de Missions")
+        )
+
+    else:
+
+        missions_par_camion = (
+            df_analyse_om
+            .groupby("_CAMION_KEY")
+            .size()
+            .reset_index(name="Nombre de Missions")
+        )
+
+
+    # --------------------------------------------------------
+    # KM PAR CAMION
+    # --------------------------------------------------------
+
+    km_par_camion = (
+        df_analyse_om
+        .groupby("_CAMION_KEY")["_KM"]
+        .sum()
+        .reset_index(name="Kilometrage Parcouru")
+    )
+
+
+    # --------------------------------------------------------
+    # FUSION MISSIONS
+    # --------------------------------------------------------
+
+    df_resultat = df_resultat.merge(
+        missions_par_camion,
+        on="_CAMION_KEY",
+        how="left",
+        suffixes=("", "_NEW")
+    )
+
+
+    if "Nombre de Missions_NEW" in df_resultat.columns:
+
+        df_resultat["Nombre de Missions"] = (
+            df_resultat["Nombre de Missions_NEW"]
+            .fillna(0)
+        )
+
+        df_resultat = df_resultat.drop(
+            columns=["Nombre de Missions_NEW"]
+        )
+
+
+    # --------------------------------------------------------
+    # FUSION KM
+    # --------------------------------------------------------
+
+    df_resultat = df_resultat.merge(
+        km_par_camion,
+        on="_CAMION_KEY",
+        how="left",
+        suffixes=("", "_NEW")
+    )
+
+
+    if "Kilometrage Parcouru_NEW" in df_resultat.columns:
+
+        df_resultat["Kilometrage Parcouru"] = (
+            df_resultat["Kilometrage Parcouru_NEW"]
+            .fillna(0)
+        )
+
+        df_resultat = df_resultat.drop(
+            columns=["Kilometrage Parcouru_NEW"]
+        )
+
+
+# ============================================================
+# CALCUL DU MONTANT PAR CAMION
+# ============================================================
+
+if (
+    not df_om.empty
+    and not df_cv.empty
+    and col_om_camion
+    and col_om_commande
+    and col_cv_commande
+    and col_cv_montant
+):
+
+    # --------------------------------------------------------
+    # COPIE OM
+    # --------------------------------------------------------
+
+    df_montant = df_om.copy()
+
+
+    # --------------------------------------------------------
+    # CLÉ CAMION
+    # --------------------------------------------------------
+
+    df_montant["_CAMION_KEY"] = (
+        df_montant[col_om_camion]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+
+
+    # --------------------------------------------------------
+    # CLÉ COMMANDE
+    # --------------------------------------------------------
+
+    df_montant["_COMMANDE_KEY"] = (
+        df_montant[col_om_commande]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+
+
+    # --------------------------------------------------------
+    # COPIE CV
+    # --------------------------------------------------------
+
+    df_commandes = df_cv.copy()
+
+
+    # --------------------------------------------------------
+    # CLÉ COMMANDE CV
+    # --------------------------------------------------------
+
+    df_commandes["_COMMANDE_KEY"] = (
+        df_commandes[col_cv_commande]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+
+
+    # --------------------------------------------------------
+    # MONTANT LIGNE HT
+    # --------------------------------------------------------
+
+    df_commandes["_MONTANT_HT"] = pd.to_numeric(
+        df_commandes[col_cv_montant],
+        errors="coerce"
+    ).fillna(0)
+
+
+    # --------------------------------------------------------
+    # TOTAL CV PAR COMMANDE
+    #
+    # Si une commande possède plusieurs lignes,
+    # les montants ligne HT sont additionnés.
+    # --------------------------------------------------------
+
+    montant_par_commande = (
+        df_commandes
+        .groupby("_COMMANDE_KEY")["_MONTANT_HT"]
+        .sum()
+        .reset_index()
+    )
+
+
+    # --------------------------------------------------------
+    # RAPPROCHEMENT OM / CV
+    # --------------------------------------------------------
+
+    df_montant = df_montant.merge(
+        montant_par_commande,
+        on="_COMMANDE_KEY",
+        how="left"
+    )
+
+
+    df_montant["_MONTANT_HT"] = (
+        df_montant["_MONTANT_HT"]
+        .fillna(0)
+    )
+
+
+    # --------------------------------------------------------
+    # ÉVITER DE COMPTER DEUX FOIS LA MÊME COMMANDE
+    # POUR UN MÊME CAMION
+    # --------------------------------------------------------
+
+    df_montant = (
+        df_montant[
+            [
+                "_CAMION_KEY",
+                "_COMMANDE_KEY",
+                "_MONTANT_HT"
+            ]
+        ]
+        .drop_duplicates(
+            subset=[
+                "_CAMION_KEY",
+                "_COMMANDE_KEY"
+            ]
+        )
+    )
+
+
+    # --------------------------------------------------------
+    # TOTAL PAR CAMION
+    # --------------------------------------------------------
+
+    montant_par_camion = (
+        df_montant
+        .groupby("_CAMION_KEY")["_MONTANT_HT"]
+        .sum()
+        .reset_index(
+            name="Montant Parc Camion HT"
+        )
+    )
+
+
+    # --------------------------------------------------------
+    # FUSION AVEC PARC CAMIONS
+    # --------------------------------------------------------
+
+    df_resultat = df_resultat.merge(
+        montant_par_camion,
+        on="_CAMION_KEY",
+        how="left",
+        suffixes=("", "_NEW")
+    )
+
+
+    if "Montant Parc Camion HT_NEW" in df_resultat.columns:
+
+        df_resultat["Montant Parc Camion HT"] = (
+            df_resultat["Montant Parc Camion HT_NEW"]
+            .fillna(0)
+        )
+
+        df_resultat = df_resultat.drop(
+            columns=["Montant Parc Camion HT_NEW"]
+        )
+
+
+# ============================================================
+# NETTOYAGE DES INDICATEURS
+# ============================================================
+
+df_resultat["Nombre de Missions"] = pd.to_numeric(
+    df_resultat["Nombre de Missions"],
+    errors="coerce"
+).fillna(0).astype(int)
+
+
+df_resultat["Kilometrage Parcouru"] = pd.to_numeric(
+    df_resultat["Kilometrage Parcouru"],
+    errors="coerce"
+).fillna(0)
+
+
+df_resultat["Montant Parc Camion HT"] = pd.to_numeric(
+    df_resultat["Montant Parc Camion HT"],
+    errors="coerce"
+).fillna(0)
+
+
+# ============================================================
+# SUPPRESSION COLONNE TECHNIQUE
+# ============================================================
+
+if "_CAMION_KEY" in df_resultat.columns:
+
+    df_resultat = df_resultat.drop(
+        columns=["_CAMION_KEY"]
+    )
+
+
+# ============================================================
+# STATISTIQUES GLOBALES
+# ============================================================
+
+total_camions = len(df_resultat)
+
+total_missions = int(
+    df_resultat["Nombre de Missions"].sum()
+)
+
+total_km = float(
+    df_resultat["Kilometrage Parcouru"].sum()
+)
+
+total_montant = float(
+    df_resultat["Montant Parc Camion HT"].sum()
+)
+
+
+# ============================================================
+# KPI
+# ============================================================
+
+st.divider()
+
+col1, col2, col3, col4 = st.columns(4)
+
+
+with col1:
+
+    st.metric(
+        "🚚 Total Camions",
+        total_camions
+    )
+
+
+with col2:
+
+    st.metric(
+        "📋 Total Missions",
+        f"{total_missions:,}".replace(",", " ")
+    )
+
+
+with col3:
+
+    st.metric(
+        "🛣️ Kilométrage Total",
+        f"{total_km:,.0f} km".replace(",", " ")
+    )
+
+
+with col4:
+
+    st.metric(
+        "💰 Montant Parc HT",
+        f"{total_montant:,.2f} DA".replace(",", " ")
+    )
+
+
+# ============================================================
+# RECHERCHE
+# ============================================================
+
+st.divider()
+
+st.subheader("🔎 Recherche")
+
+recherche = st.text_input(
+    "Rechercher un camion",
+    placeholder=(
+        "Matricule, camion, remorque, chauffeur, "
+        "client ou statut..."
+    )
+)
+
+
+# ============================================================
+# FILTRAGE
+# ============================================================
+
+df_filtre = df_resultat.copy()
+
+
+if recherche:
+
+    masque = (
+        df_filtre
+        .astype(str)
+        .apply(
+            lambda colonne:
+            colonne.str.contains(
+                recherche,
+                case=False,
+                na=False,
+                regex=False
+            )
+        )
+        .any(axis=1)
+    )
+
+    df_filtre = df_filtre[
+        masque
+    ]
+
+
+# ============================================================
+# STATISTIQUES FILTRÉES
+# ============================================================
+
+st.divider()
+
+col1, col2, col3, col4 = st.columns(4)
+
+
+with col1:
+
+    st.metric(
+        "🚚 Camions",
+        len(df_filtre)
+    )
+
+
+with col2:
+
+    st.metric(
+        "📋 Missions",
+        int(
+            df_filtre[
+                "Nombre de Missions"
+            ].sum()
+        )
+    )
+
+
+with col3:
+
+    st.metric(
+        "🛣️ KM Parcourus",
+        f"{df_filtre['Kilometrage Parcouru'].sum():,.0f} km"
+        .replace(",", " ")
+    )
+
+
+with col4:
+
+    st.metric(
+        "💰 Montant HT",
+        f"{df_filtre['Montant Parc Camion HT'].sum():,.2f} DA"
+        .replace(",", " ")
+    )
+
+
+# ============================================================
+# TABLEAU PAR CAMION
+# ============================================================
+
+st.divider()
+
+st.subheader(
+    f"🚚 Analyse par camion ({len(df_filtre)})"
+)
+
+
+# ============================================================
+# COLONNES À AFFICHER
+# ============================================================
+
+colonnes_indicateurs = [
+    col_camion,
+    "Nombre de Missions",
+    "Kilometrage Parcouru",
+    "Montant Parc Camion HT"
+]
+
+
+# Ajouter certaines colonnes existantes du fichier Camions
+
+colonnes_supplementaires = [
+    "Remorque",
+    "Chauffeur",
+    "Statut",
+    "Client",
+    "Mission",
+    "Affectation"
+]
+
+
+for colonne in colonnes_supplementaires:
+
+    if (
+        colonne in df_filtre.columns
+        and colonne not in colonnes_indicateurs
+    ):
+
+        colonnes_indicateurs.append(
+            colonne
+        )
+
+
+colonnes_affichage = [
+    colonne
+    for colonne in colonnes_indicateurs
+    if colonne in df_filtre.columns
+]
+
+
+df_affichage = df_filtre[
+    colonnes_affichage
+].copy()
+
+
+# ============================================================
+# FORMATAGE
+# ============================================================
+
+if "Kilometrage Parcouru" in df_affichage.columns:
+
+    df_affichage[
+        "Kilometrage Parcouru"
+    ] = (
+        pd.to_numeric(
+            df_affichage[
+                "Kilometrage Parcouru"
+            ],
+            errors="coerce"
+        )
+        .fillna(0)
+        .round(0)
+    )
+
+
+if "Montant Parc Camion HT" in df_affichage.columns:
+
+    df_affichage[
+        "Montant Parc Camion HT"
+    ] = (
+        pd.to_numeric(
+            df_affichage[
+                "Montant Parc Camion HT"
+            ],
+            errors="coerce"
+        )
+        .fillna(0)
+        .round(2)
+    )
+
+
+# ============================================================
+# AFFICHAGE
+# ============================================================
+
+st.dataframe(
+    df_affichage,
+    use_container_width=True,
+    hide_index=True,
+    height=600
+)
+
+
+# ============================================================
+# EXPORT EXCEL
+# ============================================================
+
+st.divider()
+
+st.subheader("📥 Export")
+
+
+def convertir_excel(df):
+
+    buffer = BytesIO()
+
+    with pd.ExcelWriter(
+        buffer,
+        engine="openpyxl"
+    ) as writer:
+
+        df.to_excel(
+            writer,
+            index=False,
+            sheet_name="Analyse Camions"
+        )
+
+    return buffer.getvalue()
+
+
+try:
+
+    fichier_excel = convertir_excel(
+        df_affichage
+    )
+
+    st.download_button(
+        label="📥 Télécharger l'analyse des camions",
+        data=fichier_excel,
+        file_name="Analyse_Camions.xlsx",
+        mime=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+        use_container_width=True
+    )
+
+except Exception as e:
+
+    st.error(
+        f"❌ Impossible de créer le fichier Excel : {e}"
+    )
+
+
+# ============================================================
+# ACTUALISATION
+# ============================================================
+
+st.divider()
+
+if st.button(
+    "🔄 Actualiser les données",
+    use_container_width=True
+):
+
+    st.rerun()
