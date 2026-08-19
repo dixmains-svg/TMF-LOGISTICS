@@ -121,22 +121,23 @@ with st.sidebar:
 # ============================================================
 # CONFIGURATION DE LA NAVIGATION
 # ============================================================
-# ✅ CODE CORRIGÉ (Un seul bouton Accueil) :
-home_page = st.Page("app_home.py", title="Accueil", icon="🏠", default=True)
 
+home_page = st.Page(str(PAGE_HOME), title="Accueil", icon="🏠", default=True)
+
+# Arborescence de navigation
 pages = {
-    "": [home_page],  # Section sans nom pour la page d'accueil simple
+    "": [home_page],
     "🚚 Gestion du transport": [
-        st.Page("pages/1_OM.py", title="Ordres de Mission", icon="📋"),
-        st.Page("pages/2_Camions.py", title="Camions", icon="🚚"),
-        st.Page("pages/3_Chauffeurs.py", title="Chauffeurs", icon="👷"),
-        st.Page("pages/4_Clients.py", title="Clients", icon="👥"),
-        st.Page("pages/5_Rapports.py", title="Rapports", icon="📊"),
+        st.Page(str(PAGE_OM), title="Ordres de Mission", icon="📋"),
+        st.Page(str(PAGE_CAMIONS), title="Camions", icon="🚚"),
+        st.Page(str(PAGE_CHAUFFEURS), title="Chauffeurs", icon="👷"),
+        st.Page(str(PAGE_CLIENTS), title="Clients", icon="👥"),
+        st.Page(str(PAGE_RAPPORTS), title="Rapports", icon="📊"),
     ],
 }
 
-pg = st.navigation(pages)
-pg.run()
+navigation = st.navigation(pages, position="sidebar")
+navigation.run()
 
 # ============================================================
 # EXECUTION DE LA NAVIGATION
