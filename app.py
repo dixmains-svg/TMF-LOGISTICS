@@ -136,9 +136,6 @@ pages = {
     ],
 }
 
-navigation = st.navigation(pages, position="sidebar")
-navigation.run()
-
 # ============================================================
 # EXECUTION DE LA NAVIGATION
 # ============================================================
