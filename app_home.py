@@ -143,20 +143,13 @@ with col_b:
 
 st.divider()
 
-# État des fichiers
-st.subheader("📁 État des données")
-c1, c2, c3, c4 = st.columns(4)
-c1.success("📋 OM.xlsx") if FICHIER_OM.exists() else c1.error("❌ OM.xlsx")
-c2.success("🚚 Camions.xlsx") if FICHIER_CAMIONS.exists() else c2.error("❌ Camions.xlsx")
-c3.success("👷 Chauffeurs.xlsx") if FICHIER_CHAUFFEURS.exists() else c3.error("❌ Chauffeurs.xlsx")
-c4.success("👥 Clients.xlsx") if FICHIER_CLIENTS.exists() else c4.error("❌ Clients.xlsx")
-
-st.divider()
 
 if st.button("🔄 Actualiser les données", use_container_width=True):
     st.rerun()
 
 st.markdown(
-    '<div class="footer"><b>TMF LOGISTICS</b><br>Système de Gestion du Transport<br>Version 2.0</div>',
+    '<div class="footer"><b>TMF LOGISTICS</b>
+    <br>Système de Gestion du Transport
+     <br>Version 1.0 By H.Redjdal</div>',
     unsafe_allow_html=True,
 )
