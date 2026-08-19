@@ -26,7 +26,7 @@ def lire_excel(fichier):
 
 
 # ============================================================
-# CSS ACCUEIL SÉCURISÉ (Fixe le problème d'écran blanc)
+# CSS ACCUEIL SÉCURISÉ
 # ============================================================
 def appliquer_style_accueil():
     background_css = "background-color: #f8fafc;"
@@ -143,13 +143,13 @@ with col_b:
 
 st.divider()
 
-
 if st.button("🔄 Actualiser les données", use_container_width=True):
     st.rerun()
 
+# Correction de la chaîne multiligne ici avec """
 st.markdown(
-    '<div class="footer"><b>TMF LOGISTICS</b>
+    """<div class="footer"><b>TMF LOGISTICS</b>
     <br>Système de Gestion du Transport
-     <br>Version 1.0 By H.Redjdal</div>',
+    <br>Version 1.0 By H.Redjdal</div>""",
     unsafe_allow_html=True,
 )
