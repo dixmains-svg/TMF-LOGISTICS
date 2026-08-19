@@ -1,8 +1,7 @@
-
+from pathlib import Path
+import base64
+import pandas as pd
 import streamlit as st
-from login import afficher_login
-from app_home import afficher_home
-
 # Configuration de la page
 st.set_page_config(
     page_title="TMF LOGISTICS",
