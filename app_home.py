@@ -16,19 +16,15 @@ st.set_page_config(
 
 
 # ============================================================
-# CHEMINS
+# CHEMIN PRINCIPAL
 # ============================================================
 
-# app_home.py se trouve à la racine du projet
 BASE_DIR = Path(__file__).resolve().parent
 
-# Dossier des données
 DATA_DIR = BASE_DIR / "Data"
 
-# Logo
-LOGO = BASE_DIR / "logo.png"
+LOGO_PATH = BASE_DIR / "logo.png"
 
-# Image d'arrière-plan
 BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
 
 
@@ -46,7 +42,7 @@ FICHIER_CLIENTS = DATA_DIR / "Clients.xlsx"
 
 
 # ============================================================
-# STYLE + ARRIÈRE-PLAN
+# ARRIÈRE-PLAN
 # ============================================================
 
 if BACKGROUND_PATH.exists():
@@ -62,21 +58,20 @@ if BACKGROUND_PATH.exists():
                 image_file.read()
             ).decode("utf-8")
 
+
         st.markdown(
             f"""
             <style>
 
-            /* ==================================================
-               ARRIÈRE-PLAN
-               ================================================== */
-
             .stApp {{
 
                 background-image:
+
                     linear-gradient(
                         rgba(255,255,255,0.88),
                         rgba(255,255,255,0.88)
                     ),
+
                     url(
                         "data:image/jpeg;base64,{encoded_image}"
                     );
@@ -91,94 +86,100 @@ if BACKGROUND_PATH.exists():
             }}
 
 
-            /* ==================================================
-               CARTES
-               ================================================== */
+            /* ================================
+               TITRE PRINCIPAL
+               ================================ */
 
-            [data-testid="stMetric"] {{
-
-                background: rgba(255,255,255,0.90);
-
-                padding: 15px;
-
-                border-radius: 12px;
-
-                box-shadow:
-                    0 2px 10px
-                    rgba(0,0,0,0.08);
-            }}
-
-
-            /* ==================================================
-               TITRE
-               ================================================== */
-
-            .tmf-title {{
-
-                font-size: 50px;
-
-                font-weight: bold;
-
-                color: #1f4e79;
-            }}
-
-
-            .tmf-subtitle {{
-
-                font-size: 25px;
-
-                color: #555;
-
-                margin-top: 5px;
-            }}
-
-
-            /* ==================================================
-               FOOTER
-               ================================================== */
-
-            .tmf-footer {{
+            .main-title {{
 
                 text-align: center;
 
-                margin-top: 40px;
+                font-size: 38px;
+
+                font-weight: 800;
+
+                margin-top: 10px;
+
+                margin-bottom: 5px;
+
+            }}
+
+
+            .main-subtitle {{
+
+                text-align: center;
+
+                font-size: 18px;
+
+                color: #555;
+
+                margin-bottom: 25px;
+
+            }}
+
+
+            /* ================================
+               LOGO
+               ================================ */
+
+            .home-logo {{
+
+                text-align: center;
+
+                margin-bottom: 5px;
+
+            }}
+
+            .home-logo img {{
+
+                width: 150px;
+
+                max-width: 80%;
+
+                height: auto;
+
+            }}
+
+
+            /* ================================
+               CARTES
+               ================================ */
+
+            .info-box {{
+
+                background: rgba(255,255,255,0.94);
+
+                border-radius: 15px;
 
                 padding: 20px;
 
-                color: #666;
+                margin-top: 10px;
 
-                font-size: 13px;
+                margin-bottom: 10px;
 
-                line-height: 1.7;
-
-                border-top:
-                    1px solid
+                box-shadow:
+                    0 3px 15px
                     rgba(0,0,0,0.10);
+
             }}
 
-            .tmf-footer-title {{
 
-                font-size: 20px;
+            /* ================================
+               FOOTER
+               ================================ */
 
-                font-weight: bold;
+            .footer {{
 
-                color: #1f4e79;
-            }}
+                text-align: center;
 
-            .tmf-footer-subtitle {{
+                padding: 25px;
+
+                margin-top: 30px;
+
+                color: #666;
 
                 font-size: 14px;
 
-                margin-top: 3px;
-            }}
-
-            .tmf-footer-version {{
-
-                font-size: 12px;
-
-                margin-top: 5px;
-
-                color: #888;
             }}
 
             </style>
@@ -191,21 +192,21 @@ if BACKGROUND_PATH.exists():
 
 
 # ============================================================
-# LECTURE EXCEL
+# FONCTION LECTURE EXCEL
 # ============================================================
 
 def lire_excel(fichier):
 
     """
-    Lit un fichier Excel sans utiliser de cache.
-
-    Les modifications enregistrées dans Excel seront
-    récupérées lors de la prochaine exécution de la page.
+    Lit un fichier Excel sans utiliser le cache.
+    Les modifications du fichier Excel sont donc
+    récupérées lors du rechargement de la page.
     """
 
     if not fichier.exists():
 
         return pd.DataFrame()
+
 
     try:
 
@@ -214,19 +215,25 @@ def lire_excel(fichier):
             engine="openpyxl"
         )
 
-        # Nettoyage des noms de colonnes
+
+        # Nettoyage des colonnes
+
         df.columns = (
             df.columns
             .astype(str)
             .str.strip()
         )
 
+
         # Suppression des lignes complètement vides
+
         df = df.dropna(
             how="all"
         )
 
+
         return df
+
 
     except Exception:
 
@@ -234,24 +241,16 @@ def lire_excel(fichier):
 
 
 # ============================================================
-# CHARGEMENT DES DONNÉES
+# CHARGEMENT DES 4 FICHIERS
 # ============================================================
 
-df_om = lire_excel(
-    FICHIER_OM
-)
+df_om = lire_excel(FICHIER_OM)
 
-df_camions = lire_excel(
-    FICHIER_CAMIONS
-)
+df_camions = lire_excel(FICHIER_CAMIONS)
 
-df_chauffeurs = lire_excel(
-    FICHIER_CHAUFFEURS
-)
+df_chauffeurs = lire_excel(FICHIER_CHAUFFEURS)
 
-df_clients = lire_excel(
-    FICHIER_CLIENTS
-)
+df_clients = lire_excel(FICHIER_CLIENTS)
 
 
 # ============================================================
@@ -268,41 +267,59 @@ nombre_clients = len(df_clients)
 
 
 # ============================================================
-# LOGO + TITRE
-# ============================================================
-
-col_logo, col_titre = st.columns(
-    [1, 5]
-)
-
-
-# ============================================================
 # LOGO
 # ============================================================
 
-with col_logo:
+if LOGO_PATH.exists():
 
-    if LOGO.exists():
+    try:
 
-        st.image(
-            str(LOGO),
-            width=100
+        with open(
+            LOGO_PATH,
+            "rb"
+        ) as image_file:
+
+            logo_base64 = base64.b64encode(
+                image_file.read()
+            ).decode("utf-8")
+
+
+        st.markdown(
+            f"""
+            <div class="home-logo">
+
+                <img
+                    src="data:image/png;base64,{logo_base64}"
+                    alt="TMF LOGISTICS"
+                >
+
+            </div>
+            """,
+            unsafe_allow_html=True
         )
+
+    except Exception:
+
+        pass
 
 
 # ============================================================
 # TITRE
 # ============================================================
 
-with col_titre:
-
-   st.markdown(
+st.markdown(
     """
-    <div class="tmf-title">
+    <div class="main-title">
         🚛 TMF LOGISTICS
     </div>
+    """,
+    unsafe_allow_html=True
+)
 
-    <div class="tmf-subtitle">
+
+st.markdown(
+    """
+    <div class="main-subtitle">
         Système de Gestion du Transport et des Ordres de Mission
     </div>
     """,
@@ -310,23 +327,18 @@ with col_titre:
 )
 
 
+st.divider()
+
+
 # ============================================================
 # TABLEAU DE BORD
 # ============================================================
 
-st.header(
-    "📊 Tableau de bord"
-)
+st.header("📊 Tableau de bord")
 
 
-col1, col2, col3, col4 = st.columns(
-    4
-)
+col1, col2, col3, col4 = st.columns(4)
 
-
-# ============================================================
-# ORDRES DE MISSION
-# ============================================================
 
 with col1:
 
@@ -336,10 +348,6 @@ with col1:
     )
 
 
-# ============================================================
-# CAMIONS
-# ============================================================
-
 with col2:
 
     st.metric(
@@ -348,10 +356,6 @@ with col2:
     )
 
 
-# ============================================================
-# CHAUFFEURS
-# ============================================================
-
 with col3:
 
     st.metric(
@@ -359,10 +363,6 @@ with col3:
         nombre_chauffeurs
     )
 
-
-# ============================================================
-# CLIENTS
-# ============================================================
 
 with col4:
 
@@ -399,19 +399,11 @@ st.write(
 # MODULES
 # ============================================================
 
-st.subheader(
-    "📌 Modules de l'application"
-)
+st.subheader("📌 Modules de l'application")
 
 
-col1, col2 = st.columns(
-    2
-)
+col1, col2 = st.columns(2)
 
-
-# ============================================================
-# COLONNE GAUCHE
-# ============================================================
 
 with col1:
 
@@ -425,6 +417,7 @@ with col1:
         """
     )
 
+
     st.markdown(
         """
         ### 🚚 Gestion du parc
@@ -433,6 +426,7 @@ with col1:
         affectations et disponibilité du parc.
         """
     )
+
 
     st.markdown(
         """
@@ -444,10 +438,6 @@ with col1:
         """
     )
 
-
-# ============================================================
-# COLONNE DROITE
-# ============================================================
 
 with col2:
 
@@ -461,6 +451,7 @@ with col2:
         """
     )
 
+
     st.markdown(
         """
         ### 📊 Rapports
@@ -471,6 +462,7 @@ with col2:
         et utilisation de la flotte.
         """
     )
+
 
     st.markdown(
         """
@@ -487,17 +479,67 @@ st.divider()
 
 
 # ============================================================
+# ÉTAT DES FICHIERS
+# ============================================================
+
+st.subheader("📁 État des données")
+
+
+col1, col2, col3, col4 = st.columns(4)
+
+
+with col1:
+
+    if FICHIER_OM.exists():
+
+        st.success("📋 OM.xlsx")
+
+    else:
+
+        st.error("❌ OM.xlsx")
+
+
+with col2:
+
+    if FICHIER_CAMIONS.exists():
+
+        st.success("🚚 Camions.xlsx")
+
+    else:
+
+        st.error("❌ Camions.xlsx")
+
+
+with col3:
+
+    if FICHIER_CHAUFFEURS.exists():
+
+        st.success("👷 Chauffeurs.xlsx")
+
+    else:
+
+        st.error("❌ Chauffeurs.xlsx")
+
+
+with col4:
+
+    if FICHIER_CLIENTS.exists():
+
+        st.success("👥 Clients.xlsx")
+
+    else:
+
+        st.error("❌ Clients.xlsx")
+
+
+# ============================================================
 # ACTUALISATION
 # ============================================================
 
-st.subheader(
-    "🔄 Actualisation des données"
-)
+st.divider()
 
 
-col1, col2, col3 = st.columns(
-    [1, 2, 1]
-)
+col1, col2, col3 = st.columns([1, 2, 1])
 
 
 with col2:
@@ -528,21 +570,16 @@ st.info(
 # ============================================================
 # FOOTER
 # ============================================================
+
 st.markdown(
     """
-    <div class="tmf-footer">
+    <div class="footer">
 
-        <div class="tmf-footer-title">
-            TMF LOGISTICS
-        </div>
+        <b>TMF LOGISTICS</b><br>
 
-        <div class="tmf-footer-subtitle">
-            Système de Gestion du Transport
-        </div>
+        Système de Gestion du Transport<br>
 
-        <div class="tmf-footer-version">
-            Version 1.0 — By H.Redjdal
-        </div>
+        Version 2.0
 
     </div>
     """,
