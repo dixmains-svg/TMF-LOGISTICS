@@ -1,17 +1,14 @@
-import streamlit as st
-import pandas as pd
 import base64
 from pathlib import Path
-
+import pandas as pd
+import streamlit as st
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
 st.set_page_config(
-    page_title="TMF LOGISTICS - Accueil",
-    page_icon="🚛",
-    layout="wide"
+    page_title="TMF LOGISTICS - Accueil", page_icon="🚛", layout="wide"
 )
 
 
@@ -46,18 +43,9 @@ FICHIER_CLIENTS = DATA_DIR / "Clients.xlsx"
 # ============================================================
 
 if BACKGROUND_PATH.exists():
-
     try:
-
-        with open(
-            BACKGROUND_PATH,
-            "rb"
-        ) as image_file:
-
-            encoded_image = base64.b64encode(
-                image_file.read()
-            ).decode("utf-8")
-
+        with open(BACKGROUND_PATH, "rb") as image_file:
+            encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
 
         st.markdown(
             f"""
@@ -184,7 +172,7 @@ if BACKGROUND_PATH.exists():
 
             </style>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     except Exception:
@@ -195,48 +183,31 @@ if BACKGROUND_PATH.exists():
 # FONCTION LECTURE EXCEL
 # ============================================================
 
-def lire_excel(fichier):
 
-    """
-    Lit un fichier Excel sans utiliser le cache.
-    Les modifications du fichier Excel sont donc
-    récupérées lors du rechargement de la page.
+def lire_excel(fichier):
+    """Lit un fichier Excel sans utiliser le cache.
+
+    Les modifications du fichier Excel sont donc récupérées lors du
+    rechargement de la page.
     """
 
     if not fichier.exists():
-
         return pd.DataFrame()
 
-
     try:
-
-        df = pd.read_excel(
-            fichier,
-            engine="openpyxl"
-        )
-
+        df = pd.read_excel(fichier, engine="openpyxl")
 
         # Nettoyage des colonnes
 
-        df.columns = (
-            df.columns
-            .astype(str)
-            .str.strip()
-        )
-
+        df.columns = df.columns.astype(str).str.strip()
 
         # Suppression des lignes complètement vides
 
-        df = df.dropna(
-            how="all"
-        )
-
+        df = df.dropna(how="all")
 
         return df
 
-
     except Exception:
-
         return pd.DataFrame()
 
 
@@ -271,18 +242,9 @@ nombre_clients = len(df_clients)
 # ============================================================
 
 if LOGO_PATH.exists():
-
     try:
-
-        with open(
-            LOGO_PATH,
-            "rb"
-        ) as image_file:
-
-            logo_base64 = base64.b64encode(
-                image_file.read()
-            ).decode("utf-8")
-
+        with open(LOGO_PATH, "rb") as image_file:
+            logo_base64 = base64.b64encode(image_file.read()).decode("utf-8")
 
         st.markdown(
             f"""
@@ -295,11 +257,10 @@ if LOGO_PATH.exists():
 
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     except Exception:
-
         pass
 
 
@@ -313,7 +274,7 @@ st.markdown(
         🚛 TMF LOGISTICS
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 
@@ -323,7 +284,7 @@ st.markdown(
         Système de Gestion du Transport et des Ordres de Mission
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 
@@ -341,35 +302,19 @@ col1, col2, col3, col4 = st.columns(4)
 
 
 with col1:
-
-    st.metric(
-        "📋 Ordres de Mission",
-        nombre_om
-    )
+    st.metric("📋 Ordres de Mission", nombre_om)
 
 
 with col2:
-
-    st.metric(
-        "🚚 Camions",
-        nombre_camions
-    )
+    st.metric("🚚 Camions", nombre_camions)
 
 
 with col3:
-
-    st.metric(
-        "👷 Chauffeurs",
-        nombre_chauffeurs
-    )
+    st.metric("👷 Chauffeurs", nombre_chauffeurs)
 
 
 with col4:
-
-    st.metric(
-        "👥 Clients",
-        nombre_clients
-    )
+    st.metric("👥 Clients", nombre_clients)
 
 
 st.divider()
@@ -379,9 +324,7 @@ st.divider()
 # MESSAGE D'ACCUEIL
 # ============================================================
 
-st.header(
-    "Azul Felawen dans TMF LOGISTICS 👋"
-)
+st.header("Azul Felawen dans TMF LOGISTICS 👋")
 
 
 st.write(
@@ -406,7 +349,6 @@ col1, col2 = st.columns(2)
 
 
 with col1:
-
     st.markdown(
         """
         ### 📋 Ordres de Mission
@@ -417,7 +359,6 @@ with col1:
         """
     )
 
-
     st.markdown(
         """
         ### 🚚 Gestion du parc
@@ -426,7 +367,6 @@ with col1:
         affectations et disponibilité du parc.
         """
     )
-
 
     st.markdown(
         """
@@ -440,7 +380,6 @@ with col1:
 
 
 with col2:
-
     st.markdown(
         """
         ### 👥 Gestion des Clients
@@ -450,7 +389,6 @@ with col2:
         coordonnées et lieux de chargement.
         """
     )
-
 
     st.markdown(
         """
@@ -462,7 +400,6 @@ with col2:
         et utilisation de la flotte.
         """
     )
-
 
     st.markdown(
         """
@@ -489,46 +426,34 @@ col1, col2, col3, col4 = st.columns(4)
 
 
 with col1:
-
     if FICHIER_OM.exists():
-
         st.success("📋 OM.xlsx")
 
     else:
-
         st.error("❌ OM.xlsx")
 
 
 with col2:
-
     if FICHIER_CAMIONS.exists():
-
         st.success("🚚 Camions.xlsx")
 
     else:
-
         st.error("❌ Camions.xlsx")
 
 
 with col3:
-
     if FICHIER_CHAUFFEURS.exists():
-
         st.success("👷 Chauffeurs.xlsx")
 
     else:
-
         st.error("❌ Chauffeurs.xlsx")
 
 
 with col4:
-
     if FICHIER_CLIENTS.exists():
-
         st.success("👥 Clients.xlsx")
 
     else:
-
         st.error("❌ Clients.xlsx")
 
 
@@ -543,12 +468,7 @@ col1, col2, col3 = st.columns([1, 2, 1])
 
 
 with col2:
-
-    if st.button(
-        "🔄 Actualiser les données",
-        use_container_width=True
-    ):
-
+    if st.button("🔄 Actualiser les données", use_container_width=True):
         st.rerun()
 
 
@@ -583,5 +503,5 @@ st.markdown(
 
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
