@@ -15,10 +15,11 @@ st.set_page_config(
 
 
 # ============================================================
-# CHEMIN DU PROJET
+# CHEMINS
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent
+
 PAGES_DIR = BASE_DIR / "Pages"
 
 
@@ -43,7 +44,7 @@ PAGE_RAPPORTS = PAGES_DIR / "5_Rapports.py"
 # VÉRIFICATION DES FICHIERS
 # ============================================================
 
-pages_fichiers = {
+fichiers = {
     "Accueil": PAGE_HOME,
     "Ordres de Mission": PAGE_OM,
     "Camions": PAGE_CAMIONS,
@@ -55,26 +56,24 @@ pages_fichiers = {
 
 fichiers_manquants = []
 
-for nom, chemin in pages_fichiers.items():
+for nom, chemin in fichiers.items():
 
     if not chemin.is_file():
 
         fichiers_manquants.append(
-            f"{nom} : {chemin}"
+            f"{nom} → {chemin}"
         )
 
-
-# ============================================================
-# AFFICHAGE DES ERREURS
-# ============================================================
 
 if fichiers_manquants:
 
     st.error(
-        "❌ Des fichiers nécessaires à la navigation sont introuvables."
+        "❌ Fichiers de navigation introuvables"
     )
 
-    st.markdown("### Fichiers recherchés")
+    st.markdown(
+        "### Fichiers manquants"
+    )
 
     for fichier in fichiers_manquants:
 
@@ -84,60 +83,60 @@ if fichiers_manquants:
 
 
 # ============================================================
-# STYLE
+# CSS
 # ============================================================
 
 st.markdown(
     """
     <style>
 
-    /* ================================
+    /* ========================================================
        SIDEBAR
-       ================================ */
+       ======================================================== */
 
     [data-testid="stSidebar"] {
         background-color: #f7f9fc;
     }
 
 
-    /* ================================
+    /* ========================================================
        TITRE SIDEBAR
-       ================================ */
+       ======================================================== */
 
     .tmf-sidebar-title {
         text-align: center;
-        font-size: 22px;
-        font-weight: 700;
+        font-size: 23px;
+        font-weight: 800;
         color: #1f4e79;
         margin-top: 10px;
         margin-bottom: 5px;
     }
 
 
-    /* ================================
+    /* ========================================================
        SOUS-TITRE SIDEBAR
-       ================================ */
+       ======================================================== */
 
     .tmf-sidebar-subtitle {
         text-align: center;
         font-size: 12px;
-        color: #666;
+        color: #666666;
         margin-bottom: 15px;
     }
 
 
-    /* ================================
+    /* ========================================================
        MASQUER MENU STREAMLIT
-       ================================ */
+       ======================================================== */
 
     #MainMenu {
         visibility: hidden;
     }
 
 
-    /* ================================
+    /* ========================================================
        MASQUER FOOTER STREAMLIT
-       ================================ */
+       ======================================================== */
 
     footer {
         visibility: hidden;
@@ -174,44 +173,69 @@ with st.sidebar:
 # ============================================================
 # NAVIGATION
 # ============================================================
+#
+# IMPORTANT :
+# Les valeurs du dictionnaire sont des LISTES.
+#
+# Correct :
+#
+# "Accueil": [
+#     st.Page(...)
+# ]
+#
+# et non :
+#
+# "Accueil": st.Page(...)
+#
+# ============================================================
 
 pages = {
 
-    "🏠 Accueil": st.Page(
-        str(PAGE_HOME),
-        title="Accueil",
-        icon="🏠"
-    ),
+    "🏠 Accueil": [
 
-    "📋 Ordres de Mission": st.Page(
-        str(PAGE_OM),
-        title="Ordres de Mission",
-        icon="📋"
-    ),
+        st.Page(
+            str(PAGE_HOME),
+            title="Accueil",
+            icon="🏠",
+            default=True
+        )
 
-    "🚚 Camions": st.Page(
-        str(PAGE_CAMIONS),
-        title="Camions",
-        icon="🚚"
-    ),
+    ],
 
-    "👷 Chauffeurs": st.Page(
-        str(PAGE_CHAUFFEURS),
-        title="Chauffeurs",
-        icon="👷"
-    ),
+    "🚛 Gestion du transport": [
 
-    "👥 Clients": st.Page(
-        str(PAGE_CLIENTS),
-        title="Clients",
-        icon="👥"
-    ),
+        st.Page(
+            str(PAGE_OM),
+            title="Ordres de Mission",
+            icon="📋"
+        ),
 
-    "📊 Rapports": st.Page(
-        str(PAGE_RAPPORTS),
-        title="Rapports",
-        icon="📊"
-    ),
+        st.Page(
+            str(PAGE_CAMIONS),
+            title="Camions",
+            icon="🚚"
+        ),
+
+        st.Page(
+            str(PAGE_CHAUFFEURS),
+            title="Chauffeurs",
+            icon="👷"
+        ),
+
+        st.Page(
+            str(PAGE_CLIENTS),
+            title="Clients",
+            icon="👥"
+        ),
+
+        st.Page(
+            str(PAGE_RAPPORTS),
+            title="Rapports",
+            icon="📊"
+        )
+
+    ]
+
 }
 
 
@@ -226,7 +250,7 @@ navigation = st.navigation(
 
 
 # ============================================================
-# EXÉCUTION
+# EXÉCUTION DE LA PAGE
 # ============================================================
 
 navigation.run()
