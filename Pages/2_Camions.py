@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from pathlib import Path
+from io import BytesIO
 
 
 # ============================================================
@@ -15,39 +16,121 @@ st.set_page_config(
 
 
 # ============================================================
-# CHEMIN DU FICHIER
+# DÉTERMINATION DU DOSSIER RACINE
 # ============================================================
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+CURRENT_DIR = Path(__file__).resolve().parent
 
-FICHIER_CAMIONS = BASE_DIR / "Data" / "Camions.xlsx"
+
+def trouver_racine_projet():
+
+    # Cas normal :
+    # /tmf-logistics/Pages/2_Camions.py
+    if (CURRENT_DIR.parent / "Data").exists():
+        return CURRENT_DIR.parent
+
+    # Recherche dans les parents
+    for parent in CURRENT_DIR.parents:
+
+        if (parent / "Data").exists():
+            return parent
+
+    # Dernier recours
+    return CURRENT_DIR.parent
+
+
+BASE_DIR = trouver_racine_projet()
+
+DATA_DIR = BASE_DIR / "Data"
 
 
 # ============================================================
-# LECTURE EXCEL
+# FICHIERS
+# ============================================================
+
+FICHIER_CAMIONS = DATA_DIR / "Camions.xlsx"
+FICHIER_OM = DATA_DIR / "OM.xlsx"
+
+
+# ============================================================
+# TITRE
+# ============================================================
+
+st.title("🚚 Gestion des Camions")
+
+st.subheader(
+    "Parc automobile - TMF LOGISTICS"
+)
+
+
+# ============================================================
+# INFORMATIONS FICHIERS
+# ============================================================
+
+with st.expander("📁 Informations sur les fichiers"):
+
+    st.write(
+        f"**Dossier du projet :** `{BASE_DIR}`"
+    )
+
+    st.write(
+        f"**Dossier Data :** `{DATA_DIR}`"
+    )
+
+    st.write(
+        f"**Fichier Camions :** `{FICHIER_CAMIONS}`"
+    )
+
+    if FICHIER_CAMIONS.exists():
+
+        st.success(
+            "✅ Camions.xlsx trouvé"
+        )
+
+    else:
+
+        st.error(
+            "❌ Camions.xlsx introuvable"
+        )
+
+        st.stop()
+
+
+# ============================================================
+# LECTURE CAMIONS
 # ============================================================
 
 @st.cache_data
 def charger_camions():
 
-    if not FICHIER_CAMIONS.exists():
-        return pd.DataFrame()
-
     try:
 
         df = pd.read_excel(
             FICHIER_CAMIONS,
-            sheet_name="Camions",
             engine="openpyxl"
         )
 
-        # Nettoyage des noms de colonnes
-        df.columns = df.columns.astype(str).str.strip()
+        df.columns = (
+            df.columns
+            .astype(str)
+            .str.strip()
+        )
 
-        # Nettoyage des cellules texte
+        df = df.dropna(
+            how="all"
+        )
+
+        # Nettoyage des données texte
         for colonne in df.columns:
+
             if df[colonne].dtype == "object":
-                df[colonne] = df[colonne].fillna("").astype(str).str.strip()
+
+                df[colonne] = (
+                    df[colonne]
+                    .fillna("")
+                    .astype(str)
+                    .str.strip()
+                )
 
         return df
 
@@ -67,43 +150,286 @@ def charger_camions():
 df_camions = charger_camions()
 
 
-# ============================================================
-# TITRE
-# ============================================================
-
-st.title("🚚 Gestion des Camions")
-
-st.subheader(
-    "Parc automobile - TMF LOGISTICS"
-)
-
-
-# ============================================================
-# VÉRIFICATION
-# ============================================================
-
 if df_camions.empty:
 
     st.error(
-        f"""
-        ❌ Le fichier Camions.xlsx est introuvable ou vide.
-
-        Fichier recherché :
-
-        `{FICHIER_CAMIONS}`
-        """
+        "❌ Le fichier Camions.xlsx est vide."
     )
 
     st.stop()
 
 
 # ============================================================
-# STATISTIQUES
+# LECTURE ORDRES DE MISSION
 # ============================================================
 
-total_camions = len(df_camions)
+@st.cache_data
+def charger_om():
 
-col1, col2, col3, col4 = st.columns(4)
+    if not FICHIER_OM.exists():
+
+        return pd.DataFrame()
+
+    try:
+
+        df = pd.read_excel(
+            FICHIER_OM,
+            sheet_name="Input OM fini",
+            engine="openpyxl"
+        )
+
+        df.columns = (
+            df.columns
+            .astype(str)
+            .str.strip()
+        )
+
+        df = df.dropna(
+            how="all"
+        )
+
+        return df
+
+    except Exception:
+
+        return pd.DataFrame()
+
+
+df_om = charger_om()
+
+
+# ============================================================
+# NETTOYAGE DES NUMÉROS DE CAMION
+# ============================================================
+
+def nettoyer_camion(valeur):
+
+    if pd.isna(valeur):
+
+        return ""
+
+    return str(valeur).strip().upper()
+
+
+# ============================================================
+# STATISTIQUES PAR CAMION
+# ============================================================
+
+if not df_om.empty and "Numero Camion" in df_om.columns:
+
+    df_om["CAMION_ANALYSE"] = (
+        df_om["Numero Camion"]
+        .apply(nettoyer_camion)
+    )
+
+
+    # --------------------------------------------------------
+    # NOMBRE DE MISSIONS
+    # --------------------------------------------------------
+
+    missions_par_camion = (
+        df_om[
+            df_om["CAMION_ANALYSE"] != ""
+        ]
+        .groupby("CAMION_ANALYSE")
+        .size()
+        .reset_index(
+            name="Nombre de Missions"
+        )
+    )
+
+
+    # --------------------------------------------------------
+    # KILOMÉTRAGE
+    # --------------------------------------------------------
+
+    if "Kilometrage Parcouru" in df_om.columns:
+
+        df_om["KM_ANALYSE"] = pd.to_numeric(
+            df_om["Kilometrage Parcouru"],
+            errors="coerce"
+        ).fillna(0)
+
+        km_par_camion = (
+            df_om[
+                df_om["CAMION_ANALYSE"] != ""
+            ]
+            .groupby("CAMION_ANALYSE")["KM_ANALYSE"]
+            .sum()
+            .reset_index()
+        )
+
+        km_par_camion = km_par_camion.rename(
+            columns={
+                "KM_ANALYSE": "Kilométrage Parcouru"
+            }
+        )
+
+    else:
+
+        km_par_camion = pd.DataFrame(
+            columns=[
+                "CAMION_ANALYSE",
+                "Kilométrage Parcouru"
+            ]
+        )
+
+
+    # --------------------------------------------------------
+    # FUSION
+    # --------------------------------------------------------
+
+    statistiques_camions = missions_par_camion.merge(
+        km_par_camion,
+        on="CAMION_ANALYSE",
+        how="outer"
+    )
+
+else:
+
+    statistiques_camions = pd.DataFrame(
+        columns=[
+            "CAMION_ANALYSE",
+            "Nombre de Missions",
+            "Kilométrage Parcouru"
+        ]
+    )
+
+
+# ============================================================
+# PRÉPARATION DU TABLEAU CAMIONS
+# ============================================================
+
+df_affichage = df_camions.copy()
+
+
+# ------------------------------------------------------------
+# IDENTIFICATION DE LA COLONNE CAMION
+# ------------------------------------------------------------
+
+colonne_camion = None
+
+possibles_camion = [
+    "Numero Camion",
+    "Numéro Camion",
+    "N° Camion",
+    "Camion",
+    "Matricule",
+    "Matricule Camion"
+]
+
+
+for colonne in possibles_camion:
+
+    if colonne in df_affichage.columns:
+
+        colonne_camion = colonne
+
+        break
+
+
+# ============================================================
+# AJOUT DES STATISTIQUES
+# ============================================================
+
+if colonne_camion is not None:
+
+    df_affichage["CAMION_ANALYSE"] = (
+        df_affichage[colonne_camion]
+        .apply(nettoyer_camion)
+    )
+
+    df_affichage = df_affichage.merge(
+        statistiques_camions,
+        on="CAMION_ANALYSE",
+        how="left"
+    )
+
+    df_affichage = df_affichage.drop(
+        columns=["CAMION_ANALYSE"],
+        errors="ignore"
+    )
+
+else:
+
+    df_affichage["Nombre de Missions"] = 0
+
+    df_affichage["Kilométrage Parcouru"] = 0
+
+
+df_affichage["Nombre de Missions"] = (
+    pd.to_numeric(
+        df_affichage["Nombre de Missions"],
+        errors="coerce"
+    )
+    .fillna(0)
+    .astype(int)
+)
+
+
+df_affichage["Kilométrage Parcouru"] = (
+    pd.to_numeric(
+        df_affichage["Kilométrage Parcouru"],
+        errors="coerce"
+    )
+    .fillna(0)
+)
+
+
+# ============================================================
+# STATISTIQUES GÉNÉRALES
+# ============================================================
+
+total_camions = len(df_affichage)
+
+total_missions = int(
+    df_affichage["Nombre de Missions"].sum()
+)
+
+total_km = float(
+    df_affichage["Kilométrage Parcouru"].sum()
+)
+
+
+# ============================================================
+# STATUTS
+# ============================================================
+
+if "Statut" in df_affichage.columns:
+
+    nombre_operationnels = (
+        df_affichage["Statut"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+        .isin(
+            [
+                "opérationnel",
+                "operationnel",
+                "disponible",
+                "en service"
+            ]
+        )
+        .sum()
+    )
+
+else:
+
+    nombre_operationnels = 0
+
+
+nombre_non_operationnels = (
+    total_camions - nombre_operationnels
+)
+
+
+# ============================================================
+# INDICATEURS
+# ============================================================
+
+st.divider()
+
+col1, col2, col3, col4, col5 = st.columns(5)
 
 
 with col1:
@@ -116,208 +442,242 @@ with col1:
 
 with col2:
 
-    if "Affectation" in df_camions.columns:
-        nombre_affectations = df_camions["Affectation"].nunique()
-    else:
-        nombre_affectations = 0
-
     st.metric(
-        "📍 Affectations",
-        nombre_affectations
+        "✅ Opérationnels",
+        nombre_operationnels
     )
 
 
 with col3:
 
-    if "Marque" in df_camions.columns:
-        nombre_marques = df_camions["Marque"].nunique()
-    else:
-        nombre_marques = 0
-
     st.metric(
-        "🏭 Marques",
-        nombre_marques
+        "⚠️ Non opérationnels",
+        nombre_non_operationnels
     )
 
 
 with col4:
 
-    if "Superviseur" in df_camions.columns:
-        nombre_superviseurs = df_camions["Superviseur"].nunique()
-    else:
-        nombre_superviseurs = 0
-
     st.metric(
-        "👤 Superviseurs",
-        nombre_superviseurs
+        "📋 Total Missions",
+        total_missions
     )
 
 
-st.divider()
+with col5:
+
+    st.metric(
+        "🛣️ Total KM",
+        f"{total_km:,.0f}"
+    )
 
 
 # ============================================================
 # RECHERCHE
 # ============================================================
 
+st.divider()
+
 st.subheader("🔎 Recherche")
 
 recherche = st.text_input(
     "Rechercher un camion",
     placeholder=(
-        "N°, immatriculation, section, affectation, "
-        "genre, marque ou superviseur..."
+        "Matricule, camion, remorque, chauffeur, "
+        "client ou statut..."
     )
 )
-
-
-# ============================================================
-# FILTRES
-# ============================================================
-
-col1, col2, col3 = st.columns(3)
-
-
-with col1:
-
-    if "Section" in df_camions.columns:
-
-        sections = sorted(
-            [
-                x for x in
-                df_camions["Section"].dropna().unique()
-                if str(x).strip()
-            ]
-        )
-
-        section_selection = st.multiselect(
-            "📂 Section",
-            sections
-        )
-
-    else:
-
-        section_selection = []
-
-
-with col2:
-
-    if "Affectation" in df_camions.columns:
-
-        affectations = sorted(
-            [
-                x for x in
-                df_camions["Affectation"].dropna().unique()
-                if str(x).strip()
-            ]
-        )
-
-        affectation_selection = st.multiselect(
-            "📍 Affectation",
-            affectations
-        )
-
-    else:
-
-        affectation_selection = []
-
-
-with col3:
-
-    if "Marque" in df_camions.columns:
-
-        marques = sorted(
-            [
-                x for x in
-                df_camions["Marque"].dropna().unique()
-                if str(x).strip()
-            ]
-        )
-
-        marque_selection = st.multiselect(
-            "🏭 Marque",
-            marques
-        )
-
-    else:
-
-        marque_selection = []
 
 
 # ============================================================
 # FILTRAGE
 # ============================================================
 
-df_filtre = df_camions.copy()
+df_filtre = df_affichage.copy()
 
-
-# Recherche générale
 
 if recherche:
 
     masque = (
-        df_filtre.astype(str)
+        df_filtre
+        .astype(str)
         .apply(
             lambda colonne:
             colonne.str.contains(
                 recherche,
                 case=False,
-                na=False
+                na=False,
+                regex=False
             )
         )
         .any(axis=1)
     )
 
-    df_filtre = df_filtre[masque]
-
-
-# Section
-
-if section_selection:
-
     df_filtre = df_filtre[
-        df_filtre["Section"].isin(section_selection)
+        masque
     ]
-
-
-# Affectation
-
-if affectation_selection:
-
-    df_filtre = df_filtre[
-        df_filtre["Affectation"].isin(affectation_selection)
-    ]
-
-
-# Marque
-
-if marque_selection:
-
-    df_filtre = df_filtre[
-        df_filtre["Marque"].isin(marque_selection)
-    ]
-
-
-# ============================================================
-# RÉSULTAT
-# ============================================================
-
-st.divider()
-
-st.subheader(
-    f"🚛 Liste des camions ({len(df_filtre)})"
-)
 
 
 # ============================================================
 # TABLEAU
 # ============================================================
 
-st.dataframe(
-    df_filtre,
-    use_container_width=True,
-    hide_index=True
+st.divider()
+
+st.subheader(
+    f"🚚 Liste des camions ({len(df_filtre)})"
 )
+
+
+# ------------------------------------------------------------
+# ORDRE DES COLONNES
+# ------------------------------------------------------------
+
+colonnes_prioritaires = []
+
+for colonne in [
+    "N°",
+    "Numéro",
+    "Numero Camion",
+    "Numéro Camion",
+    "Camion",
+    "Remorque",
+    "Chauffeur",
+    "Statut",
+    "Client",
+    "Mission",
+    "Nombre de Missions",
+    "Kilométrage Parcouru"
+]:
+
+    if colonne in df_filtre.columns:
+
+        if colonne not in colonnes_prioritaires:
+
+            colonnes_prioritaires.append(
+                colonne
+            )
+
+
+autres_colonnes = [
+    colonne
+    for colonne in df_filtre.columns
+    if colonne not in colonnes_prioritaires
+]
+
+
+df_tableau = df_filtre[
+    colonnes_prioritaires + autres_colonnes
+].copy()
+
+
+# ============================================================
+# AFFICHAGE
+# ============================================================
+
+st.dataframe(
+    df_tableau,
+    use_container_width=True,
+    hide_index=True,
+    height=600
+)
+
+
+# ============================================================
+# DÉTAIL PAR CAMION
+# ============================================================
+
+st.divider()
+
+st.subheader(
+    "🔍 Analyse détaillée d'un camion"
+)
+
+
+if colonne_camion is not None:
+
+    liste_camions = sorted(
+        [
+            nettoyer_camion(x)
+            for x in df_affichage[
+                colonne_camion
+            ]
+            .dropna()
+            .unique()
+            if nettoyer_camion(x)
+        ]
+    )
+
+    if liste_camions:
+
+        camion_selectionne = st.selectbox(
+            "🚚 Sélectionner un camion",
+            liste_camions,
+            key="camion_detail_selection"
+        )
+
+
+        ligne_camion = df_affichage[
+            df_affichage[
+                colonne_camion
+            ]
+            .apply(nettoyer_camion)
+            == camion_selectionne
+        ]
+
+
+        if not ligne_camion.empty:
+
+            ligne = ligne_camion.iloc[0]
+
+
+            col1, col2, col3, col4 = st.columns(4)
+
+
+            with col1:
+
+                st.metric(
+                    "🚚 Camion",
+                    camion_selectionne
+                )
+
+
+            with col2:
+
+                st.metric(
+                    "📋 Missions",
+                    int(
+                        ligne.get(
+                            "Nombre de Missions",
+                            0
+                        )
+                    )
+                )
+
+
+            with col3:
+
+                st.metric(
+                    "🛣️ KM Parcourus",
+                    f"{float(ligne.get('Kilométrage Parcouru', 0)):,.0f}"
+                )
+
+
+            with col4:
+
+                if "Statut" in ligne.index:
+
+                    st.metric(
+                        "📌 Statut",
+                        ligne["Statut"]
+                    )
+
+                else:
+
+                    st.metric(
+                        "📌 Statut",
+                        "-"
+                    )
 
 
 # ============================================================
@@ -326,13 +686,12 @@ st.dataframe(
 
 st.divider()
 
-st.subheader("📥 Export")
+st.subheader(
+    "📥 Export des données"
+)
 
 
-@st.cache_data
 def convertir_excel(df):
-
-    from io import BytesIO
 
     buffer = BytesIO()
 
@@ -350,15 +709,44 @@ def convertir_excel(df):
     return buffer.getvalue()
 
 
-fichier_excel = convertir_excel(df_filtre)
+try:
 
-
-st.download_button(
-    label="📥 Télécharger la liste des camions",
-    data=fichier_excel,
-    file_name="Camions_filtrés.xlsx",
-    mime=(
-        "application/vnd.openxmlformats-officedocument."
-        "spreadsheetml.sheet"
+    fichier_excel = convertir_excel(
+        df_filtre
     )
-)
+
+
+    st.download_button(
+        label="📥 Télécharger la liste des camions",
+        data=fichier_excel,
+        file_name="Camions_Analyse.xlsx",
+        mime=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+        key="download_camions_analyse"
+    )
+
+
+except Exception as e:
+
+    st.error(
+        f"❌ Impossible de créer le fichier Excel : {e}"
+    )
+
+
+# ============================================================
+# ACTUALISATION
+# ============================================================
+
+st.divider()
+
+if st.button(
+    "🔄 Actualiser les données",
+    use_container_width=True,
+    key="refresh_camions"
+):
+
+    st.cache_data.clear()
+
+    st.rerun()
