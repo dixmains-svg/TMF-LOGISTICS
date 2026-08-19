@@ -9,180 +9,53 @@ from pathlib import Path
 st.set_page_config(
     page_title="TMF LOGISTICS",
     page_icon="🚛",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
 
 # ============================================================
-# RACINE DU PROJET
+# CHEMIN RACINE
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent
-
 PAGES_DIR = BASE_DIR / "Pages"
 
 
 # ============================================================
-# FICHIERS DES PAGES
+# FICHIERS
 # ============================================================
 
 PAGE_HOME = BASE_DIR / "app_home.py"
-
 PAGE_OM = PAGES_DIR / "1_Ordres_de_Mission.py"
-
 PAGE_CAMIONS = PAGES_DIR / "2_Camions.py"
-
 PAGE_CHAUFFEURS = PAGES_DIR / "3_Chauffeurs.py"
-
 PAGE_CLIENTS = PAGES_DIR / "4_Clients.py"
-
 PAGE_RAPPORTS = PAGES_DIR / "5_Rapports.py"
 
 
 # ============================================================
-# VÉRIFICATION DU DOSSIER PAGES
+# VÉRIFICATION
 # ============================================================
 
-if not PAGES_DIR.exists():
-
-    st.error(
-        f"""
-        ❌ Le dossier Pages est introuvable.
-
-        Emplacement recherché :
-
-        {PAGES_DIR}
-        """
-    )
-
-    st.stop()
+fichiers = [
+    PAGE_HOME,
+    PAGE_OM,
+    PAGE_CAMIONS,
+    PAGE_CHAUFFEURS,
+    PAGE_CLIENTS,
+    PAGE_RAPPORTS
+]
 
 
-# ============================================================
-# VÉRIFICATION DES FICHIERS
-# ============================================================
+for fichier in fichiers:
 
-fichiers = {
-    "Accueil": PAGE_HOME,
-    "Ordres de Mission": PAGE_OM,
-    "Camions": PAGE_CAMIONS,
-    "Chauffeurs": PAGE_CHAUFFEURS,
-    "Clients": PAGE_CLIENTS,
-    "Rapports": PAGE_RAPPORTS
-}
-
-
-fichiers_manquants = []
-
-
-for nom, fichier in fichiers.items():
-
-    if not fichier.is_file():
-
-        fichiers_manquants.append(
-            f"{nom} : {fichier}"
-        )
-
-
-# ============================================================
-# AFFICHAGE DES FICHIERS MANQUANTS
-# ============================================================
-
-if fichiers_manquants:
-
-    st.error(
-        "❌ Certains fichiers de navigation sont introuvables."
-    )
-
-    st.write(
-        "Fichiers recherchés :"
-    )
-
-    for fichier in fichiers_manquants:
+    if not fichier.exists():
 
         st.error(
-            fichier
+            f"❌ Fichier introuvable :\n\n`{fichier}`"
         )
 
-    st.stop()
-
-
-# ============================================================
-# CSS
-# ============================================================
-
-st.markdown(
-    """
-    <style>
-
-    /* SIDEBAR */
-
-    [data-testid="stSidebar"] {
-        background-color: #f7f9fc;
-    }
-
-
-    /* TITRE SIDEBAR */
-
-    .tmf-sidebar-title {
-        text-align: center;
-        font-size: 22px;
-        font-weight: 700;
-        color: #1f4e79;
-        padding: 10px 0;
-    }
-
-
-    /* SOUS-TITRE */
-
-    .tmf-sidebar-subtitle {
-        text-align: center;
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 10px;
-    }
-
-
-    /* MASQUER MENU STREAMLIT */
-
-    #MainMenu {
-        visibility: hidden;
-    }
-
-
-    /* FOOTER STREAMLIT */
-
-    footer {
-        visibility: hidden;
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# ============================================================
-# SIDEBAR
-# ============================================================
-
-with st.sidebar:
-
-    st.markdown(
-        """
-        <div class="tmf-sidebar-title">
-            🚛 TMF LOGISTICS
-        </div>
-
-        <div class="tmf-sidebar-subtitle">
-            Système de Gestion du Transport
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.divider()
+        st.stop()
 
 
 # ============================================================
@@ -191,46 +64,51 @@ with st.sidebar:
 
 pages = {
 
-    "🏠 Accueil": st.Page(
-        str(PAGE_HOME),
-        title="Accueil",
-        icon="🏠"
-    ),
+    "🏠 Accueil": [
+        st.Page(
+            PAGE_HOME,
+            title="Accueil",
+            icon="🏠"
+        )
+    ],
 
-    "📋 Ordres de Mission": st.Page(
-        str(PAGE_OM),
-        title="Ordres de Mission",
-        icon="📋"
-    ),
+    "🚛 Gestion du transport": [
 
-    "🚚 Camions": st.Page(
-        str(PAGE_CAMIONS),
-        title="Camions",
-        icon="🚚"
-    ),
+        st.Page(
+            PAGE_OM,
+            title="Ordres de Mission",
+            icon="📋"
+        ),
 
-    "👷 Chauffeurs": st.Page(
-        str(PAGE_CHAUFFEURS),
-        title="Chauffeurs",
-        icon="👷"
-    ),
+        st.Page(
+            PAGE_CAMIONS,
+            title="Camions",
+            icon="🚚"
+        ),
 
-    "👥 Clients": st.Page(
-        str(PAGE_CLIENTS),
-        title="Clients",
-        icon="👥"
-    ),
+        st.Page(
+            PAGE_CHAUFFEURS,
+            title="Chauffeurs",
+            icon="👷"
+        ),
 
-    "📊 Rapports": st.Page(
-        str(PAGE_RAPPORTS),
-        title="Rapports",
-        icon="📊"
-    )
-}
+        st.Page(
+            PAGE_CLIENTS,
+            title="Clients",
+            icon="👥"
+        ),
+
+        st.Page(
+            PAGE_RAPPORTS,
+            title="Rapports",
+            icon="📊"
+        )
+    ]
+]
 
 
 # ============================================================
-# NAVIGATION STREAMLIT
+# NAVIGATION
 # ============================================================
 
 navigation = st.navigation(
