@@ -2,18 +2,23 @@ import base64
 from pathlib import Path
 import streamlit as st
 
+# ============================================================
+# IDENTIFIANTS UTILISATEURS
+# ============================================================
 UTILISATEURS = {
     "admin": "1234",
     "transport": "tmf2026",
     "direction": "tmf@2026",
 }
 
+# CHEMINS DES IMAGES DE FOND ET LOGO
 BASE_DIR = Path(__file__).resolve().parent
 LOGO_PATH = BASE_DIR / "logo.png"
 BACKGROUND_PATH = BASE_DIR / "TMF.jpg"
 
 
-def appliquer_style_login():
+def appliquer_style_connexion():
+    """Style CSS spécifique à l'écran de connexion."""
     if BACKGROUND_PATH.exists():
         with open(BACKGROUND_PATH, "rb") as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
@@ -54,9 +59,20 @@ def appliquer_style_login():
     )
 
 
-def afficher_login():
-    """Affiche l'écran de connexion."""
-    appliquer_style_login()
+def ecran_connexion():
+    """Affiche le formulaire de connexion et gère la session utilisateur."""
+    if st.session_state.get("connecte", False):
+        # Affiche le bouton de déconnexion dans la sidebar quand connecté
+        st.sidebar.divider()
+        st.sidebar.markdown(f"### 👤 Utilisateur\n**{st.session_state.get('utilisateur', '')}**")
+        if st.sidebar.button("🚪 Déconnexion", use_container_width=True):
+            st.session_state.connecte = False
+            st.session_state.pop("utilisateur", None)
+            st.session_state.pop("login_error", None)
+            st.rerun()
+        return True
+
+    appliquer_style_connexion()
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="login-box">', unsafe_allow_html=True)
@@ -117,3 +133,5 @@ def afficher_login():
         '<div class="login-footer"><b>TMF LOGISTICS</b><br>© 2026</div>',
         unsafe_allow_html=True,
     )
+
+    return False
