@@ -15,18 +15,11 @@ st.set_page_config(
 
 
 # ============================================================
-# CHEMIN DU PROJET
+# RACINE DU PROJET
 # ============================================================
 
-# app.py se trouve à la racine du projet
 BASE_DIR = Path(__file__).resolve().parent
 
-
-# ============================================================
-# DOSSIERS
-# ============================================================
-
-DATA_DIR = BASE_DIR / "Data"
 PAGES_DIR = BASE_DIR / "Pages"
 
 
@@ -48,60 +41,117 @@ PAGE_RAPPORTS = PAGES_DIR / "5_Rapports.py"
 
 
 # ============================================================
-# STYLE GLOBAL
+# VÉRIFICATION DU DOSSIER PAGES
+# ============================================================
+
+if not PAGES_DIR.exists():
+
+    st.error(
+        f"""
+        ❌ Le dossier Pages est introuvable.
+
+        Emplacement recherché :
+
+        {PAGES_DIR}
+        """
+    )
+
+    st.stop()
+
+
+# ============================================================
+# VÉRIFICATION DES FICHIERS
+# ============================================================
+
+fichiers = {
+    "Accueil": PAGE_HOME,
+    "Ordres de Mission": PAGE_OM,
+    "Camions": PAGE_CAMIONS,
+    "Chauffeurs": PAGE_CHAUFFEURS,
+    "Clients": PAGE_CLIENTS,
+    "Rapports": PAGE_RAPPORTS
+}
+
+
+fichiers_manquants = []
+
+
+for nom, fichier in fichiers.items():
+
+    if not fichier.is_file():
+
+        fichiers_manquants.append(
+            f"{nom} : {fichier}"
+        )
+
+
+# ============================================================
+# AFFICHAGE DES FICHIERS MANQUANTS
+# ============================================================
+
+if fichiers_manquants:
+
+    st.error(
+        "❌ Certains fichiers de navigation sont introuvables."
+    )
+
+    st.write(
+        "Fichiers recherchés :"
+    )
+
+    for fichier in fichiers_manquants:
+
+        st.error(
+            fichier
+        )
+
+    st.stop()
+
+
+# ============================================================
+# CSS
 # ============================================================
 
 st.markdown(
     """
     <style>
 
-    /* ======================================================
-       SIDEBAR
-       ====================================================== */
+    /* SIDEBAR */
 
     [data-testid="stSidebar"] {
-        background-color: #f8f9fa;
+        background-color: #f7f9fc;
     }
 
 
-    /* ======================================================
-       TITRE SIDEBAR
-       ====================================================== */
+    /* TITRE SIDEBAR */
 
-    .sidebar-title {
+    .tmf-sidebar-title {
         text-align: center;
-        font-size: 20px;
+        font-size: 22px;
         font-weight: 700;
         color: #1f4e79;
-        padding-top: 10px;
-        padding-bottom: 10px;
+        padding: 10px 0;
     }
 
 
-    /* ======================================================
-       FOOTER SIDEBAR
-       ====================================================== */
+    /* SOUS-TITRE */
 
-    .sidebar-footer {
+    .tmf-sidebar-subtitle {
         text-align: center;
-        color: #777;
-        font-size: 11px;
-        padding-top: 30px;
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 10px;
     }
 
 
-    /* ======================================================
-       MASQUER MENU STREAMLIT INUTILE
-       ====================================================== */
+    /* MASQUER MENU STREAMLIT */
 
     #MainMenu {
         visibility: hidden;
     }
 
 
-    /* ======================================================
-       FOOTER STREAMLIT
-       ====================================================== */
+    /* FOOTER STREAMLIT */
 
     footer {
         visibility: hidden;
@@ -114,84 +164,6 @@ st.markdown(
 
 
 # ============================================================
-# VÉRIFICATION DE LA STRUCTURE
-# ============================================================
-
-fichiers_pages = {
-    "Accueil": PAGE_HOME,
-    "Ordres de Mission": PAGE_OM,
-    "Camions": PAGE_CAMIONS,
-    "Chauffeurs": PAGE_CHAUFFEURS,
-    "Clients": PAGE_CLIENTS,
-    "Rapports": PAGE_RAPPORTS
-}
-
-
-# ============================================================
-# VÉRIFICATION DES PAGES
-# ============================================================
-
-pages_manquantes = []
-
-for nom, fichier in fichiers_pages.items():
-
-    if not fichier.exists():
-
-        pages_manquantes.append(
-            f"{nom} → {fichier}"
-        )
-
-
-# ============================================================
-# ERREUR SI UNE PAGE MANQUE
-# ============================================================
-
-if pages_manquantes:
-
-    st.error(
-        "❌ Une ou plusieurs pages de l'application sont introuvables."
-    )
-
-    st.markdown(
-        "### 📁 Structure attendue"
-    )
-
-    st.code(
-        """
-tmf-logistics/
-│
-├── app.py
-├── app_home.py
-│
-├── Data/
-│   ├── OM.xlsx
-│   ├── Camions.xlsx
-│   ├── Chauffeurs.xlsx
-│   └── Clients.xlsx
-│
-└── Pages/
-    ├── 1_Ordres_de_Mission.py
-    ├── 2_Camions.py
-    ├── 3_Chauffeurs.py
-    ├── 4_Clients.py
-    └── 5_Rapports.py
-        """
-    )
-
-    st.markdown(
-        "### ❌ Fichiers manquants"
-    )
-
-    for fichier in pages_manquantes:
-
-        st.error(
-            fichier
-        )
-
-    st.stop()
-
-
-# ============================================================
 # SIDEBAR
 # ============================================================
 
@@ -199,21 +171,15 @@ with st.sidebar:
 
     st.markdown(
         """
-        <div class="sidebar-title">
+        <div class="tmf-sidebar-title">
             🚛 TMF LOGISTICS
+        </div>
+
+        <div class="tmf-sidebar-subtitle">
+            Système de Gestion du Transport
         </div>
         """,
         unsafe_allow_html=True
-    )
-
-    st.divider()
-
-    st.caption(
-        "Système de Gestion du Transport"
-    )
-
-    st.caption(
-        "Gestion des Ordres de Mission"
     )
 
     st.divider()
@@ -264,18 +230,17 @@ pages = {
 
 
 # ============================================================
-# CRÉATION DE LA NAVIGATION
+# NAVIGATION STREAMLIT
 # ============================================================
 
 navigation = st.navigation(
     pages,
-    position="sidebar",
-    expanded=True
+    position="sidebar"
 )
 
 
 # ============================================================
-# EXÉCUTION DE LA PAGE
+# LANCEMENT
 # ============================================================
 
 navigation.run()
