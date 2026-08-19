@@ -1,7 +1,6 @@
-import streamlit as st
 import base64
 from pathlib import Path
-
+import streamlit as st
 
 # ============================================================
 # UTILISATEURS
@@ -10,7 +9,7 @@ from pathlib import Path
 UTILISATEURS = {
     "admin": "1234",
     "transport": "tmf2026",
-    "direction": "tmf@2026"
+    "direction": "tmf@2026",
 }
 
 
@@ -33,7 +32,7 @@ st.set_page_config(
     page_title="TMF LOGISTICS - Connexion",
     page_icon="🚛",
     layout="centered",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
 )
 
 
@@ -41,22 +40,15 @@ st.set_page_config(
 # ARRIÈRE-PLAN + STYLE
 # ============================================================
 
-def appliquer_style():
 
+def appliquer_style():
     # --------------------------------------------------------
     # Vérifier l'image d'arrière-plan
     # --------------------------------------------------------
 
     if BACKGROUND_PATH.exists():
-
-        with open(
-            BACKGROUND_PATH,
-            "rb"
-        ) as image_file:
-
-            encoded_image = base64.b64encode(
-                image_file.read()
-            ).decode("utf-8")
+        with open(BACKGROUND_PATH, "rb") as image_file:
+            encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
 
         background_css = f"""
         background-image:
@@ -68,7 +60,6 @@ def appliquer_style():
         """
 
     else:
-
         background_css = """
         background:
             linear-gradient(
@@ -77,7 +68,6 @@ def appliquer_style():
                 #1e3a5f
             );
         """
-
 
     # --------------------------------------------------------
     # CSS
@@ -343,7 +333,7 @@ def appliquer_style():
 
         </style>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
 
@@ -351,19 +341,14 @@ def appliquer_style():
 # FONCTION DE CONNEXION
 # ============================================================
 
-def connexion():
 
+def connexion():
     # --------------------------------------------------------
     # SI DÉJÀ CONNECTÉ
     # --------------------------------------------------------
 
-    if st.session_state.get(
-        "connecte",
-        False
-    ):
-
+    if st.session_state.get("connecte", False):
         return True
-
 
     # --------------------------------------------------------
     # APPLIQUER LE STYLE
@@ -371,42 +356,25 @@ def connexion():
 
     appliquer_style()
 
-
     # --------------------------------------------------------
     # ESPACE
     # --------------------------------------------------------
 
-    st.markdown(
-        "<br>",
-        unsafe_allow_html=True
-    )
-
+    st.markdown("<br>", unsafe_allow_html=True)
 
     # --------------------------------------------------------
     # PANNEAU
     # --------------------------------------------------------
 
-    st.markdown(
-        '<div class="login-box">',
-        unsafe_allow_html=True
-    )
-
+    st.markdown('<div class="login-box">', unsafe_allow_html=True)
 
     # ========================================================
     # LOGO
     # ========================================================
 
     if LOGO_PATH.exists():
-
-        with open(
-            LOGO_PATH,
-            "rb"
-        ) as image_file:
-
-            logo_base64 = base64.b64encode(
-                image_file.read()
-            ).decode("utf-8")
-
+        with open(LOGO_PATH, "rb") as image_file:
+            logo_base64 = base64.b64encode(image_file.read()).decode("utf-8")
 
         st.markdown(
             f"""
@@ -419,20 +387,18 @@ def connexion():
 
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     else:
-
         st.markdown(
             """
             <div class="logo-fallback">
                 🚛
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
-
 
     # ========================================================
     # TITRE
@@ -444,9 +410,8 @@ def connexion():
             TMF LOGISTICS
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
-
 
     # ========================================================
     # SOUS-TITRE
@@ -458,96 +423,66 @@ def connexion():
             Système de Gestion du Transport
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
-
 
     # ========================================================
     # FORMULAIRE
     # ========================================================
 
-    with st.form(
-        "login_form",
-        clear_on_submit=False
-    ):
-
+    with st.form("login_form", clear_on_submit=False):
         utilisateur = st.text_input(
             "👤 Nom d'utilisateur",
-            placeholder="Entrez votre nom d'utilisateur"
+            placeholder="Entrez votre nom d'utilisateur",
         )
-
 
         mot_de_passe = st.text_input(
             "🔑 Mot de passe",
             type="password",
-            placeholder="Entrez votre mot de passe"
+            placeholder="Entrez votre mot de passe",
         )
-
 
         bouton = st.form_submit_button(
-            "🔐  SE CONNECTER",
-            use_container_width=True
+            "🔐 SE CONNECTER", use_container_width=True
         )
-
 
         # ====================================================
         # VALIDATION
         # ====================================================
 
         if bouton:
-
             utilisateur = utilisateur.strip()
-
 
             if (
                 utilisateur in UTILISATEURS
-                and
-                UTILISATEURS[utilisateur]
-                == mot_de_passe
+                and UTILISATEURS[utilisateur] == mot_de_passe
             ):
-
                 # --------------------------------------------
                 # Connexion réussie
                 # --------------------------------------------
 
                 st.session_state.connecte = True
 
-                st.session_state.utilisateur = (
-                    utilisateur
-                )
+                st.session_state.utilisateur = utilisateur
 
                 # Supprimer ancienne erreur
 
                 if "login_error" in st.session_state:
-
-                    del st.session_state[
-                        "login_error"
-                    ]
-
+                    del st.session_state["login_error"]
 
                 # Actualiser
 
                 st.rerun()
 
-
             else:
-
                 st.session_state.login_error = True
-
 
     # ========================================================
     # MESSAGE D'ERREUR
     # ========================================================
 
-    if st.session_state.get(
-        "login_error",
-        False
-    ):
-
-        st.error(
-            "❌ Nom d'utilisateur ou mot de passe incorrect."
-        )
-
+    if st.session_state.get("login_error", False):
+        st.error("❌ Nom d'utilisateur ou mot de passe incorrect.")
 
     # ========================================================
     # MESSAGE SÉCURITÉ
@@ -561,19 +496,14 @@ def connexion():
 
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
-
 
     # ========================================================
     # FIN DU PANNEAU
     # ========================================================
 
-    st.markdown(
-        "</div>",
-        unsafe_allow_html=True
-    )
-
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # ========================================================
     # FOOTER
@@ -591,9 +521,8 @@ def connexion():
 
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
-
 
     return False
 
@@ -602,19 +531,14 @@ def connexion():
 # FONCTION DE DÉCONNEXION
 # ============================================================
 
-def deconnexion():
 
+def deconnexion():
     # --------------------------------------------------------
     # Vérifier si l'utilisateur est connecté
     # --------------------------------------------------------
 
-    if not st.session_state.get(
-        "connecte",
-        False
-    ):
-
+    if not st.session_state.get("connecte", False):
         return
-
 
     # ========================================================
     # SIDEBAR
@@ -622,16 +546,11 @@ def deconnexion():
 
     st.sidebar.divider()
 
-
     # ========================================================
     # UTILISATEUR CONNECTÉ
     # ========================================================
 
-    utilisateur = st.session_state.get(
-        "utilisateur",
-        ""
-    )
-
+    utilisateur = st.session_state.get("utilisateur", "")
 
     st.sidebar.markdown(
         f"""
@@ -641,36 +560,22 @@ def deconnexion():
         """
     )
 
-
     # ========================================================
     # BOUTON DÉCONNEXION
     # ========================================================
 
-    if st.sidebar.button(
-        "🚪 Déconnexion",
-        use_container_width=True
-    ):
-
+    if st.sidebar.button("🚪 Déconnexion", use_container_width=True):
         # --------------------------------------------
         # Supprimer la session
         # --------------------------------------------
 
         st.session_state.connecte = False
 
-
         if "utilisateur" in st.session_state:
-
-            del st.session_state[
-                "utilisateur"
-            ]
-
+            del st.session_state["utilisateur"]
 
         if "login_error" in st.session_state:
-
-            del st.session_state[
-                "login_error"
-            ]
-
+            del st.session_state["login_error"]
 
         # --------------------------------------------
         # Retour à la connexion
