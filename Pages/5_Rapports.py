@@ -27,6 +27,20 @@ FEUILLE_OM = "Input OM fini"
 FEUILLE_CHAUFFEURS = "Chauffeurs"
 FEUILLE_COMMANDES = "Feuil1"
 
+# Dictionnaire de correspondance des noms de colonnes
+CORRESPONDANCE_COLONNES = {
+    "code convention": "Nom client",
+    "Code convention": "Nom client",
+    "Code Convention": "Nom client",
+    "code vehicule": "Camion",
+    "Code vehicule": "Camion",
+    "code véhicule": "Camion",
+    "Code véhicule": "Camion",
+    "Code Vehicule": "Camion",
+    "Numero Camion": "Camion",
+    "N° Camion": "Camion"
+}
+
 # ============================================================
 # FONCTIONS UTILITAIRES & CHARGEMENT
 # ============================================================
@@ -35,7 +49,10 @@ def nettoyer_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.columns = df.columns.astype(str).str.strip()
     
-    # Traitement vectorisé ciblé sur les colonnes de type string/object
+    # Renommage automatique des colonnes cibles
+    df = df.rename(columns=CORRESPONDANCE_COLONNES)
+    
+    # Traitement vectorisé des valeurs textuelles
     obj_cols = df.select_dtypes(include=["object"]).columns
     for col in obj_cols:
         df[col] = df[col].fillna("").astype(str).str.strip()
@@ -99,7 +116,6 @@ if "Date Depart" in df_om.columns:
 else:
     dates_valides = pd.Series(dtype="datetime64[ns]")
 
-# Sélection sécurisée de la période
 if not dates_valides.empty:
     date_min = dates_valides.min().date()
     date_max = dates_valides.max().date()
@@ -118,8 +134,11 @@ def extraire_options(df: pd.DataFrame, col: str) -> list:
         return sorted([str(x) for x in df[col].dropna().unique() if str(x).strip()])
     return []
 
+# Prise en compte du libellé "Nom client" s'il existe
+col_client_filter = "Nom client" if "Nom client" in df_om.columns else "Client"
+
 filtre_statut = st.sidebar.multiselect("📊 Statut", extraire_options(df_om, "Status"), key="f_statut")
-filtre_client = st.sidebar.multiselect("👥 Client", extraire_options(df_om, "Client"), key="f_client")
+filtre_client = st.sidebar.multiselect("👥 Client", extraire_options(df_om, col_client_filter), key="f_client")
 filtre_chauffeur = st.sidebar.multiselect("👷 Chauffeur", extraire_options(df_om, "Chauffeur"), key="f_chauffeur")
 filtre_section = st.sidebar.multiselect("🏢 Section", extraire_options(df_om, "Section"), key="f_section")
 
@@ -129,7 +148,6 @@ filtre_section = st.sidebar.multiselect("🏢 Section", extraire_options(df_om, 
 
 df_analyse = df_om.copy()
 
-# Traitement du filtre date
 if isinstance(periode, tuple) and len(periode) == 2:
     date_debut = pd.Timestamp(periode[0])
     date_fin = pd.Timestamp(periode[1]) + pd.Timedelta(days=1)
@@ -138,8 +156,8 @@ if isinstance(periode, tuple) and len(periode) == 2:
 
 if filtre_statut and "Status" in df_analyse.columns:
     df_analyse = df_analyse[df_analyse["Status"].isin(filtre_statut)]
-if filtre_client and "Client" in df_analyse.columns:
-    df_analyse = df_analyse[df_analyse["Client"].isin(filtre_client)]
+if filtre_client and col_client_filter in df_analyse.columns:
+    df_analyse = df_analyse[df_analyse[col_client_filter].isin(filtre_client)]
 if filtre_chauffeur and "Chauffeur" in df_analyse.columns:
     df_analyse = df_analyse[df_analyse["Chauffeur"].isin(filtre_chauffeur)]
 if filtre_section and "Section" in df_analyse.columns:
@@ -160,12 +178,11 @@ st.divider()
 st.header("📊 Synthèse générale")
 
 nombre_om = len(df_analyse)
-nombre_camions = df_analyse["Numero Camion"].replace("", pd.NA).nunique() if "Numero Camion" in df_analyse.columns else 0
+nombre_camions = df_analyse["Camion"].replace("", pd.NA).nunique() if "Camion" in df_analyse.columns else 0
 nombre_chauffeurs = df_analyse["Chauffeur"].replace("", pd.NA).nunique() if "Chauffeur" in df_analyse.columns else 0
-nombre_clients = df_analyse["Client"].replace("", pd.NA).nunique() if "Client" in df_analyse.columns else 0
+nombre_clients = df_analyse[col_client_filter].replace("", pd.NA).nunique() if col_client_filter in df_analyse.columns else 0
 
 nombre_commandes = df_commandes_analyse["N° document"].replace("", pd.NA).nunique() if "N° document" in df_commandes_analyse.columns else len(df_commandes_analyse)
-montant_commandes = pd.to_numeric(df_commandes_analyse.get("Montant ligne HT", 0), errors="coerce").fillna(0).sum()
 
 col1, col2, col3, col4, col5 = st.columns(5)
 col1.metric("📋 Ordres de Mission", nombre_om)
@@ -175,7 +192,7 @@ col4.metric("👥 Clients", nombre_clients)
 col5.metric("📦 Commandes de vente", nombre_commandes)
 
 # ============================================================
-# ANALYSE CROISÉE (COLONNE ORDRE DE MISSION EN PREMIER)
+# ANALYSE CROISÉE
 # ============================================================
 
 st.divider()
@@ -185,7 +202,6 @@ st.caption("Cette analyse rapproche les commandes de vente des Ordres de Mission
 if df_commandes_analyse.empty or df_analyse.empty:
     st.warning("⚠️ Impossible de réaliser l'analyse croisée : données de commandes ou d'OM insuffisantes.")
 else:
-    # Recherche de la colonne représentant l'Ordre de Mission (Numéro / Code / OM)
     col_om_cmd = None
     for nom_col in ["Ordre de Mission", "Numéro", "N° OM", "Code"]:
         if nom_col in df_commandes_analyse.columns:
@@ -208,13 +224,9 @@ else:
             suffixes=("_Cmd", "_OM")
         )
 
-        # Réorganisation pour mettre l'Ordre de Mission en 1ère colonne
         col_clef_nommee = col_om_cmd if col_om_cmd in df_croise.columns else col_om_main
-        
-        # Renommage explicite de la 1ère colonne si besoin
         df_croise = df_croise.rename(columns={col_clef_nommee: "Ordre de Mission"})
         
-        # Positionnement de "Ordre de Mission" au tout début
         cols = ["Ordre de Mission"] + [c for c in df_croise.columns if c != "Ordre de Mission"]
         df_croise = df_croise[cols]
 
