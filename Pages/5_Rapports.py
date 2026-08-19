@@ -1,13 +1,14 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 from pathlib import Path
 
 # ============================================================
-# CONFIGURATION
+# CONFIGURATION DE LA PAGE
 # ============================================================
 
 st.set_page_config(
-    page_title="TMF LOGISTICS - Rapports",
+    page_title="TMF LOGISTICS - Analyse Approfondie",
     page_icon="📊",
     layout="wide"
 )
@@ -31,11 +32,13 @@ CORRESPONDANCE_COLONNES = {
     "code convention": "Nom client",
     "Code convention": "Nom client",
     "Code Convention": "Nom client",
-    "code vehicule": "Camion",
-    "Code vehicule": "Camion",
-    "code véhicule": "Camion",
-    "Code véhicule": "Camion",
-    "Code Vehicule": "Camion"
+    "Client": "Nom client",
+    "code vehicule": "Numero Camion",
+    "Code vehicule": "Numero Camion",
+    "code véhicule": "Numero Camion",
+    "Code véhicule": "Numero Camion",
+    "Code Vehicule": "Numero Camion",
+    "Camion": "Numero Camion"
 }
 
 # ============================================================
@@ -45,7 +48,6 @@ CORRESPONDANCE_COLONNES = {
 def nettoyer_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.columns = df.columns.astype(str).str.strip()
-    
     df = df.rename(columns=CORRESPONDANCE_COLONNES)
     
     obj_cols = df.select_dtypes(include=["object"]).columns
@@ -76,7 +78,7 @@ df_chauffeurs = charger_excel(FICHIER_CHAUFFEURS, FEUILLE_CHAUFFEURS)
 df_clients = charger_excel(FICHIER_CLIENTS)
 df_commandes = charger_excel(FICHIER_COMMANDES, FEUILLE_COMMANDES)
 
-# Convertir les colonnes spécifiques de df_commandes
+# Conversions de types
 if not df_commandes.empty:
     for col in ["Date de Mission", "Date Heure Charg Planif"]:
         if col in df_commandes.columns:
@@ -91,9 +93,8 @@ if not df_commandes.empty:
 # TITRE
 # ============================================================
 
-st.title("📊 Rapports & Analyse")
-st.subheader("Analyse des données de TMF LOGISTICS")
-st.caption("Analyse croisée des Ordres de Mission, Commandes de vente, Chauffeurs et Clients.")
+st.title("📊 Rapports & Analyse Approfondie")
+st.caption("Tableau de bord décisionnel : Ordres de Mission, Commandes, Flotte et Clients.")
 
 if df_om.empty:
     st.error(f"❌ Impossible de charger les Ordres de Mission.\nFichier : `{FICHIER_OM}`")
@@ -131,13 +132,13 @@ def extraire_options(df: pd.DataFrame, col: str) -> list:
 
 col_client_filter = "Nom client" if "Nom client" in df_om.columns else "Client"
 
-filtre_statut = st.sidebar.multiselect("📊 Statut", extraire_options(df_om, "Status"), key="f_statut")
-filtre_client = st.sidebar.multiselect("👥 Client", extraire_options(df_om, col_client_filter), key="f_client")
+filtre_statut = st.sidebar.multiselect("📊 Statut OM", extraire_options(df_om, "Status"), key="f_statut")
+filtre_client = st.sidebar.multiselect("👥 Nom Client", extraire_options(df_om, col_client_filter), key="f_client")
 filtre_chauffeur = st.sidebar.multiselect("👷 Chauffeur", extraire_options(df_om, "Chauffeur"), key="f_chauffeur")
 filtre_section = st.sidebar.multiselect("🏢 Section", extraire_options(df_om, "Section"), key="f_section")
 
 # ============================================================
-# FILTRAGE
+# FILTRAGE DES DONNÉES
 # ============================================================
 
 df_analyse = df_om.copy()
@@ -165,74 +166,176 @@ if isinstance(periode, tuple) and len(periode) == 2 and "Date de Mission" in df_
     ]
 
 # ============================================================
-# SYNTHÈSE ET KPI
+# RAPPROCHEMENT DES DONNÉES
 # ============================================================
 
-st.divider()
-st.header("📊 Synthèse générale")
+col_om_cmd = next((c for c in ["Ordre de Mission", "Numéro", "N° OM", "Code"] if c in df_commandes_analyse.columns), None)
+col_om_main = next((c for c in ["Code", "Numéro", "Ordre de Mission", "N° OM"] if c in df_analyse.columns), None)
 
-col_camion = "Numero Camion" if "Numero Camion" in df_analyse.columns else "Camion"
-
-nombre_om = len(df_analyse)
-nombre_camions = df_analyse[col_camion].replace("", pd.NA).nunique() if col_camion in df_analyse.columns else 0
-nombre_chauffeurs = df_analyse["Chauffeur"].replace("", pd.NA).nunique() if "Chauffeur" in df_analyse.columns else 0
-nombre_clients = df_analyse[col_client_filter].replace("", pd.NA).nunique() if col_client_filter in df_analyse.columns else 0
-
-nombre_commandes = df_commandes_analyse["N° document"].replace("", pd.NA).nunique() if "N° document" in df_commandes_analyse.columns else len(df_commandes_analyse)
-
-col1, col2, col3, col4, col5 = st.columns(5)
-col1.metric("📋 Ordres de Mission", nombre_om)
-col2.metric("🚚 Camions", nombre_camions)
-col3.metric("👷 Chauffeurs", nombre_chauffeurs)
-col4.metric("👥 Clients", nombre_clients)
-col5.metric("📦 Commandes de vente", nombre_commandes)
-
-# ============================================================
-# ANALYSE CROISÉE
-# ============================================================
-
-st.divider()
-st.header("🔗 Analyse croisée : Commandes de vente → OM → Camions → Chauffeurs")
-st.caption("Cette analyse rapproche les commandes de vente des Ordres de Mission.")
-
-if df_commandes_analyse.empty or df_analyse.empty:
-    st.warning("⚠️ Impossible de réaliser l'analyse croisée : données de commandes ou d'OM insuffisantes.")
+if col_om_cmd and col_om_main and not df_commandes_analyse.empty and not df_analyse.empty:
+    df_croise = pd.merge(
+        df_commandes_analyse,
+        df_analyse,
+        left_on=col_om_cmd,
+        right_on=col_om_main,
+        how="inner",
+        suffixes=("_CMD", "_OM")
+    )
+    col_clef = col_om_cmd if col_om_cmd in df_croise.columns else col_om_main
+    df_croise = df_croise.rename(columns={
+        col_clef: "Ordre de Mission",
+        "Camion_CMD": "Numero Camion",
+        "Camion_Cmd": "Numero Camion"
+    })
+    cols = ["Ordre de Mission"] + [c for c in df_croise.columns if c != "Ordre de Mission"]
+    df_croise = df_croise[cols]
 else:
-    col_om_cmd = None
-    for nom_col in ["Ordre de Mission", "Numéro", "N° OM", "Code"]:
-        if nom_col in df_commandes_analyse.columns:
-            col_om_cmd = nom_col
-            break
+    df_croise = pd.DataFrame()
 
-    col_om_main = None
-    for nom_col in ["Code", "Numéro", "Ordre de Mission", "N° OM"]:
-        if nom_col in df_analyse.columns:
-            col_om_main = nom_col
-            break
+# ============================================================
+# SYNTHÈSE & KPIS AVANCÉS
+# ============================================================
 
-    if col_om_cmd and col_om_main:
-        df_croise = pd.merge(
-            df_commandes_analyse,
-            df_analyse,
-            left_on=col_om_cmd,
-            right_on=col_om_main,
-            how="inner",
-            suffixes=("_CMD", "_OM")
+st.divider()
+st.header("📈 Synthèse globale & Performance")
+
+total_ca = df_commandes_analyse["Montant ligne HT"].sum() if "Montant ligne HT" in df_commandes_analyse.columns else 0
+total_tonnage = df_commandes_analyse["Tonnage"].sum() if "Tonnage" in df_commandes_analyse.columns else 0
+nb_om = len(df_analyse)
+nb_camions = df_analyse["Numero Camion"].replace("", pd.NA).nunique() if "Numero Camion" in df_analyse.columns else 0
+nb_chauffeurs = df_analyse["Chauffeur"].replace("", pd.NA).nunique() if "Chauffeur" in df_analyse.columns else 0
+nb_clients = df_analyse[col_client_filter].replace("", pd.NA).nunique() if col_client_filter in df_analyse.columns else 0
+
+c1, c2, c3, c4, c5, c6 = st.columns(6)
+c1.metric("💰 CA Total (HT)", f"{total_ca:,.2f} DA")
+c2.metric("⚖️ Tonnage Total", f"{total_tonnage:,.2f} T")
+c3.metric("📋 Ordres de Mission", f"{nb_om:,}")
+c4.metric("🚚 Camions Actifs", f"{nb_camions}")
+c5.metric("👷 Chauffeurs", f"{nb_chauffeurs}")
+c6.metric("👥 Clients Servis", f"{nb_clients}")
+
+# ============================================================
+# ONGLETS D'ANALYSE APPROFONDIE
+# ============================================================
+
+tab1, tab2, tab3, tab4 = st.tabs([
+    "💼 Analyse Commerciale & Clients", 
+    "🚚 Flotte & Chauffeurs", 
+    "📅 Évolution Temporelle", 
+    "📄 Tableau Croisé Complet"
+])
+
+# ------------------------------------------------------------
+# TAB 1 : COMMERCIAL & CLIENTS
+# ------------------------------------------------------------
+with tab1:
+    st.subheader("Performance par Client")
+    col_left, col_right = st.columns(2)
+    
+    if not df_commandes_analyse.empty and "Nom client" in df_commandes_analyse.columns and "Montant ligne HT" in df_commandes_analyse.columns:
+        ca_client = df_commandes_analyse.groupby("Nom client")["Montant ligne HT"].sum().reset_index().sort_values(by="Montant ligne HT", ascending=False).head(10)
+        
+        fig_ca = px.bar(
+            ca_client, x="Montant ligne HT", y="Nom client", orientation="h",
+            title="Top 10 Clients par Chiffre d'Affaires (HT)",
+            labels={"Montant ligne HT": "CA (HT)", "Nom client": "Client"},
+            color="Montant ligne HT", color_continuous_scale="Viridis"
         )
-
-        col_clef_nommee = col_om_cmd if col_om_cmd in df_croise.columns else col_om_main
-        
-        # Renommage explicite de Ordre de Mission et de Camion_CMD -> Numero Camion
-        df_croise = df_croise.rename(columns={
-            col_clef_nommee: "Ordre de Mission",
-            "Camion_CMD": "Numero Camion",
-            "Camion_Cmd": "Numero Camion"
-        })
-        
-        cols = ["Ordre de Mission"] + [c for c in df_croise.columns if c != "Ordre de Mission"]
-        df_croise = df_croise[cols]
-
-        st.subheader(f"📌 {len(df_croise)} lignes associées trouvées")
-        st.dataframe(df_croise, use_container_width=True, hide_index=True)
+        fig_ca.update_layout(yaxis={"categoryorder": "total ascending"})
+        col_left.plotly_chart(fig_ca, use_container_width=True)
     else:
-        st.warning("⚠️ Clef de liaison 'Ordre de Mission' introuvable dans les jeux de données.")
+        col_left.info("Données insuffisantes pour le CA par client.")
+
+    if not df_commandes_analyse.empty and "Nom client" in df_commandes_analyse.columns and "Tonnage" in df_commandes_analyse.columns:
+        ton_client = df_commandes_analyse.groupby("Nom client")["Tonnage"].sum().reset_index().sort_values(by="Tonnage", ascending=False).head(10)
+        
+        fig_ton = px.bar(
+            ton_client, x="Tonnage", y="Nom client", orientation="h",
+            title="Top 10 Clients par Tonnage Livré",
+            labels={"Tonnage": "Tonnage (T)", "Nom client": "Client"},
+            color="Tonnage", color_continuous_scale="Plasma"
+        )
+        fig_ton.update_layout(yaxis={"categoryorder": "total ascending"})
+        col_right.plotly_chart(fig_ton, use_container_width=True)
+    else:
+        col_right.info("Données insuffisantes pour le tonnage par client.")
+
+# ------------------------------------------------------------
+# TAB 2 : FLOTTE & CHAUFFEURS
+# ------------------------------------------------------------
+with tab2:
+    st.subheader("Activité de la Flotte et des Chauffeurs")
+    col_flotte, col_statut = st.columns(2)
+    
+    if "Numero Camion" in df_analyse.columns:
+        top_camions = df_analyse["Numero Camion"].value_counts().reset_index()
+        top_camions.columns = ["Numero Camion", "Nombre de Missions"]
+        top_camions = top_camions[top_camions["Numero Camion"] != ""].head(10)
+        
+        fig_cam = px.bar(
+            top_camions, x="Numero Camion", y="Nombre de Missions",
+            title="Top 10 Camions les plus Sollicités",
+            color="Nombre de Missions", color_continuous_scale="Blues"
+        )
+        col_flotte.plotly_chart(fig_cam, use_container_width=True)
+        
+    if "Status" in df_analyse.columns:
+        statut_counts = df_analyse["Status"].value_counts().reset_index()
+        statut_counts.columns = ["Status", "Total"]
+        
+        fig_pie = px.pie(
+            statut_counts, names="Status", values="Total",
+            title="Répartition des Ordres de Mission par Statut",
+            hole=0.4
+        )
+        col_statut.plotly_chart(fig_pie, use_container_width=True)
+
+    st.subheader("Charge de travail par Chauffeur")
+    if "Chauffeur" in df_analyse.columns:
+        top_chauffeurs = df_analyse["Chauffeur"].value_counts().reset_index()
+        top_chauffeurs.columns = ["Chauffeur", "Nombre de Missions"]
+        top_chauffeurs = top_chauffeurs[top_chauffeurs["Chauffeur"] != ""].head(15)
+        
+        fig_ch = px.bar(
+            top_chauffeurs, x="Chauffeur", y="Nombre de Missions",
+            title="Top 15 Chauffeurs par Nombre de Missions",
+            color="Nombre de Missions", color_continuous_scale="Greens"
+        )
+        st.plotly_chart(fig_ch, use_container_width=True)
+
+# ------------------------------------------------------------
+# TAB 3 : ÉVOLUTION TEMPORELLE
+# ------------------------------------------------------------
+with tab3:
+    st.subheader("Évolution Journalière des Missions")
+    if "Date Depart" in df_analyse.columns and not df_analyse["Date Depart"].dropna().empty:
+        df_temp = df_analyse.groupby(df_analyse["Date Depart"].dt.date).size().reset_index(name="Nombre d'OM")
+        
+        fig_line = px.line(
+            df_temp, x="Date Depart", y="Nombre d'OM",
+            title="Nombre d'Ordres de Mission par Jour",
+            markers=True
+        )
+        st.plotly_chart(fig_line, use_container_width=True)
+    else:
+        st.info("Aucune donnée temporelle disponible pour tracer le graphique.")
+
+# ------------------------------------------------------------
+# TAB 4 : TABLEAU CROISÉ DÉTAILLÉ
+# ------------------------------------------------------------
+with tab4:
+    st.subheader("Données Croisées Rapprochées")
+    if not df_croise.empty:
+        st.caption(f"📌 {len(df_croise)} lignes trouvées après croisement.")
+        st.dataframe(df_croise, use_container_width=True, hide_index=True)
+        
+        # Export CSV
+        csv = df_croise.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="📥 Télécharger le tableau croisé (CSV)",
+            data=csv,
+            file_name="Analyse_Croisee_TMF.csv",
+            mime="text/csv"
+        )
+    else:
+        st.warning("⚠️ Aucun croisement possible avec les filtres sélectionnés.")
