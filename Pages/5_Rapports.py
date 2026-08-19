@@ -129,7 +129,7 @@ filtre_section = st.sidebar.multiselect("🏢 Section", extraire_options(df_om, 
 
 df_analyse = df_om.copy()
 
-# Traitement correct du filtre date à deux éléments
+# Traitement du filtre date
 if isinstance(periode, tuple) and len(periode) == 2:
     date_debut = pd.Timestamp(periode[0])
     date_fin = pd.Timestamp(periode[1]) + pd.Timedelta(days=1)
@@ -153,7 +153,7 @@ if isinstance(periode, tuple) and len(periode) == 2 and "Date de Mission" in df_
     ]
 
 # ============================================================
-# SYNTHÈSE ET KPi
+# SYNTHÈSE ET KPI
 # ============================================================
 
 st.divider()
@@ -175,7 +175,7 @@ col4.metric("👥 Clients", nombre_clients)
 col5.metric("📦 Commandes de vente", nombre_commandes)
 
 # ============================================================
-# ANALYSE CROISÉE (COMPLÉTÉE)
+# ANALYSE CROISÉE (COLONNE ORDRE DE MISSION EN PREMIER)
 # ============================================================
 
 st.divider()
@@ -185,9 +185,18 @@ st.caption("Cette analyse rapproche les commandes de vente des Ordres de Mission
 if df_commandes_analyse.empty or df_analyse.empty:
     st.warning("⚠️ Impossible de réaliser l'analyse croisée : données de commandes ou d'OM insuffisantes.")
 else:
-    # Rapprochement basé sur la clef 'Ordre de Mission'
-    col_om_cmd = "Ordre de Mission" if "Ordre de Mission" in df_commandes_analyse.columns else None
-    col_om_main = "Code" if "Code" in df_analyse.columns else df_analyse.columns[0]
+    # Recherche de la colonne représentant l'Ordre de Mission (Numéro / Code / OM)
+    col_om_cmd = None
+    for nom_col in ["Ordre de Mission", "Numéro", "N° OM", "Code"]:
+        if nom_col in df_commandes_analyse.columns:
+            col_om_cmd = nom_col
+            break
+
+    col_om_main = None
+    for nom_col in ["Code", "Numéro", "Ordre de Mission", "N° OM"]:
+        if nom_col in df_analyse.columns:
+            col_om_main = nom_col
+            break
 
     if col_om_cmd and col_om_main:
         df_croise = pd.merge(
@@ -198,7 +207,17 @@ else:
             how="inner",
             suffixes=("_Cmd", "_OM")
         )
+
+        # Réorganisation pour mettre l'Ordre de Mission en 1ère colonne
+        col_clef_nommee = col_om_cmd if col_om_cmd in df_croise.columns else col_om_main
         
+        # Renommage explicite de la 1ère colonne si besoin
+        df_croise = df_croise.rename(columns={col_clef_nommee: "Ordre de Mission"})
+        
+        # Positionnement de "Ordre de Mission" au tout début
+        cols = ["Ordre de Mission"] + [c for c in df_croise.columns if c != "Ordre de Mission"]
+        df_croise = df_croise[cols]
+
         st.subheader(f"📌 {len(df_croise)} lignes associées trouvées")
         st.dataframe(df_croise, use_container_width=True, hide_index=True)
     else:
