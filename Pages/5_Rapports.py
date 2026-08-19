@@ -27,7 +27,6 @@ FEUILLE_OM = "Input OM fini"
 FEUILLE_CHAUFFEURS = "Chauffeurs"
 FEUILLE_COMMANDES = "Feuil1"
 
-# Dictionnaire de correspondance des noms de colonnes
 CORRESPONDANCE_COLONNES = {
     "code convention": "Nom client",
     "Code convention": "Nom client",
@@ -36,9 +35,7 @@ CORRESPONDANCE_COLONNES = {
     "Code vehicule": "Camion",
     "code véhicule": "Camion",
     "Code véhicule": "Camion",
-    "Code Vehicule": "Camion",
-    "Numero Camion": "Camion",
-    "N° Camion": "Camion"
+    "Code Vehicule": "Camion"
 }
 
 # ============================================================
@@ -49,10 +46,8 @@ def nettoyer_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.columns = df.columns.astype(str).str.strip()
     
-    # Renommage automatique des colonnes cibles
     df = df.rename(columns=CORRESPONDANCE_COLONNES)
     
-    # Traitement vectorisé des valeurs textuelles
     obj_cols = df.select_dtypes(include=["object"]).columns
     for col in obj_cols:
         df[col] = df[col].fillna("").astype(str).str.strip()
@@ -134,7 +129,6 @@ def extraire_options(df: pd.DataFrame, col: str) -> list:
         return sorted([str(x) for x in df[col].dropna().unique() if str(x).strip()])
     return []
 
-# Prise en compte du libellé "Nom client" s'il existe
 col_client_filter = "Nom client" if "Nom client" in df_om.columns else "Client"
 
 filtre_statut = st.sidebar.multiselect("📊 Statut", extraire_options(df_om, "Status"), key="f_statut")
@@ -177,8 +171,10 @@ if isinstance(periode, tuple) and len(periode) == 2 and "Date de Mission" in df_
 st.divider()
 st.header("📊 Synthèse générale")
 
+col_camion = "Numero Camion" if "Numero Camion" in df_analyse.columns else "Camion"
+
 nombre_om = len(df_analyse)
-nombre_camions = df_analyse["Camion"].replace("", pd.NA).nunique() if "Camion" in df_analyse.columns else 0
+nombre_camions = df_analyse[col_camion].replace("", pd.NA).nunique() if col_camion in df_analyse.columns else 0
 nombre_chauffeurs = df_analyse["Chauffeur"].replace("", pd.NA).nunique() if "Chauffeur" in df_analyse.columns else 0
 nombre_clients = df_analyse[col_client_filter].replace("", pd.NA).nunique() if col_client_filter in df_analyse.columns else 0
 
@@ -221,11 +217,17 @@ else:
             left_on=col_om_cmd,
             right_on=col_om_main,
             how="inner",
-            suffixes=("_Cmd", "_OM")
+            suffixes=("_CMD", "_OM")
         )
 
         col_clef_nommee = col_om_cmd if col_om_cmd in df_croise.columns else col_om_main
-        df_croise = df_croise.rename(columns={col_clef_nommee: "Ordre de Mission"})
+        
+        # Renommage explicite de Ordre de Mission et de Camion_CMD -> Numero Camion
+        df_croise = df_croise.rename(columns={
+            col_clef_nommee: "Ordre de Mission",
+            "Camion_CMD": "Numero Camion",
+            "Camion_Cmd": "Numero Camion"
+        })
         
         cols = ["Ordre de Mission"] + [c for c in df_croise.columns if c != "Ordre de Mission"]
         df_croise = df_croise[cols]
