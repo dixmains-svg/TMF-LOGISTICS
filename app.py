@@ -1,52 +1,48 @@
-from pathlib import Path
 import base64
+from pathlib import Path
 import pandas as pd
 import streamlit as st
-# Configuration de la page
+
+# Import de la fonction d'authentification (adaptez le nom du fichier si nécessaire)
+try:
+    from login import ecran_connexion
+except ImportError:
+    # Si login.py n'existe pas encore, fonction temporaire pour éviter de faire crasher l'app
+    def ecran_connexion():
+        st.error("❌ Fichier 'login.py' introuvable.")
+        return False
+
+# ============================================================
+# CONFIGURATION DE LA PAGE (Doit être la toute première commande Streamlit)
+# ============================================================
 st.set_page_config(
     page_title="TMF LOGISTICS",
     page_icon="🚛",
     layout="wide",
 )
 
-# 1. Vérification : Si l'utilisateur n'est PAS connecté -> Afficher Login
-if not st.session_state.get("connecte", False):
-    afficher_login()
-    st.stop()  # Empêche l'affichage de la suite
-
-# 2. Si l'utilisateur EST connecté -> Afficher la page d'accueil
-afficher_home()
+# ============================================================
+# VERIFICATION DE L'AUTHENTIFICATION
+# ============================================================
+if not ecran_connexion():
+    st.stop()  # Stoppe le script si l'utilisateur n'est pas connecté
 
 # ============================================================
-# CHEMINS
+# CHEMINS DES PAGES
 # ============================================================
-
 BASE_DIR = Path(__file__).resolve().parent
-
 PAGES_DIR = BASE_DIR / "Pages"
 
-
-# ============================================================
-# FICHIERS DES PAGES
-# ============================================================
-
 PAGE_HOME = BASE_DIR / "app_home.py"
-
 PAGE_OM = PAGES_DIR / "1_Ordres_de_Mission.py"
-
 PAGE_CAMIONS = PAGES_DIR / "2_Camions.py"
-
 PAGE_CHAUFFEURS = PAGES_DIR / "3_Chauffeurs.py"
-
 PAGE_CLIENTS = PAGES_DIR / "4_Clients.py"
-
 PAGE_RAPPORTS = PAGES_DIR / "5_Rapports.py"
 
-
 # ============================================================
-# VÉRIFICATION DES FICHIERS
+# VÉRIFICATION DE L'EXISTENCE DES FICHIERS
 # ============================================================
-
 fichiers = {
     "Accueil": PAGE_HOME,
     "Ordres de Mission": PAGE_OM,
@@ -56,56 +52,29 @@ fichiers = {
     "Rapports": PAGE_RAPPORTS,
 }
 
-
-fichiers_manquants = []
-
-for nom, chemin in fichiers.items():
-
-    if not chemin.is_file():
-
-        fichiers_manquants.append(
-            f"{nom} → {chemin}"
-        )
-
+fichiers_manquants = [
+    f"{nom} → {chemin}" for nom, chemin in fichiers.items() if not chemin.is_file()
+]
 
 if fichiers_manquants:
-
-    st.error(
-        "❌ Fichiers de navigation introuvables"
-    )
-
-    st.markdown(
-        "### Fichiers manquants"
-    )
-
+    st.error("❌ Fichiers de navigation introuvables")
+    st.markdown("### Fichiers manquants")
     for fichier in fichiers_manquants:
-
         st.error(fichier)
-
     st.stop()
 
-
 # ============================================================
-# CSS
+# STYLE CSS PERSONNALISÉ
 # ============================================================
-
 st.markdown(
     """
     <style>
-
-    /* ========================================================
-       SIDEBAR
-       ======================================================== */
-
+    /* SIDEBAR */
     [data-testid="stSidebar"] {
         background-color: #f7f9fc;
     }
 
-
-    /* ========================================================
-       TITRE SIDEBAR
-       ======================================================== */
-
+    /* TITRE SIDEBAR */
     .tmf-sidebar-title {
         text-align: center;
         font-size: 23px;
@@ -115,11 +84,7 @@ st.markdown(
         margin-bottom: 5px;
     }
 
-
-    /* ========================================================
-       SOUS-TITRE SIDEBAR
-       ======================================================== */
-
+    /* SOUS-TITRE SIDEBAR */
     .tmf-sidebar-subtitle {
         text-align: center;
         font-size: 12px;
@@ -127,133 +92,75 @@ st.markdown(
         margin-bottom: 15px;
     }
 
-
-    /* ========================================================
-       MASQUER MENU STREAMLIT
-       ======================================================== */
-
-    #MainMenu {
+    /* MASQUER MENU & FOOTER STREAMLIT */
+    #MainMenu, footer {
         visibility: hidden;
     }
-
-
-    /* ========================================================
-       MASQUER FOOTER STREAMLIT
-       ======================================================== */
-
-    footer {
-        visibility: hidden;
-    }
-
     </style>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
-
 # ============================================================
-# SIDEBAR
+# EN-TÊTE SIDEBAR
 # ============================================================
-
 with st.sidebar:
-
     st.markdown(
         """
         <div class="tmf-sidebar-title">
             🚛 TMF LOGISTICS
         </div>
-
         <div class="tmf-sidebar-subtitle">
             Système de Gestion du Transport
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
-
     st.divider()
 
-
 # ============================================================
-# NAVIGATION
+# CONFIGURATION DE LA NAVIGATION
 # ============================================================
-#
-# IMPORTANT :
-# Les valeurs du dictionnaire sont des LISTES.
-#
-# Correct :
-#
-# "Accueil": [
-#     st.Page(...)
-# ]
-#
-# et non :
-#
-# "Accueil": st.Page(...)
-#
-# ============================================================
-
 pages = {
-
     "🏠 Accueil": [
-
         st.Page(
             str(PAGE_HOME),
             title="Accueil",
             icon="🏠",
-            default=True
+            default=True,
         )
-
     ],
-
     "🚛 Gestion du transport": [
-
         st.Page(
             str(PAGE_OM),
             title="Ordres de Mission",
-            icon="📋"
+            icon="📋",
         ),
-
         st.Page(
             str(PAGE_CAMIONS),
             title="Camions",
-            icon="🚚"
+            icon="🚚",
         ),
-
         st.Page(
             str(PAGE_CHAUFFEURS),
             title="Chauffeurs",
-            icon="👷"
+            icon="👷",
         ),
-
         st.Page(
             str(PAGE_CLIENTS),
             title="Clients",
-            icon="👥"
+            icon="👥",
         ),
-
         st.Page(
             str(PAGE_RAPPORTS),
             title="Rapports",
-            icon="📊"
-        )
-
-    ]
-
+            icon="📊",
+        ),
+    ],
 }
 
-
 # ============================================================
-# CRÉATION DE LA NAVIGATION
+# EXECUTION DE LA NAVIGATION
 # ============================================================
-
-navigation = st.navigation(
-    pages,
-    position="sidebar"
-)
-
-
-# ============================================================
-# EXÉCUTION DE LA PAGE
-# ============================================================
-
+navigation = st.navigation(pages, position="sidebar")
 navigation.run()
