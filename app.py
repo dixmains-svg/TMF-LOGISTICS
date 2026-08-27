@@ -3,14 +3,25 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-# Import de la fonction d'authentification (adaptez le nom du fichier si nécessaire)
+# Import du module d'API Navision
+try:
+    from navision_api import charger_donnees_nav
+except ImportError:
+
+    def charger_donnees_nav(endpoint: str) -> pd.DataFrame:
+        st.error(f"❌ Fichier 'navision_api.py' introuvable.")
+        return pd.DataFrame()
+
+
+# Import de la fonction d'authentification
 try:
     from login import ecran_connexion
 except ImportError:
-    # Si login.py n'existe pas encore, fonction temporaire pour éviter de faire crasher l'app
+
     def ecran_connexion():
         st.error("❌ Fichier 'login.py' introuvable.")
         return False
+
 
 # ============================================================
 # CONFIGURATION DE LA PAGE (Doit être la toute première commande Streamlit)
@@ -26,6 +37,19 @@ st.set_page_config(
 # ============================================================
 if not ecran_connexion():
     st.stop()  # Stoppe le script si l'utilisateur n'est pas connecté
+
+# ============================================================
+# INITIALISATION ET CHARGEMENT DE NAVISION DANS SESSION_STATE
+# ============================================================
+# Charge les tables Navision une seule fois par session pour optimiser la vitesse
+if "nav_data_loaded" not in st.session_state:
+    with st.spinner("🚀 Synchronisation avec Navision ERP..."):
+        # Remplacez les noms des endpoints par les noms exacts de vos Web Services Navision
+        st.session_state["df_om"] = charger_donnees_nav("OrdresDeMission")
+        st.session_state["df_camions"] = charger_donnees_nav("Camions")
+        st.session_state["df_chauffeurs"] = charger_donnees_nav("Chauffeurs")
+        st.session_state["df_clients"] = charger_donnees_nav("Clients")
+        st.session_state["nav_data_loaded"] = True
 
 # ============================================================
 # CHEMINS DES PAGES
@@ -102,7 +126,7 @@ st.markdown(
 )
 
 # ============================================================
-# EN-TÊTE SIDEBAR
+# EN-TÊTE SIDEBAR ET BOUTON DE SYNCHRONISATION NAV
 # ============================================================
 with st.sidebar:
     st.markdown(
@@ -116,12 +140,19 @@ with st.sidebar:
         """,
         unsafe_allow_html=True,
     )
+
+    # Bouton pour forcer le rafraîchissement des données depuis Navision
+    if st.button("🔄 Actualiser Navision", use_container_width=True):
+        st.cache_data.clear()
+        if "nav_data_loaded" in st.session_state:
+            del st.session_state["nav_data_loaded"]
+        st.rerun()
+
     st.divider()
 
 # ============================================================
 # CONFIGURATION DE LA NAVIGATION
 # ============================================================
-
 home_page = st.Page(str(PAGE_HOME), title="Accueil", icon="🏠", default=True)
 
 # Arborescence de navigation
