@@ -6,98 +6,14 @@ from datetime import datetime
 
 
 # ============================================================
-# CONFIGURATION STREAMLIT
+# CONFIGURATION
 # ============================================================
 
 st.set_page_config(
-    page_title="TMF LOGISTICS - Rapports",
+    page_title="TMF LOGISTICS",
     page_icon="🚚",
     layout="wide",
     initial_sidebar_state="expanded"
-)
-
-
-# ============================================================
-# STYLE
-# ============================================================
-
-st.markdown(
-    """
-    <style>
-
-    .main {
-        background-color: #f4f6f8;
-    }
-
-    .block-container {
-        padding-top: 1.5rem;
-        padding-bottom: 2rem;
-    }
-
-    .tmf-header {
-        background: linear-gradient(
-            135deg,
-            #0b5d3b,
-            #15915f
-        );
-        padding: 25px 30px;
-        border-radius: 14px;
-        color: white;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    }
-
-    .tmf-header h1 {
-        margin: 0;
-        font-size: 32px;
-        font-weight: 700;
-    }
-
-    .tmf-header p {
-        margin-top: 6px;
-        margin-bottom: 0;
-        font-size: 15px;
-    }
-
-    .metric-card {
-        background: white;
-        padding: 18px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        text-align: center;
-        border-left: 5px solid #15915f;
-    }
-
-    .metric-title {
-        color: #666666;
-        font-size: 14px;
-        margin-bottom: 5px;
-    }
-
-    .metric-value {
-        color: #0b5d3b;
-        font-size: 28px;
-        font-weight: bold;
-    }
-
-    .section-title {
-        color: #0b5d3b;
-        font-size: 22px;
-        font-weight: 700;
-        margin-top: 15px;
-        margin-bottom: 15px;
-    }
-
-    div[data-testid="stMetric"] {
-        background-color: white;
-        padding: 12px;
-        border-radius: 10px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.07);
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True
 )
 
 
@@ -107,38 +23,136 @@ st.markdown(
 
 DATA_DIR = "Data"
 
-CAMIONS_FILE = os.path.join(
-    DATA_DIR,
-    "Camions.xlsx"
-)
-
-CHAUFFEURS_FILE = os.path.join(
-    DATA_DIR,
-    "Chauffeurs.xlsx"
-)
-
-CLIENTS_FILE = os.path.join(
-    DATA_DIR,
-    "Clients.xlsx"
-)
-
-COMMANDES_FILE = os.path.join(
-    DATA_DIR,
-    "Commande de vente.xlsx"
-)
-
-OM_FILE = os.path.join(
-    DATA_DIR,
-    "OM.xlsx"
-)
+FILES = {
+    "Camions": os.path.join(DATA_DIR, "Camions.xlsx"),
+    "Chauffeurs": os.path.join(DATA_DIR, "Chauffeurs.xlsx"),
+    "Clients": os.path.join(DATA_DIR, "Clients.xlsx"),
+    "Commandes": os.path.join(DATA_DIR, "Commande de vente.xlsx"),
+    "OM": os.path.join(DATA_DIR, "OM.xlsx")
+}
 
 
 # ============================================================
-# FONCTIONS
+# STYLE
+# ============================================================
+
+st.markdown("""
+<style>
+
+.main {
+    background-color: #f5f7fa;
+}
+
+.block-container {
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+}
+
+/* HEADER */
+
+.tmf-header {
+    background: linear-gradient(
+        135deg,
+        #0b5d3b,
+        #15915f
+    );
+
+    padding: 22px 30px;
+
+    border-radius: 12px;
+
+    color: white;
+
+    margin-bottom: 25px;
+
+    box-shadow:
+        0 3px 10px rgba(0,0,0,0.12);
+}
+
+.tmf-header h1 {
+    margin: 0;
+    font-size: 32px;
+}
+
+.tmf-header p {
+    margin-top: 5px;
+    margin-bottom: 0;
+    font-size: 15px;
+}
+
+/* TITRES */
+
+.section-title {
+    color: #0b5d3b;
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+/* CARTES */
+
+.metric-card {
+    background: white;
+
+    padding: 18px;
+
+    border-radius: 10px;
+
+    border-left: 5px solid #15915f;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.08);
+
+    text-align: center;
+}
+
+.metric-title {
+    color: #666;
+    font-size: 14px;
+}
+
+.metric-value {
+    color: #0b5d3b;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+/* SIDEBAR */
+
+section[data-testid="stSidebar"] {
+    background-color: #f0f2f6;
+}
+
+/* BOUTONS */
+
+.stButton > button {
+    border-radius: 7px;
+}
+
+/* TABLE */
+
+div[data-testid="stDataFrame"] {
+    border-radius: 8px;
+}
+
+/* SEPARATION */
+
+hr {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+
+# ============================================================
+# FONCTIONS EXCEL
 # ============================================================
 
 @st.cache_data
-def get_excel_sheets(file_path):
+def get_sheets(file_path):
 
     if not os.path.exists(file_path):
         return []
@@ -158,14 +172,16 @@ def get_excel_sheets(file_path):
 
 
 @st.cache_data
-def load_excel(file_path, sheet_name=None):
+def read_excel(
+    file_path,
+    sheet_name=None
+):
 
     if not os.path.exists(file_path):
         return pd.DataFrame()
 
     try:
 
-        # Lecture d'une feuille précise
         if sheet_name:
 
             df = pd.read_excel(
@@ -176,61 +192,64 @@ def load_excel(file_path, sheet_name=None):
 
         else:
 
-            # Première feuille
             df = pd.read_excel(
                 file_path,
                 engine="openpyxl"
             )
 
-        # Suppression lignes vides
+        # Supprimer lignes vides
         df = df.dropna(
             axis=0,
             how="all"
         )
 
-        # Suppression colonnes vides
+        # Supprimer colonnes vides
         df = df.dropna(
             axis=1,
             how="all"
         )
 
-        # Nettoyage colonnes
+        # Nettoyer les noms des colonnes
         df.columns = [
-            str(col).strip()
-            for col in df.columns
+            str(c).strip()
+            for c in df.columns
         ]
 
         return df
 
-    except Exception:
+    except Exception as e:
 
         return pd.DataFrame()
 
 
-def load_main_file(file_path, preferred_sheet=None):
+def load_file(
+    file_path,
+    preferred_sheet=None
+):
 
-    sheets = get_excel_sheets(
+    sheets = get_sheets(
         file_path
     )
 
     if not sheets:
+
         return pd.DataFrame(), []
 
-    # Feuille demandée disponible
+    # Priorité à la feuille demandée
     if (
         preferred_sheet
         and preferred_sheet in sheets
     ):
 
-        df = load_excel(
+        df = read_excel(
             file_path,
             preferred_sheet
         )
 
         return df, sheets
 
-    # Première feuille
-    df = load_excel(
+    # Sinon première feuille
+    df = read_excel(
         file_path,
         sheets[0]
     )
@@ -238,30 +257,29 @@ def load_main_file(file_path, preferred_sheet=None):
     return df, sheets
 
 
-def normalize_text(value):
-
-    if pd.isna(value):
-        return ""
-
-    return str(value).strip().lower()
-
-
-def search_dataframe(df, search_text):
+def search_data(
+    df,
+    search
+):
 
     if df.empty:
         return df
 
-    if not search_text:
+    if not search:
         return df
 
-    search_text = str(
-        search_text
-    ).strip().lower()
+    search = str(
+        search
+    ).strip()
+
+    if not search:
+        return df
 
     mask = df.astype(str).apply(
-        lambda column:
-        column.str.lower().str.contains(
-            search_text,
+        lambda col:
+        col.str.contains(
+            search,
+            case=False,
             na=False,
             regex=False
         )
@@ -272,7 +290,7 @@ def search_dataframe(df, search_text):
     ]
 
 
-def filter_dataframe(
+def filter_data(
     df,
     column,
     value
@@ -282,37 +300,32 @@ def filter_dataframe(
         return df
 
     if (
-        column is None
-        or column == "Toutes les colonnes"
+        column == "Toutes les colonnes"
         or not value
     ):
         return df
 
-    mask = (
-        df[column]
-        .astype(str)
-        .str.contains(
-            value,
-            case=False,
-            na=False,
-            regex=False
-        )
+    mask = df[column].astype(str).str.contains(
+        value,
+        case=False,
+        na=False,
+        regex=False
     )
 
     return df[mask]
 
 
-def dataframe_to_excel(df):
+def excel_download(df):
 
     output = io.BytesIO()
 
     with pd.ExcelWriter(
         output,
         engine="openpyxl"
-    ):
+    ) as writer:
 
         df.to_excel(
-            output,
+            writer,
             index=False,
             sheet_name="Rapport"
         )
@@ -320,17 +333,10 @@ def dataframe_to_excel(df):
     return output.getvalue()
 
 
-def show_table(
+def show_data(
     df,
-    title=None,
     height=500
 ):
-
-    if title:
-        st.markdown(
-            f'<div class="section-title">{title}</div>',
-            unsafe_allow_html=True
-        )
 
     if df.empty:
 
@@ -348,151 +354,124 @@ def show_table(
     )
 
 
-def file_status(
-    file_path
-):
-
-    return os.path.exists(
-        file_path
-    )
-
-
 # ============================================================
-# CHARGEMENT DES 5 SOURCES
+# CHARGEMENT DES DONNÉES
 # ============================================================
 
-camions, camions_sheets = load_main_file(
-    CAMIONS_FILE
+camions, camions_sheets = load_file(
+    FILES["Camions"]
 )
 
-chauffeurs, chauffeurs_sheets = load_main_file(
-    CHAUFFEURS_FILE,
+chauffeurs, chauffeurs_sheets = load_file(
+    FILES["Chauffeurs"],
     "Chauffeurs"
 )
 
-clients, clients_sheets = load_main_file(
-    CLIENTS_FILE
+clients, clients_sheets = load_file(
+    FILES["Clients"]
 )
 
-commandes, commandes_sheets = load_main_file(
-    COMMANDES_FILE
+commandes, commandes_sheets = load_file(
+    FILES["Commandes"]
 )
 
 # OM : priorité à Input OM fini
-om, om_sheets = load_main_file(
-    OM_FILE,
+om, om_sheets = load_file(
+    FILES["OM"],
     "Input OM fini"
 )
 
 
 # ============================================================
-# DICTIONNAIRE DES DONNÉES
+# SIDEBAR — UN SEUL MENU
 # ============================================================
 
-DATASETS = {
+with st.sidebar:
 
-    "Camions": {
-        "file": CAMIONS_FILE,
-        "data": camions,
-        "sheets": camions_sheets
-    },
+    st.markdown(
+        """
+        <div style="
+            text-align:center;
+            padding:10px 0 20px 0;
+        ">
+            <h2 style="
+                color:#0b5d3b;
+                margin-bottom:5px;
+            ">
+                🚚 TMF LOGISTICS
+            </h2>
 
-    "Chauffeurs": {
-        "file": CHAUFFEURS_FILE,
-        "data": chauffeurs,
-        "sheets": chauffeurs_sheets
-    },
+            <small>
+                Transport & Logistique
+            </small>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    "Clients": {
-        "file": CLIENTS_FILE,
-        "data": clients,
-        "sheets": clients_sheets
-    },
+    st.markdown("---")
 
-    "Commandes de vente": {
-        "file": COMMANDES_FILE,
-        "data": commandes,
-        "sheets": commandes_sheets
-    },
+    menu = st.radio(
+        "MENU PRINCIPAL",
 
-    "Ordres de mission": {
-        "file": OM_FILE,
-        "data": om,
-        "sheets": om_sheets
-    }
-}
+        [
+            "🏠 Accueil",
+            "🚚 Gestion du transport",
+            "📋 Ordres de Mission",
+            "🚛 Camions",
+            "👨‍✈️ Chauffeurs",
+            "👥 Clients",
+            "📦 Commandes de vente",
+            "📊 Rapports"
+        ],
+
+        index=0
+    )
+
+    st.markdown("---")
+
+    st.caption(
+        "TMF LOGISTICS"
+    )
+
+    st.caption(
+        datetime.now().strftime(
+            "%d/%m/%Y %H:%M"
+        )
+    )
 
 
 # ============================================================
 # HEADER
 # ============================================================
 
-st.markdown(
-    """
-    <div class="tmf-header">
+st.markdown("""
+<div class="tmf-header">
 
-        <h1>🚚 TMF LOGISTICS</h1>
+    <h1>🚚 TMF LOGISTICS</h1>
 
-        <p>
-            Rapports • Transport • Exploitation •
-            Planification • Suivi
-        </p>
+    <p>
+        Gestion du transport •
+        Ordres de mission •
+        Camions •
+        Chauffeurs •
+        Clients •
+        Rapports
+    </p>
 
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# ============================================================
-# SIDEBAR
-# ============================================================
-
-st.sidebar.markdown(
-    "## 🚚 TMF LOGISTICS"
-)
-
-st.sidebar.markdown("---")
-
-menu = st.sidebar.radio(
-    "MENU PRINCIPAL",
-    [
-        "🏠 Tableau de bord",
-        "📋 Ordres de mission",
-        "🚛 Camions",
-        "👨‍✈️ Chauffeurs",
-        "🏢 Clients",
-        "📦 Commandes de vente",
-        "🔎 Recherche globale",
-        "📊 Analyse",
-        "⚙️ Données"
-    ]
-)
-
-st.sidebar.markdown("---")
-
-st.sidebar.info(
-    "Application de suivi "
-    "et de reporting transport"
-)
-
-st.sidebar.caption(
-    "Dernière ouverture : "
-    + datetime.now().strftime(
-        "%d/%m/%Y %H:%M"
-    )
-)
+</div>
+""", unsafe_allow_html=True)
 
 
 # ============================================================
-# TABLEAU DE BORD
+# ACCUEIL
 # ============================================================
 
-if menu == "🏠 Tableau de bord":
+if menu == "🏠 Accueil":
 
     st.markdown(
         '<div class="section-title">'
-        '📊 Tableau de bord'
+        '🏠 Tableau de bord'
         '</div>',
         unsafe_allow_html=True
     )
@@ -501,37 +480,37 @@ if menu == "🏠 Tableau de bord":
     # INDICATEURS
     # --------------------------------------------------------
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+    c1, c2, c3, c4, c5 = st.columns(5)
 
-    with col1:
+    with c1:
 
         st.metric(
             "🚛 Camions",
             len(camions)
         )
 
-    with col2:
+    with c2:
 
         st.metric(
             "👨‍✈️ Chauffeurs",
             len(chauffeurs)
         )
 
-    with col3:
+    with c3:
 
         st.metric(
-            "🏢 Clients",
+            "👥 Clients",
             len(clients)
         )
 
-    with col4:
+    with c4:
 
         st.metric(
             "📦 Commandes",
             len(commandes)
         )
 
-    with col5:
+    with c5:
 
         st.metric(
             "📋 OM",
@@ -544,49 +523,61 @@ if menu == "🏠 Tableau de bord":
     # ÉTAT DES FICHIERS
     # --------------------------------------------------------
 
-    st.markdown(
-        '<div class="section-title">'
-        '📁 État des fichiers'
-        '</div>',
-        unsafe_allow_html=True
+    st.subheader(
+        "📁 État des données"
     )
 
-    status_data = []
+    status = pd.DataFrame({
 
-    for name, info in DATASETS.items():
+        "Source": [
+            "Camions",
+            "Chauffeurs",
+            "Clients",
+            "Commandes de vente",
+            "Ordres de Mission"
+        ],
 
-        df = info["data"]
+        "Fichier": [
+            "Camions.xlsx",
+            "Chauffeurs.xlsx",
+            "Clients.xlsx",
+            "Commande de vente.xlsx",
+            "OM.xlsx"
+        ],
 
-        status_data.append(
-            {
-                "Source": name,
+        "Statut": [
+            "✅ Disponible"
+            if os.path.exists(FILES["Camions"])
+            else "❌ Introuvable",
 
-                "Fichier": os.path.basename(
-                    info["file"]
-                ),
+            "✅ Disponible"
+            if os.path.exists(FILES["Chauffeurs"])
+            else "❌ Introuvable",
 
-                "Statut":
-                    "✅ Disponible"
-                    if file_status(info["file"])
-                    else "❌ Introuvable",
+            "✅ Disponible"
+            if os.path.exists(FILES["Clients"])
+            else "❌ Introuvable",
 
-                "Lignes":
-                    len(df),
+            "✅ Disponible"
+            if os.path.exists(FILES["Commandes"])
+            else "❌ Introuvable",
 
-                "Colonnes":
-                    len(df.columns),
+            "✅ Disponible"
+            if os.path.exists(FILES["OM"])
+            else "❌ Introuvable"
+        ],
 
-                "Feuilles":
-                    len(info["sheets"])
-            }
-        )
-
-    status_df = pd.DataFrame(
-        status_data
-    )
+        "Lignes": [
+            len(camions),
+            len(chauffeurs),
+            len(clients),
+            len(commandes),
+            len(om)
+        ]
+    })
 
     st.dataframe(
-        status_df,
+        status,
         use_container_width=True,
         hide_index=True
     )
@@ -595,39 +586,114 @@ if menu == "🏠 Tableau de bord":
     # GRAPHIQUE
     # --------------------------------------------------------
 
+    st.subheader(
+        "📊 Volume des données"
+    )
+
+    graph = pd.DataFrame({
+
+        "Source": [
+            "Camions",
+            "Chauffeurs",
+            "Clients",
+            "Commandes",
+            "OM"
+        ],
+
+        "Nombre": [
+            len(camions),
+            len(chauffeurs),
+            len(clients),
+            len(commandes),
+            len(om)
+        ]
+    })
+
+    st.bar_chart(
+        graph.set_index("Source")
+    )
+
+
+# ============================================================
+# GESTION DU TRANSPORT
+# ============================================================
+
+elif menu == "🚚 Gestion du transport":
+
     st.markdown(
         '<div class="section-title">'
-        '📈 Volume des données'
+        '🚚 Gestion du transport'
         '</div>',
         unsafe_allow_html=True
     )
 
-    chart_df = pd.DataFrame(
-        {
-            "Source": [
-                "Camions",
-                "Chauffeurs",
-                "Clients",
-                "Commandes",
-                "OM"
-            ],
+    st.info(
+        """
+        Cette section constitue le centre de gestion
+        de l'activité transport.
 
-            "Nombre": [
-                len(camions),
-                len(chauffeurs),
-                len(clients),
-                len(commandes),
-                len(om)
-            ]
-        }
+        Les données disponibles sont :
+
+        • 🚛 Camions
+        • 👨‍✈️ Chauffeurs
+        • 📋 Ordres de Mission
+        • 👥 Clients
+        • 📦 Commandes de vente
+        """
     )
 
-    chart_df = chart_df.set_index(
-        "Source"
+    c1, c2, c3 = st.columns(3)
+
+    with c1:
+
+        st.metric(
+            "🚛 Parc camions",
+            len(camions)
+        )
+
+    with c2:
+
+        st.metric(
+            "👨‍✈️ Chauffeurs",
+            len(chauffeurs)
+        )
+
+    with c3:
+
+        st.metric(
+            "📋 Ordres de Mission",
+            len(om)
+        )
+
+    st.markdown("---")
+
+    st.subheader(
+        "📈 Données disponibles"
     )
 
-    st.bar_chart(
-        chart_df
+    transport_data = pd.DataFrame({
+
+        "Élément": [
+            "Camions",
+            "Chauffeurs",
+            "Clients",
+            "Commandes",
+            "Ordres de Mission"
+        ],
+
+        "Nombre": [
+            len(camions),
+            len(chauffeurs),
+            len(clients),
+            len(commandes),
+            len(om)
+        ]
+    })
+
+    st.dataframe(
+        transport_data,
+        use_container_width=True,
+        hide_index=True
     )
 
 
@@ -635,11 +701,11 @@ if menu == "🏠 Tableau de bord":
 # ORDRES DE MISSION
 # ============================================================
 
-elif menu == "📋 Ordres de mission":
+elif menu == "📋 Ordres de Mission":
 
     st.markdown(
         '<div class="section-title">'
-        '📋 Ordres de mission'
+        '📋 Ordres de Mission'
         '</div>',
         unsafe_allow_html=True
     )
@@ -647,99 +713,90 @@ elif menu == "📋 Ordres de mission":
     if om.empty:
 
         st.error(
-            "Aucune donnée OM disponible."
+            "Aucune donnée trouvée dans OM.xlsx."
         )
 
     else:
 
         st.success(
-            f"{len(om)} ligne(s) chargée(s) "
-            f"depuis OM.xlsx"
+            f"{len(om)} ligne(s) chargée(s)"
         )
 
-        # ----------------------------------------------------
-        # FEUILLE
-        # ----------------------------------------------------
-
+        # Sélection de feuille
         if om_sheets:
 
-            selected_sheet = st.selectbox(
+            sheet = st.selectbox(
                 "📄 Feuille",
                 om_sheets,
                 index=(
-                    om_sheets.index("Input OM fini")
-                    if "Input OM fini" in om_sheets
+                    om_sheets.index(
+                        "Input OM fini"
+                    )
+                    if "Input OM fini"
+                    in om_sheets
                     else 0
                 )
             )
 
-            om_view = load_excel(
-                OM_FILE,
-                selected_sheet
+            data = read_excel(
+                FILES["OM"],
+                sheet
             )
 
         else:
 
-            om_view = om.copy()
+            data = om.copy()
 
-        # ----------------------------------------------------
-        # RECHERCHE
-        # ----------------------------------------------------
-
+        # Recherche
         search = st.text_input(
             "🔎 Rechercher dans les OM"
         )
 
-        result = search_dataframe(
-            om_view,
+        result = search_data(
+            data,
             search
         )
 
-        # ----------------------------------------------------
-        # FILTRE
-        # ----------------------------------------------------
+        # Filtre
+        if not result.empty:
 
-        col1, col2 = st.columns(2)
+            c1, c2 = st.columns(2)
 
-        with col1:
+            with c1:
 
-            filter_column = st.selectbox(
-                "Filtrer par colonne",
-                [
-                    "Toutes les colonnes"
-                ] + list(result.columns)
+                column = st.selectbox(
+                    "Filtrer par",
+                    [
+                        "Toutes les colonnes"
+                    ] + list(result.columns)
+                )
+
+            with c2:
+
+                value = st.text_input(
+                    "Valeur"
+                )
+
+            result = filter_data(
+                result,
+                column,
+                value
             )
-
-        with col2:
-
-            filter_value = st.text_input(
-                "Valeur du filtre"
-            )
-
-        result = filter_dataframe(
-            result,
-            filter_column,
-            filter_value
-        )
 
         st.write(
             f"**{len(result)} résultat(s)**"
         )
 
-        show_table(
+        show_data(
             result,
-            height=550
+            600
         )
-
-        # ----------------------------------------------------
-        # EXPORT
-        # ----------------------------------------------------
 
         if not result.empty:
 
             st.download_button(
-                "⬇️ Télécharger le rapport OM",
-                data=dataframe_to_excel(
+                "⬇️ Exporter le rapport OM",
+                data=excel_download(
                     result
                 ),
                 file_name="TMF_Rapport_OM.xlsx",
@@ -766,31 +823,25 @@ elif menu == "🚛 Camions":
     if camions.empty:
 
         st.error(
-            "Camions.xlsx est vide "
-            "ou introuvable."
+            "Aucune donnée trouvée dans Camions.xlsx."
         )
 
     else:
 
-        st.success(
-            f"{len(camions)} ligne(s) "
-            "chargée(s)"
+        st.metric(
+            "Nombre de lignes",
+            len(camions)
         )
-
-        # ----------------------------------------------------
-        # FEUILLES
-        # ----------------------------------------------------
 
         if camions_sheets:
 
             sheet = st.selectbox(
                 "📄 Feuille",
-                camions_sheets,
-                key="camions_sheet"
+                camions_sheets
             )
 
-            data = load_excel(
-                CAMIONS_FILE,
+            data = read_excel(
+                FILES["Camions"],
                 sheet
             )
 
@@ -798,37 +849,28 @@ elif menu == "🚛 Camions":
 
             data = camions.copy()
 
-        # ----------------------------------------------------
-        # RECHERCHE
-        # ----------------------------------------------------
-
         search = st.text_input(
-            "🔎 Rechercher un camion",
-            key="search_camions"
+            "🔎 Rechercher un camion"
         )
 
-        result = search_dataframe(
+        result = search_data(
             data,
             search
         )
-
-        # ----------------------------------------------------
-        # TABLE
-        # ----------------------------------------------------
 
         st.write(
             f"**{len(result)} résultat(s)**"
         )
 
-        show_table(
+        show_data(
             result
         )
 
         if not result.empty:
 
             st.download_button(
-                "⬇️ Télécharger Camions",
-                data=dataframe_to_excel(
+                "⬇️ Exporter Camions",
+                data=excel_download(
                     result
                 ),
                 file_name="TMF_Camions.xlsx",
@@ -855,26 +897,25 @@ elif menu == "👨‍✈️ Chauffeurs":
     if chauffeurs.empty:
 
         st.error(
-            "Chauffeurs.xlsx est vide "
-            "ou introuvable."
+            "Aucune donnée trouvée dans Chauffeurs.xlsx."
         )
 
     else:
 
-        st.success(
-            f"{len(chauffeurs)} chauffeur(s)"
+        st.metric(
+            "Nombre de chauffeurs",
+            len(chauffeurs)
         )
 
         if chauffeurs_sheets:
 
             sheet = st.selectbox(
                 "📄 Feuille",
-                chauffeurs_sheets,
-                key="chauffeurs_sheet"
+                chauffeurs_sheets
             )
 
-            data = load_excel(
-                CHAUFFEURS_FILE,
+            data = read_excel(
+                FILES["Chauffeurs"],
                 sheet
             )
 
@@ -883,11 +924,10 @@ elif menu == "👨‍✈️ Chauffeurs":
             data = chauffeurs.copy()
 
         search = st.text_input(
-            "🔎 Rechercher un chauffeur",
-            key="search_chauffeurs"
+            "🔎 Rechercher un chauffeur"
         )
 
-        result = search_dataframe(
+        result = search_data(
             data,
             search
         )
@@ -896,15 +936,15 @@ elif menu == "👨‍✈️ Chauffeurs":
             f"**{len(result)} résultat(s)**"
         )
 
-        show_table(
+        show_data(
             result
         )
 
         if not result.empty:
 
             st.download_button(
-                "⬇️ Télécharger Chauffeurs",
-                data=dataframe_to_excel(
+                "⬇️ Exporter Chauffeurs",
+                data=excel_download(
                     result
                 ),
                 file_name="TMF_Chauffeurs.xlsx",
@@ -919,11 +959,11 @@ elif menu == "👨‍✈️ Chauffeurs":
 # CLIENTS
 # ============================================================
 
-elif menu == "🏢 Clients":
+elif menu == "👥 Clients":
 
     st.markdown(
         '<div class="section-title">'
-        '🏢 Gestion des clients'
+        '👥 Gestion des clients'
         '</div>',
         unsafe_allow_html=True
     )
@@ -931,26 +971,25 @@ elif menu == "🏢 Clients":
     if clients.empty:
 
         st.error(
-            "Clients.xlsx est vide "
-            "ou introuvable."
+            "Aucune donnée trouvée dans Clients.xlsx."
         )
 
     else:
 
-        st.success(
-            f"{len(clients)} client(s)"
+        st.metric(
+            "Nombre de clients",
+            len(clients)
         )
 
         if clients_sheets:
 
             sheet = st.selectbox(
                 "📄 Feuille",
-                clients_sheets,
-                key="clients_sheet"
+                clients_sheets
             )
 
-            data = load_excel(
-                CLIENTS_FILE,
+            data = read_excel(
+                FILES["Clients"],
                 sheet
             )
 
@@ -959,11 +998,10 @@ elif menu == "🏢 Clients":
             data = clients.copy()
 
         search = st.text_input(
-            "🔎 Rechercher un client",
-            key="search_clients"
+            "🔎 Rechercher un client"
         )
 
-        result = search_dataframe(
+        result = search_data(
             data,
             search
         )
@@ -972,15 +1010,15 @@ elif menu == "🏢 Clients":
             f"**{len(result)} résultat(s)**"
         )
 
-        show_table(
+        show_data(
             result
         )
 
         if not result.empty:
 
             st.download_button(
-                "⬇️ Télécharger Clients",
-                data=dataframe_to_excel(
+                "⬇️ Exporter Clients",
+                data=excel_download(
                     result
                 ),
                 file_name="TMF_Clients.xlsx",
@@ -1007,26 +1045,26 @@ elif menu == "📦 Commandes de vente":
     if commandes.empty:
 
         st.error(
-            "Commande de vente.xlsx est vide "
-            "ou introuvable."
+            "Aucune donnée trouvée dans "
+            "Commande de vente.xlsx."
         )
 
     else:
 
-        st.success(
-            f"{len(commandes)} ligne(s) chargée(s)"
+        st.metric(
+            "Nombre de lignes",
+            len(commandes)
         )
 
         if commandes_sheets:
 
             sheet = st.selectbox(
                 "📄 Feuille",
-                commandes_sheets,
-                key="commandes_sheet"
+                commandes_sheets
             )
 
-            data = load_excel(
-                COMMANDES_FILE,
+            data = read_excel(
+                FILES["Commandes"],
                 sheet
             )
 
@@ -1035,60 +1073,53 @@ elif menu == "📦 Commandes de vente":
             data = commandes.copy()
 
         search = st.text_input(
-            "🔎 Rechercher une commande",
-            key="search_commandes"
+            "🔎 Rechercher une commande"
         )
 
-        result = search_dataframe(
+        result = search_data(
             data,
             search
         )
 
-        # ----------------------------------------------------
-        # FILTRE COLONNE
-        # ----------------------------------------------------
-
         if not result.empty:
 
-            col1, col2 = st.columns(2)
+            c1, c2 = st.columns(2)
 
-            with col1:
+            with c1:
 
-                filter_column = st.selectbox(
+                column = st.selectbox(
                     "Filtrer par",
                     [
                         "Toutes les colonnes"
-                    ] + list(result.columns),
-                    key="commande_filter_col"
+                    ] + list(result.columns)
                 )
 
-            with col2:
+            with c2:
 
-                filter_value = st.text_input(
-                    "Valeur",
-                    key="commande_filter_value"
+                value = st.text_input(
+                    "Valeur"
                 )
 
-            result = filter_dataframe(
+            result = filter_data(
                 result,
-                filter_column,
-                filter_value
+                column,
+                value
             )
 
         st.write(
             f"**{len(result)} résultat(s)**"
         )
 
-        show_table(
+        show_data(
             result,
-            height=550
+            600
         )
 
         if not result.empty:
 
             st.download_button(
-                "⬇️ Télécharger Commandes",
-                data=dataframe_to_excel(
+                "⬇️ Exporter Commandes",
+                data=excel_download(
                     result
                 ),
                 file_name="TMF_Commandes_Vente.xlsx",
@@ -1100,398 +1131,171 @@ elif menu == "📦 Commandes de vente":
 
 
 # ============================================================
-# RECHERCHE GLOBALE
+# RAPPORTS
 # ============================================================
 
-elif menu == "🔎 Recherche globale":
+elif menu == "📊 Rapports":
 
     st.markdown(
         '<div class="section-title">'
-        '🔎 Recherche globale TMF'
+        '📊 Rapports TMF LOGISTICS'
         '</div>',
         unsafe_allow_html=True
     )
 
-    st.write(
-        "Recherchez un camion, chauffeur, client, "
-        "commande, OM ou toute autre information."
+    # --------------------------------------------------------
+    # CHOIX DE LA SOURCE
+    # --------------------------------------------------------
+
+    source = st.selectbox(
+        "📂 Choisir les données à analyser",
+        [
+            "Ordres de Mission",
+            "Camions",
+            "Chauffeurs",
+            "Clients",
+            "Commandes de vente"
+        ]
     )
 
-    search = st.text_input(
-        "🔎 Recherche",
-        placeholder=(
-            "Exemple : TR301, client, OM, commande..."
-        )
-    )
+    if source == "Ordres de Mission":
 
-    if search:
+        data = om
 
-        all_results = []
+    elif source == "Camions":
 
-        for name, info in DATASETS.items():
+        data = camions
 
-            df = info["data"]
+    elif source == "Chauffeurs":
 
-            if df.empty:
-                continue
+        data = chauffeurs
 
-            result = search_dataframe(
-                df,
-                search
-            )
+    elif source == "Clients":
 
-            if not result.empty:
+        data = clients
 
-                result = result.copy()
+    else:
 
-                result.insert(
-                    0,
-                    "SOURCE",
-                    name
-                )
-
-                all_results.append(
-                    result
-                )
-
-        if all_results:
-
-            final_result = pd.concat(
-                all_results,
-                ignore_index=True
-            )
-
-            st.success(
-                f"{len(final_result)} résultat(s) trouvé(s)."
-            )
-
-            show_table(
-                final_result,
-                height=600
-            )
-
-            st.download_button(
-                "⬇️ Télécharger les résultats",
-                data=dataframe_to_excel(
-                    final_result
-                ),
-                file_name="TMF_Recherche_Globale.xlsx",
-                mime=(
-                    "application/vnd.openxmlformats-officedocument."
-                    "spreadsheetml.sheet"
-                )
-            )
-
-        else:
-
-            st.warning(
-                "Aucun résultat trouvé."
-            )
-
-
-# ============================================================
-# ANALYSE
-# ============================================================
-
-elif menu == "📊 Analyse":
-
-    st.markdown(
-        '<div class="section-title">'
-        '📊 Analyse des données'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-    source_name = st.selectbox(
-        "Choisir une source",
-        list(DATASETS.keys())
-    )
-
-    data = DATASETS[
-        source_name
-    ]["data"]
+        data = commandes
 
     if data.empty:
 
         st.warning(
-            "Cette source ne contient aucune donnée."
+            "Aucune donnée disponible."
         )
 
     else:
 
-        st.write(
-            f"### Analyse : {source_name}"
-        )
-
         # ----------------------------------------------------
-        # INFORMATIONS
+        # INDICATEURS
         # ----------------------------------------------------
 
-        col1, col2, col3 = st.columns(3)
+        c1, c2, c3 = st.columns(3)
 
-        with col1:
+        with c1:
 
             st.metric(
                 "Lignes",
                 len(data)
             )
 
-        with col2:
+        with c2:
 
             st.metric(
                 "Colonnes",
                 len(data.columns)
             )
 
-        with col3:
+        with c3:
 
             st.metric(
                 "Cellules",
-                data.shape[0] * data.shape[1]
+                data.shape[0] *
+                data.shape[1]
             )
 
+        st.markdown("---")
+
         # ----------------------------------------------------
-        # COLONNES
+        # RECHERCHE
         # ----------------------------------------------------
 
-        st.markdown("### 📋 Colonnes")
-
-        columns_info = []
-
-        for col in data.columns:
-
-            columns_info.append(
-                {
-                    "Colonne": col,
-
-                    "Type":
-                        str(data[col].dtype),
-
-                    "Valeurs":
-                        data[col].notna().sum(),
-
-                    "Vides":
-                        data[col].isna().sum(),
-
-                    "Valeurs uniques":
-                        data[col].nunique()
-                }
-            )
-
-        info_df = pd.DataFrame(
-            columns_info
+        search = st.text_input(
+            "🔎 Rechercher dans le rapport"
         )
 
-        show_table(
-            info_df,
-            height=450
+        result = search_data(
+            data,
+            search
         )
 
         # ----------------------------------------------------
-        # ANALYSE NUMÉRIQUE
+        # FILTRE
         # ----------------------------------------------------
 
-        numeric_cols = data.select_dtypes(
-            include="number"
-        ).columns.tolist()
+        if not result.empty:
 
-        if numeric_cols:
+            c1, c2 = st.columns(2)
 
-            st.markdown(
-                "### 📈 Analyse numérique"
-            )
+            with c1:
 
-            selected_numeric = st.selectbox(
-                "Choisir une colonne",
-                numeric_cols
-            )
-
-            series = pd.to_numeric(
-                data[selected_numeric],
-                errors="coerce"
-            ).dropna()
-
-            if not series.empty:
-
-                c1, c2, c3, c4 = st.columns(4)
-
-                with c1:
-
-                    st.metric(
-                        "Total",
-                        f"{series.sum():,.2f}"
-                    )
-
-                with c2:
-
-                    st.metric(
-                        "Moyenne",
-                        f"{series.mean():,.2f}"
-                    )
-
-                with c3:
-
-                    st.metric(
-                        "Minimum",
-                        f"{series.min():,.2f}"
-                    )
-
-                with c4:
-
-                    st.metric(
-                        "Maximum",
-                        f"{series.max():,.2f}"
-                    )
-
-                chart = pd.DataFrame(
-                    {
-                        selected_numeric:
-                            series.reset_index(
-                                drop=True
-                            )
-                    }
+                column = st.selectbox(
+                    "Filtrer par colonne",
+                    [
+                        "Toutes les colonnes"
+                    ] + list(result.columns)
                 )
 
-                st.line_chart(
-                    chart
+            with c2:
+
+                value = st.text_input(
+                    "Valeur du filtre"
                 )
 
+            result = filter_data(
+                result,
+                column,
+                value
+            )
 
-# ============================================================
-# DONNÉES
-# ============================================================
+        # ----------------------------------------------------
+        # TABLEAU
+        # ----------------------------------------------------
 
-elif menu == "⚙️ Données":
-
-    st.markdown(
-        '<div class="section-title">'
-        '⚙️ Gestion des données'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-    # --------------------------------------------------------
-    # TABLEAU DES FICHIERS
-    # --------------------------------------------------------
-
-    rows = []
-
-    for name, info in DATASETS.items():
-
-        rows.append(
-            {
-                "Source": name,
-
-                "Fichier":
-                    os.path.basename(
-                        info["file"]
-                    ),
-
-                "Existe":
-                    "Oui"
-                    if os.path.exists(
-                        info["file"]
-                    )
-                    else "Non",
-
-                "Feuilles":
-                    ", ".join(
-                        info["sheets"]
-                    ),
-
-                "Lignes":
-                    len(info["data"]),
-
-                "Colonnes":
-                    len(info["data"].columns)
-            }
+        st.write(
+            f"### Résultat : {len(result)} ligne(s)"
         )
 
-    files_df = pd.DataFrame(
-        rows
-    )
+        show_data(
+            result,
+            600
+        )
 
-    show_table(
-        files_df,
-        height=400
-    )
+        # ----------------------------------------------------
+        # EXPORT
+        # ----------------------------------------------------
 
-    # --------------------------------------------------------
-    # EXPLORATION DES COLONNES
-    # --------------------------------------------------------
+        if not result.empty:
 
-    st.markdown(
-        "### 📋 Structure des fichiers"
-    )
-
-    source = st.selectbox(
-        "Choisir le fichier",
-        list(DATASETS.keys()),
-        key="structure_source"
-    )
-
-    selected_data = DATASETS[
-        source
-    ]["data"]
-
-    if not selected_data.empty:
-
-        structure = pd.DataFrame(
-            {
-                "N°": range(
-                    1,
-                    len(selected_data.columns) + 1
+            st.download_button(
+                "⬇️ Télécharger le rapport Excel",
+                data=excel_download(
+                    result
                 ),
-
-                "Nom de colonne":
-                    selected_data.columns,
-
-                "Type":
-                    [
-                        str(
-                            selected_data[col].dtype
-                        )
-                        for col in selected_data.columns
-                    ],
-
-                "Valeurs":
-                    [
-                        selected_data[col].notna().sum()
-                        for col in selected_data.columns
-                    ],
-
-                "Vides":
-                    [
-                        selected_data[col].isna().sum()
-                        for col in selected_data.columns
-                    ],
-
-                "Uniques":
-                    [
-                        selected_data[col].nunique()
-                        for col in selected_data.columns
-                    ]
-            }
-        )
-
-        show_table(
-            structure,
-            height=500
-        )
+                file_name="TMF_Rapport.xlsx",
+                mime=(
+                    "application/vnd.openxmlformats-officedocument."
+                    "spreadsheetml.sheet"
+                )
+            )
 
 
 # ============================================================
-# FOOTER
+# FIN
 # ============================================================
 
 st.markdown("---")
 
-st.markdown(
-    """
-    <div style="text-align:center; color:#777;">
-        <b>TMF LOGISTICS</b><br>
-        Application de rapports et suivi transport
-    </div>
-    """,
-    unsafe_allow_html=True
+st.caption(
+    "TMF LOGISTICS • Gestion du transport et rapports"
 )
