@@ -419,7 +419,7 @@ with col_logo:
 
         st.image(
             LOGO_FILE,
-            width=100
+            width=800
         )
 
     else:
