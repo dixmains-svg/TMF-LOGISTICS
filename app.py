@@ -580,7 +580,7 @@ if menu == "🏠 Tableau de bord Global":
         title="Tendance du CA Mensuel (DA)",
     )
     fig_trend.update_traces(line_color="#087443", line_width=3)
-    st.plotly_chart(fig_trend, responsive=True)
+    st.plotly_chart(fig_trend, use_container_width=True)
 
   with col_g2:
     st.markdown(
