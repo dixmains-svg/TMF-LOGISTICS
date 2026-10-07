@@ -271,7 +271,7 @@ with col_t:
         <div style="font-size:28px; font-weight:700; color:white;">
             Système de Gestion Intégré & Analytics Flotte
         </div>
-        <div style="font-size:14px; color:#e8f5ef;">
+        <div style="font-size:18px; color:#000000;">
             Suivi des opérations de transport, des KPI RH, de la rentabilité et du transfert de marchandises
         </div>
         """,
