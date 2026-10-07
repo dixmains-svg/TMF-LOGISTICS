@@ -409,8 +409,8 @@ with col_t:
     <div style="
         border: 2px solid #087443; 
         border-radius: 10px; 
-        padding: 15px 20px; 
-        background-color: #f8faf9; 
+        padding: 30px 20px; 
+        background-color: #087443; 
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
         <div style="font-size:28px; font-weight:700; color:#000000;">
             Système de Gestion Intégré & Analytics Flotte
