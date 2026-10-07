@@ -391,7 +391,7 @@ with st.sidebar:
 
         st.image(
             LOGO_FILE,
-            width=800
+            width=600
         )
 
     else:
@@ -489,12 +489,13 @@ st.markdown(
 )
 
 col_logo, col_title = st.columns(
-    [1, 6]
+    [1, 6],
+    vertical_alignment="center"
 )
 
 
 # ------------------------------------------------------------
-# LOGO HEADER
+# LOGO
 # ------------------------------------------------------------
 
 with col_logo:
@@ -503,7 +504,7 @@ with col_logo:
 
         st.image(
             LOGO_FILE,
-            width=800
+            width=100
         )
 
     else:
@@ -515,34 +516,35 @@ with col_logo:
 
 
 # ------------------------------------------------------------
-# TITRE HEADER
+# TITRE DE L'APPLICATION
 # ------------------------------------------------------------
 
 with col_title:
 
     st.markdown(
         """
-        <h1 style="
-            margin:10px 0 0 0;
-            color:white;
-            font-size:32px;
-            font-weight:700;
+        <div style="
+            margin-left:10px;
+            margin-top:5px;
         ">
-            TMF LOGISTICS
-        </h1>
 
-        <p style="
-            margin-top:8px;
-            color:white;
-            font-size:15px;
-        ">
-            Gestion du transport •
-            Ordres de mission •
-            Camions •
-            Chauffeurs •
-            Clients •
-            Rapports
-        </p>
+            <div style="
+                font-size:32px;
+                font-weight:700;
+                color:white;
+            ">
+                Gestion de la flotte TMF Logistics
+            </div>
+
+            <div style="
+                margin-top:8px;
+                font-size:15px;
+                color:#e8f5ef;
+            ">
+                Transport & Logistique
+            </div>
+
+        </div>
         """,
         unsafe_allow_html=True
     )
@@ -552,7 +554,6 @@ st.markdown(
     "</div>",
     unsafe_allow_html=True
 )
-
 
 # ============================================================
 # ACCUEIL
