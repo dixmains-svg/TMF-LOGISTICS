@@ -21,10 +21,16 @@ st.set_page_config(
 # DOSSIERS ET FICHIERS
 # ============================================================
 
-DATA_DIR = "Data"
+# Répertoire où se trouve app.py
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-LOGO_FILE = "logo.png"
+# Dossier Data
+DATA_DIR = os.path.join(BASE_DIR, "Data")
 
+# Logo situé au même niveau que app.py
+LOGO_FILE = os.path.join(BASE_DIR, "logo.png")
+
+# Fichiers Excel
 FILES = {
     "Camions": os.path.join(DATA_DIR, "Camions.xlsx"),
     "Chauffeurs": os.path.join(DATA_DIR, "Chauffeurs.xlsx"),
@@ -42,10 +48,32 @@ st.markdown(
     """
     <style>
 
+    /* =========================
+       CONTENEUR PRINCIPAL
+       ========================= */
+
     .block-container {
         padding-top: 1.5rem;
         padding-bottom: 2rem;
     }
+
+
+    /* =========================
+       SIDEBAR
+       ========================= */
+
+    section[data-testid="stSidebar"] {
+        background-color: #f0f2f6;
+    }
+
+    section[data-testid="stSidebar"] > div {
+        padding-top: 1.5rem;
+    }
+
+
+    /* =========================
+       HEADER PRINCIPAL
+       ========================= */
 
     .tmf-header {
         background: linear-gradient(
@@ -66,6 +94,11 @@ st.markdown(
             0 4px 12px rgba(0,0,0,0.12);
     }
 
+
+    /* =========================
+       TITRES
+       ========================= */
+
     .section-title {
         color: #0b5d3b;
 
@@ -78,12 +111,27 @@ st.markdown(
         margin-bottom: 20px;
     }
 
-    section[data-testid="stSidebar"] {
-        background-color: #f0f2f6;
-    }
+
+    /* =========================
+       TABLEAUX
+       ========================= */
 
     div[data-testid="stDataFrame"] {
         border-radius: 8px;
+    }
+
+
+    /* =========================
+       RADIO MENU
+       ========================= */
+
+    div[role="radiogroup"] {
+        gap: 4px;
+    }
+
+    div[role="radiogroup"] label {
+        padding: 8px 10px;
+        border-radius: 6px;
     }
 
     </style>
@@ -123,7 +171,6 @@ def read_excel(
 ):
 
     if not os.path.exists(file_path):
-
         return pd.DataFrame()
 
     try:
@@ -143,13 +190,13 @@ def read_excel(
                 engine="openpyxl"
             )
 
-        # Supprimer les lignes vides
+        # Supprimer les lignes complètement vides
         df = df.dropna(
             axis=0,
             how="all"
         )
 
-        # Supprimer les colonnes vides
+        # Supprimer les colonnes complètement vides
         df = df.dropna(
             axis=1,
             how="all"
@@ -173,9 +220,7 @@ def load_data(
     preferred_sheet=None
 ):
 
-    sheets = get_sheets(
-        file_path
-    )
+    sheets = get_sheets(file_path)
 
     if not sheets:
 
@@ -266,9 +311,7 @@ def filter_data(
     return df[mask]
 
 
-def dataframe_to_excel(
-    df
-):
+def dataframe_to_excel(df):
 
     output = io.BytesIO()
 
@@ -334,51 +377,81 @@ om, om_sheets = load_data(
 )
 
 
-# =========================
+# ============================================================
 # SIDEBAR - MENU PRINCIPAL
-# =========================
+# ============================================================
 
 with st.sidebar:
 
-    # Logo
-    if os.path.exists(LOGO_FILE):
-        st.image(LOGO_FILE, width=90)
+    # --------------------------------------------------------
+    # LOGO
+    # --------------------------------------------------------
 
-    # Nom de l'application
-    st.markdown("""
-    <div style="
-        font-size:24px;
-        font-weight:700;
-        color:#0b5d3b;
-        margin-top:5px;
-    ">
-        TMF LOGISTICS
-    </div>
+    if os.path.isfile(LOGO_FILE):
 
-    <div style="
-        margin-top:5px;
-        color:#666;
-        font-size:13px;
-        margin-bottom:20px;
-    ">
-        Transport & Logistique
-    </div>
-    """, unsafe_allow_html=True)
+        st.image(
+            LOGO_FILE,
+            width=100
+        )
 
-    # =========================
+    else:
+
+        st.markdown(
+            "🚚",
+            unsafe_allow_html=True
+        )
+
+        st.error(
+            "logo.png introuvable"
+        )
+
+
+    # --------------------------------------------------------
+    # NOM DE L'APPLICATION
+    # --------------------------------------------------------
+
+    st.markdown(
+        """
+        <div style="
+            font-size:24px;
+            font-weight:700;
+            color:#0b5d3b;
+            margin-top:5px;
+        ">
+            TMF LOGISTICS
+        </div>
+
+        <div style="
+            margin-top:5px;
+            color:#666;
+            font-size:13px;
+            margin-bottom:20px;
+        ">
+            Transport & Logistique
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+    # --------------------------------------------------------
     # MENU PRINCIPAL
-    # =========================
+    # --------------------------------------------------------
 
-    st.markdown("""
-    <div style="
-        font-size:14px;
-        font-weight:700;
-        color:#0b5d3b;
-        margin-bottom:8px;
-    ">
-        MENU PRINCIPAL
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div style="
+            font-size:14px;
+            font-weight:700;
+            color:#0b5d3b;
+            margin-bottom:8px;
+        ">
+            MENU PRINCIPAL
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 
     menu = st.radio(
         "",
@@ -395,13 +468,19 @@ with st.sidebar:
         label_visibility="collapsed"
     )
 
+
+    # --------------------------------------------------------
+    # INFORMATIONS
+    # --------------------------------------------------------
+
     st.markdown("---")
 
     st.caption("TMF LOGISTICS")
     st.caption("Transport & Logistique")
 
+
 # ============================================================
-# EN-TÊTE PRINCIPAL AVEC LOGO
+# EN-TÊTE PRINCIPAL
 # ============================================================
 
 st.markdown(
@@ -413,13 +492,18 @@ col_logo, col_title = st.columns(
     [1, 6]
 )
 
+
+# ------------------------------------------------------------
+# LOGO HEADER
+# ------------------------------------------------------------
+
 with col_logo:
 
-    if os.path.exists(LOGO_FILE):
+    if os.path.isfile(LOGO_FILE):
 
         st.image(
             LOGO_FILE,
-            width=800
+            width=100
         )
 
     else:
@@ -428,6 +512,11 @@ with col_logo:
             "🚚",
             unsafe_allow_html=True
         )
+
+
+# ------------------------------------------------------------
+# TITRE HEADER
+# ------------------------------------------------------------
 
 with col_title:
 
@@ -458,6 +547,7 @@ with col_title:
         unsafe_allow_html=True
     )
 
+
 st.markdown(
     "</div>",
     unsafe_allow_html=True
@@ -477,7 +567,9 @@ if menu == "🏠 Accueil":
         unsafe_allow_html=True
     )
 
+
     col1, col2, col3, col4, col5 = st.columns(5)
+
 
     with col1:
 
@@ -486,12 +578,14 @@ if menu == "🏠 Accueil":
             len(camions)
         )
 
+
     with col2:
 
         st.metric(
             "👨‍✈️ Chauffeurs",
             len(chauffeurs)
         )
+
 
     with col3:
 
@@ -500,12 +594,14 @@ if menu == "🏠 Accueil":
             len(clients)
         )
 
+
     with col4:
 
         st.metric(
             "📦 Commandes",
             len(commandes)
         )
+
 
     with col5:
 
@@ -514,11 +610,14 @@ if menu == "🏠 Accueil":
             len(om)
         )
 
+
     st.markdown("---")
+
 
     st.subheader(
         "📁 État des fichiers"
     )
+
 
     status = pd.DataFrame({
 
@@ -580,17 +679,21 @@ if menu == "🏠 Accueil":
         ]
     })
 
+
     st.dataframe(
         status,
         use_container_width=True,
         hide_index=True
     )
 
+
     st.markdown("---")
+
 
     st.subheader(
         "📊 Volume des données"
     )
+
 
     graph = pd.DataFrame({
 
@@ -611,6 +714,7 @@ if menu == "🏠 Accueil":
         ]
     })
 
+
     st.bar_chart(
         graph.set_index("Source")
     )
@@ -629,11 +733,14 @@ elif menu == "🚚 Gestion du transport":
         unsafe_allow_html=True
     )
 
+
     st.info(
         "Centre de gestion de l'activité transport."
     )
 
+
     col1, col2, col3 = st.columns(3)
+
 
     with col1:
 
@@ -642,12 +749,14 @@ elif menu == "🚚 Gestion du transport":
             len(camions)
         )
 
+
     with col2:
 
         st.metric(
             "👨‍✈️ Chauffeurs",
             len(chauffeurs)
         )
+
 
     with col3:
 
@@ -656,11 +765,14 @@ elif menu == "🚚 Gestion du transport":
             len(om)
         )
 
+
     st.markdown("---")
+
 
     st.subheader(
         "📊 Synthèse transport"
     )
+
 
     synthese = pd.DataFrame({
 
@@ -680,6 +792,7 @@ elif menu == "🚚 Gestion du transport":
             len(om)
         ]
     })
+
 
     st.dataframe(
         synthese,
@@ -701,6 +814,7 @@ elif menu == "📋 Ordres de Mission":
         unsafe_allow_html=True
     )
 
+
     if not om_sheets:
 
         st.error(
@@ -717,33 +831,40 @@ elif menu == "📋 Ordres de Mission":
                 "Input OM fini"
             )
 
+
         sheet = st.selectbox(
             "📄 Feuille",
             om_sheets,
             index=sheet_index
         )
 
+
         data = read_excel(
             FILES["OM"],
             sheet
         )
 
+
         st.success(
             f"{len(data)} ligne(s) chargée(s)"
         )
 
+
         search = st.text_input(
             "🔎 Rechercher dans les Ordres de Mission"
         )
+
 
         result = search_data(
             data,
             search
         )
 
+
         if not result.empty:
 
             col1, col2 = st.columns(2)
+
 
             with col1:
 
@@ -755,11 +876,13 @@ elif menu == "📋 Ordres de Mission":
                     + list(result.columns)
                 )
 
+
             with col2:
 
                 value = st.text_input(
                     "Valeur du filtre"
                 )
+
 
             result = filter_data(
                 result,
@@ -767,13 +890,16 @@ elif menu == "📋 Ordres de Mission":
                 value
             )
 
+
         st.write(
             f"**{len(result)} résultat(s)**"
         )
 
+
         show_table(
             result
         )
+
 
         if not result.empty:
 
@@ -798,6 +924,7 @@ elif menu == "🚛 Camions":
         unsafe_allow_html=True
     )
 
+
     if not camions_sheets:
 
         st.error(
@@ -811,32 +938,39 @@ elif menu == "🚛 Camions":
             camions_sheets
         )
 
+
         data = read_excel(
             FILES["Camions"],
             sheet
         )
+
 
         st.metric(
             "Nombre de camions",
             len(data)
         )
 
+
         search = st.text_input(
             "🔎 Rechercher un camion"
         )
+
 
         result = search_data(
             data,
             search
         )
 
+
         st.write(
             f"**{len(result)} résultat(s)**"
         )
 
+
         show_table(
             result
         )
+
 
         if not result.empty:
 
@@ -861,6 +995,7 @@ elif menu == "👨‍✈️ Chauffeurs":
         unsafe_allow_html=True
     )
 
+
     if not chauffeurs_sheets:
 
         st.error(
@@ -877,38 +1012,46 @@ elif menu == "👨‍✈️ Chauffeurs":
                 "Chauffeurs"
             )
 
+
         sheet = st.selectbox(
             "📄 Feuille",
             chauffeurs_sheets,
             index=sheet_index
         )
 
+
         data = read_excel(
             FILES["Chauffeurs"],
             sheet
         )
+
 
         st.metric(
             "Nombre de chauffeurs",
             len(data)
         )
 
+
         search = st.text_input(
             "🔎 Rechercher un chauffeur"
         )
+
 
         result = search_data(
             data,
             search
         )
 
+
         st.write(
             f"**{len(result)} résultat(s)**"
         )
 
+
         show_table(
             result
         )
+
 
         if not result.empty:
 
@@ -933,6 +1076,7 @@ elif menu == "👥 Clients":
         unsafe_allow_html=True
     )
 
+
     if not clients_sheets:
 
         st.error(
@@ -946,32 +1090,39 @@ elif menu == "👥 Clients":
             clients_sheets
         )
 
+
         data = read_excel(
             FILES["Clients"],
             sheet
         )
+
 
         st.metric(
             "Nombre de clients",
             len(data)
         )
 
+
         search = st.text_input(
             "🔎 Rechercher un client"
         )
+
 
         result = search_data(
             data,
             search
         )
 
+
         st.write(
             f"**{len(result)} résultat(s)**"
         )
 
+
         show_table(
             result
         )
+
 
         if not result.empty:
 
@@ -996,6 +1147,7 @@ elif menu == "📦 Commandes de vente":
         unsafe_allow_html=True
     )
 
+
     if not commandes_sheets:
 
         st.error(
@@ -1009,28 +1161,34 @@ elif menu == "📦 Commandes de vente":
             commandes_sheets
         )
 
+
         data = read_excel(
             FILES["Commandes"],
             sheet
         )
+
 
         st.metric(
             "Nombre de commandes",
             len(data)
         )
 
+
         search = st.text_input(
             "🔎 Rechercher une commande"
         )
+
 
         result = search_data(
             data,
             search
         )
 
+
         if not result.empty:
 
             col1, col2 = st.columns(2)
+
 
             with col1:
 
@@ -1042,11 +1200,13 @@ elif menu == "📦 Commandes de vente":
                     + list(result.columns)
                 )
 
+
             with col2:
 
                 value = st.text_input(
                     "Valeur du filtre"
                 )
+
 
             result = filter_data(
                 result,
@@ -1054,13 +1214,16 @@ elif menu == "📦 Commandes de vente":
                 value
             )
 
+
         st.write(
             f"**{len(result)} résultat(s)**"
         )
 
+
         show_table(
             result
         )
+
 
         if not result.empty:
 
@@ -1085,6 +1248,7 @@ elif menu == "📊 Rapports":
         unsafe_allow_html=True
     )
 
+
     source = st.selectbox(
         "📂 Choisir les données",
         [
@@ -1095,6 +1259,7 @@ elif menu == "📊 Rapports":
             "Commandes de vente"
         ]
     )
+
 
     if source == "Ordres de Mission":
 
@@ -1116,6 +1281,7 @@ elif menu == "📊 Rapports":
 
         data = commandes
 
+
     if data.empty:
 
         st.warning(
@@ -1126,12 +1292,14 @@ elif menu == "📊 Rapports":
 
         col1, col2, col3 = st.columns(3)
 
+
         with col1:
 
             st.metric(
                 "Lignes",
                 len(data)
             )
+
 
         with col2:
 
@@ -1140,28 +1308,33 @@ elif menu == "📊 Rapports":
                 len(data.columns)
             )
 
+
         with col3:
 
             st.metric(
                 "Cellules",
-                data.shape[0]
-                * data.shape[1]
+                data.shape[0] * data.shape[1]
             )
 
+
         st.markdown("---")
+
 
         search = st.text_input(
             "🔎 Rechercher dans le rapport"
         )
+
 
         result = search_data(
             data,
             search
         )
 
+
         if not result.empty:
 
             col1, col2 = st.columns(2)
+
 
             with col1:
 
@@ -1173,11 +1346,13 @@ elif menu == "📊 Rapports":
                     + list(result.columns)
                 )
 
+
             with col2:
 
                 value = st.text_input(
                     "Valeur du filtre"
                 )
+
 
             result = filter_data(
                 result,
@@ -1185,13 +1360,16 @@ elif menu == "📊 Rapports":
                 value
             )
 
+
         st.subheader(
             f"Résultat : {len(result)} ligne(s)"
         )
 
+
         show_table(
             result
         )
+
 
         if not result.empty:
 
@@ -1208,6 +1386,7 @@ elif menu == "📊 Rapports":
 # ============================================================
 
 st.markdown("---")
+
 
 st.markdown(
     """
