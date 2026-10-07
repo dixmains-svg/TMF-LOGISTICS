@@ -391,7 +391,7 @@ with st.sidebar:
 
         st.image(
             LOGO_FILE,
-            width=100
+            width=1000
         )
 
     else:
