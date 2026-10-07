@@ -164,43 +164,26 @@ div[role="radiogroup"] label:hover {
 
 @st.cache_data
 def get_sheets(file_path):
-
     try:
-
         if not os.path.isfile(file_path):
             return []
-
-        excel_file = pd.ExcelFile(
-            file_path,
-            engine="openpyxl"
-        )
-
+        excel_file = pd.ExcelFile(file_path, engine="openpyxl")
         return excel_file.sheet_names
-
     except Exception:
         return []
 
 
 @st.cache_data
 def read_excel(file_path, sheet_name=0):
-
     try:
-
         if not os.path.isfile(file_path):
             return pd.DataFrame()
-
-        return pd.read_excel(
-            file_path,
-            sheet_name=sheet_name,
-            engine="openpyxl"
-        )
-
+        return pd.read_excel(file_path, sheet_name=sheet_name, engine="openpyxl")
     except Exception:
         return pd.DataFrame()
 
 
 def load_data(file_path, preferred_sheet=None):
-
     if not os.path.isfile(file_path):
         return pd.DataFrame()
 
@@ -210,23 +193,16 @@ def load_data(file_path, preferred_sheet=None):
         return pd.DataFrame()
 
     if preferred_sheet and preferred_sheet in sheets:
-        return read_excel(
-            file_path,
-            preferred_sheet
-        )
+        return read_excel(file_path, preferred_sheet)
 
-    return read_excel(
-        file_path,
-        sheets[0]
-    )
+    return read_excel(file_path, sheets[0])
 
 
 # ============================================================
-# FONCTIONS
+# FONCTIONS UTILITAIRES
 # ============================================================
 
 def search_data(df, search_text):
-
     if df.empty or not search_text:
         return df
 
@@ -234,13 +210,7 @@ def search_data(df, search_text):
 
     mask = (
         df.astype(str)
-        .apply(
-            lambda column:
-            column.str.lower().str.contains(
-                search_text,
-                na=False
-            )
-        )
+        .apply(lambda column: column.str.lower().str.contains(search_text, na=False))
         .any(axis=1)
     )
 
@@ -248,53 +218,25 @@ def search_data(df, search_text):
 
 
 def filter_data(df, column, value):
-
-    if (
-        df.empty
-        or column not in df.columns
-        or value in ["Tous", "", None]
-    ):
+    if df.empty or column not in df.columns or value in ["Tous", "", None]:
         return df
 
-    return df[
-        df[column].astype(str) == str(value)
-    ]
+    return df[df[column].astype(str) == str(value)]
 
 
 def dataframe_to_excel(df):
-
     output = io.BytesIO()
-
-    with pd.ExcelWriter(
-        output,
-        engine="openpyxl"
-    ) as writer:
-
-        df.to_excel(
-            writer,
-            index=False,
-            sheet_name="Données"
-        )
-
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Données")
     return output.getvalue()
 
 
 def show_table(df, key):
-
     if df.empty:
-
-        st.info(
-            "Aucune donnée disponible."
-        )
-
+        st.info("Aucune donnée disponible.")
         return
 
-    st.dataframe(
-        df,
-        use_container_width=True,
-        hide_index=True,
-        key=key
-    )
+    st.dataframe(df, use_container_width=True, hide_index=True, key=key)
 
     excel_data = dataframe_to_excel(df)
 
@@ -311,61 +253,36 @@ def show_table(df, key):
 # CHARGEMENT DES DONNÉES
 # ============================================================
 
-camions = load_data(
-    FILES["camions"]
-)
+camions = load_data(FILES["camions"])
+chauffeurs = load_data(FILES["chauffeurs"], "Chauffeurs")
+clients = load_data(FILES["clients"])
+commandes = load_data(FILES["commandes"])
+om = load_data(FILES["om"], "Input OM fini")
 
-chauffeurs = load_data(
-    FILES["chauffeurs"],
-    "Chauffeurs"
-)
-
-clients = load_data(
-    FILES["clients"]
-)
-
-commandes = load_data(
-    FILES["commandes"]
-)
-
-om = load_data(
-    FILES["om"],
-    "Input OM fini"
-)
-
+# Nombre d'enregistrements dynamiques
+nb_camions = len(camions)
+nb_chauffeurs = len(chauffeurs)
+nb_clients = len(clients)
+nb_commandes = len(commandes)
+nb_om = len(om)
 
 # ============================================================
 # SIDEBAR
-# LOGO UNIQUEMENT + UN SEUL MENU
 # ============================================================
 
 with st.sidebar:
-
     if os.path.isfile(LOGO_FILE):
-
-        st.image(
-            LOGO_FILE,
-            width=120
-        )
-
+        st.image(LOGO_FILE, width=120)
     else:
-
         st.markdown(
             """
-            <div style="
-                font-size:55px;
-                text-align:center;
-                padding:10px;
-            ">
+            <div style="font-size:55px; text-align:center; padding:10px;">
                 🚚
             </div>
             """,
             unsafe_allow_html=True
         )
-
-        st.warning(
-            "logo.png introuvable."
-        )
+        st.warning("logo.png introuvable.")
 
     st.markdown("---")
 
@@ -388,12 +305,7 @@ with st.sidebar:
 
     st.markdown(
         """
-        <div style="
-            font-size:13px;
-            font-weight:600;
-            color:#0b5d3b;
-            margin-bottom:8px;
-        ">
+        <div style="font-size:13px; font-weight:600; color:#0b5d3b; margin-bottom:8px;">
             📁 Fichiers de données
         </div>
         """,
@@ -401,111 +313,53 @@ with st.sidebar:
     )
 
     for name, path in FILES.items():
-
         if os.path.isfile(path):
-
             st.markdown(
-                f"""
-                <div style="
-                    font-size:11px;
-                    color:#16834b;
-                    margin-bottom:3px;
-                ">
-                    ✓ {os.path.basename(path)}
-                </div>
-                """,
+                f'<div style="font-size:11px; color:#16834b; margin-bottom:3px;">✓ {os.path.basename(path)}</div>',
                 unsafe_allow_html=True
             )
-
         else:
-
             st.markdown(
-                f"""
-                <div style="
-                    font-size:11px;
-                    color:#c0392b;
-                    margin-bottom:3px;
-                ">
-                    ✗ {os.path.basename(path)}
-                </div>
-                """,
+                f'<div style="font-size:11px; color:#c0392b; margin-bottom:3px;">✗ {os.path.basename(path)}</div>',
                 unsafe_allow_html=True
             )
 
 
 # ============================================================
 # HEADER CENTRAL
-# LOGO + TITRE
 # ============================================================
 
-st.markdown(
-    '<div class="tmf-header">',
-    unsafe_allow_html=True
-)
+st.markdown('<div class="tmf-header">', unsafe_allow_html=True)
 
-col_logo, col_title = st.columns(
-    [1, 6],
-    vertical_alignment="center"
-)
+col_logo, col_title = st.columns([1, 6], vertical_alignment="center")
 
-
-# LOGO
 with col_logo:
-
     if os.path.isfile(LOGO_FILE):
-
-        st.image(
-            LOGO_FILE,
-            width=110
-        )
-
+        st.image(LOGO_FILE, width=110)
     else:
-
         st.markdown(
             """
-            <div style="
-                font-size:60px;
-                text-align:center;
-            ">
+            <div style="font-size:60px; text-align:center;">
                 🚚
             </div>
             """,
             unsafe_allow_html=True
         )
 
-
-# TITRE
 with col_title:
-
     st.markdown(
         """
-        <div style="
-            font-size:32px;
-            font-weight:700;
-            color:white;
-            text-align:left;
-            line-height:1.2;
-        ">
+        <div style="font-size:32px; font-weight:700; color:white; text-align:left; line-height:1.2;">
             Gestion de la flotte TMF Logistics
         </div>
-
-        <div style="
-            margin-top:8px;
-            font-size:15px;
-            color:#e8f5ef;
-            text-align:left;
-        ">
+        <div style="margin-top:8px; font-size:15px; color:#e8f5ef; text-align:left;">
             Transport & Logistique
         </div>
         """,
         unsafe_allow_html=True
     )
 
-
-st.markdown(
-    '</div>',
-    unsafe_allow_html=True
-)
+st.markdown('</div>', unsafe_allow_html=True)
 
 
 # ============================================================
@@ -514,99 +368,55 @@ st.markdown(
 
 if menu == "🏠 Accueil":
 
-    st.markdown(
-        '<div class="section-title">🏠 Tableau de bord</div>',
-        unsafe_allow_html=True
-    )
+    st.markdown('<div class="section-title">🏠 Tableau de bord</div>', unsafe_allow_html=True)
 
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-
         st.markdown(
-            """
+            f"""
             <div class="info-card">
-
-                <div class="info-card-title">
-                    🚛 Camions
-                </div>
-
-                <div class="info-card-value">
-                    210
-                </div>
-
+                <div class="info-card-title">🚛 Camions</div>
+                <div class="info-card-value">{nb_camions}</div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
     with col2:
-
         st.markdown(
-            """
+            f"""
             <div class="info-card">
-
-                <div class="info-card-title">
-                    👨‍✈️ Chauffeurs
-                </div>
-
-                <div class="info-card-value">
-                    239
-                </div>
-
+                <div class="info-card-title">👨‍✈️ Chauffeurs</div>
+                <div class="info-card-value">{nb_chauffeurs}</div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
     with col3:
-
         st.markdown(
-            """
+            f"""
             <div class="info-card">
-
-                <div class="info-card-title">
-                    👥 Clients
-                </div>
-
-                <div class="info-card-value">
-                    439
-                </div>
-
+                <div class="info-card-title">👥 Clients</div>
+                <div class="info-card-value">{nb_clients}</div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
     with col4:
-
         st.markdown(
-            """
+            f"""
             <div class="info-card">
-
-                <div class="info-card-title">
-                    📋 Ordres de mission
-                </div>
-
-                <div class="info-card-value">
-                    1816
-                </div>
-
+                <div class="info-card-title">📋 Ordres de mission</div>
+                <div class="info-card-value">{nb_om}</div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-
-    # --------------------------------------------------------
-    # PRESENTATION
-    # --------------------------------------------------------
-
-    st.markdown(
-        '<div class="sub-title">📌 Présentation</div>',
-        unsafe_allow_html=True
-    )
-
+    st.markdown('<div class="sub-title">📌 Présentation</div>', unsafe_allow_html=True)
     st.info(
         """
         Bienvenue dans l'application **Gestion de la flotte TMF Logistics**.
@@ -617,39 +427,14 @@ if menu == "🏠 Accueil":
         """
     )
 
+    st.markdown('<div class="sub-title">📁 État des fichiers</div>', unsafe_allow_html=True)
 
-    # --------------------------------------------------------
-    # ETAT DES FICHIERS
-    # --------------------------------------------------------
+    file_status = [
+        {"Fichier": os.path.basename(path), "Statut": "Disponible" if os.path.isfile(path) else "Introuvable"}
+        for name, path in FILES.items()
+    ]
 
-    st.markdown(
-        '<div class="sub-title">📁 État des fichiers</div>',
-        unsafe_allow_html=True
-    )
-
-    file_status = []
-
-    for name, path in FILES.items():
-
-        file_status.append(
-            {
-                "Fichier": os.path.basename(path),
-                "Statut":
-                    "Disponible"
-                    if os.path.isfile(path)
-                    else "Introuvable"
-            }
-        )
-
-    status_df = pd.DataFrame(
-        file_status
-    )
-
-    st.dataframe(
-        status_df,
-        use_container_width=True,
-        hide_index=True
-    )
+    st.dataframe(pd.DataFrame(file_status), use_container_width=True, hide_index=True)
 
 
 # ============================================================
@@ -658,464 +443,13 @@ if menu == "🏠 Accueil":
 
 elif menu == "🚚 Gestion du transport":
 
-    st.markdown(
-        '<div class="section-title">🚚 Gestion du transport</div>',
-        unsafe_allow_html=True
-    )
-
-    st.write(
-        "Suivi et analyse des données liées à l'activité de transport."
-    )
+    st.markdown('<div class="section-title">🚚 Gestion du transport</div>', unsafe_allow_html=True)
+    st.write("Suivi et analyse des données liées à l'activité de transport.")
 
     col1, col2, col3 = st.columns(3)
-
     with col1:
-        st.metric(
-            "Camions",
-            210
-        )
-
+        st.metric("Camions", nb_camions)
     with col2:
-        st.metric(
-            "Chauffeurs",
-            239
-        )
-
+        st.metric("Chauffeurs", nb_chauffeurs)
     with col3:
-        st.metric(
-            "Ordres de mission",
-            1816
-        )
-
-    st.markdown(
-        '<div class="sub-title">🔎 Recherche dans les données</div>',
-        unsafe_allow_html=True
-    )
-
-    search_text = st.text_input(
-        "Rechercher",
-        placeholder="Saisissez une référence, un camion, un client..."
-    )
-
-    if search_text:
-
-        datasets = {
-            "Camions": camions,
-            "Chauffeurs": chauffeurs,
-            "Clients": clients,
-            "Commandes": commandes,
-            "Ordres de Mission": om
-        }
-
-        for name, df in datasets.items():
-
-            if not df.empty:
-
-                result = search_data(
-                    df,
-                    search_text
-                )
-
-                if not result.empty:
-
-                    st.markdown(
-                        f"### {name}"
-                    )
-
-                    show_table(
-                        result,
-                        f"transport_{name}"
-                    )
-
-
-# ============================================================
-# ORDRES DE MISSION
-# ============================================================
-
-elif menu == "📋 Ordres de Mission":
-
-    st.markdown(
-        '<div class="section-title">📋 Ordres de Mission</div>',
-        unsafe_allow_html=True
-    )
-
-    if om.empty:
-
-        st.warning(
-            "Aucune donnée OM disponible."
-        )
-
-    else:
-
-        st.write(
-            f"Nombre de lignes : **{len(om)}**"
-        )
-
-        search_om = st.text_input(
-            "🔎 Rechercher dans les Ordres de Mission",
-            key="search_om"
-        )
-
-        filtered_om = search_data(
-            om,
-            search_om
-        )
-
-        filter_col1, filter_col2 = st.columns(2)
-
-        with filter_col1:
-
-            selected_column = st.selectbox(
-                "Filtrer par colonne",
-                ["Aucun"] + list(filtered_om.columns),
-                key="om_filter_column"
-            )
-
-        with filter_col2:
-
-            if (
-                selected_column != "Aucun"
-                and selected_column in filtered_om.columns
-            ):
-
-                values = (
-                    filtered_om[selected_column]
-                    .dropna()
-                    .astype(str)
-                    .unique()
-                    .tolist()
-                )
-
-                selected_value = st.selectbox(
-                    "Valeur",
-                    ["Tous"] + sorted(values),
-                    key="om_filter_value"
-                )
-
-                filtered_om = filter_data(
-                    filtered_om,
-                    selected_column,
-                    selected_value
-                )
-
-        show_table(
-            filtered_om,
-            "om_table"
-        )
-
-
-# ============================================================
-# CAMIONS
-# ============================================================
-
-elif menu == "🚛 Camions":
-
-    st.markdown(
-        '<div class="section-title">🚛 Gestion des camions</div>',
-        unsafe_allow_html=True
-    )
-
-    if camions.empty:
-
-        st.warning(
-            "Le fichier Camions.xlsx est vide ou introuvable."
-        )
-
-    else:
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-
-            st.metric(
-                "Nombre de camions",
-                210
-            )
-
-        with col2:
-
-            st.metric(
-                "Nombre de colonnes",
-                len(camions.columns)
-            )
-
-        search_camions = st.text_input(
-            "🔎 Rechercher un camion",
-            key="search_camions"
-        )
-
-        filtered_camions = search_data(
-            camions,
-            search_camions
-        )
-
-        show_table(
-            filtered_camions,
-            "camions_table"
-        )
-
-
-# ============================================================
-# CHAUFFEURS
-# ============================================================
-
-elif menu == "👨‍✈️ Chauffeurs":
-
-    st.markdown(
-        '<div class="section-title">👨‍✈️ Gestion des chauffeurs</div>',
-        unsafe_allow_html=True
-    )
-
-    if chauffeurs.empty:
-
-        st.warning(
-            "Le fichier Chauffeurs.xlsx est vide ou introuvable."
-        )
-
-    else:
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-
-            st.metric(
-                "Nombre de chauffeurs",
-                239
-            )
-
-        with col2:
-
-            st.metric(
-                "Nombre de colonnes",
-                len(chauffeurs.columns)
-            )
-
-        search_chauffeurs = st.text_input(
-            "🔎 Rechercher un chauffeur",
-            key="search_chauffeurs"
-        )
-
-        filtered_chauffeurs = search_data(
-            chauffeurs,
-            search_chauffeurs
-        )
-
-        show_table(
-            filtered_chauffeurs,
-            "chauffeurs_table"
-        )
-
-
-# ============================================================
-# CLIENTS
-# ============================================================
-
-elif menu == "👥 Clients":
-
-    st.markdown(
-        '<div class="section-title">👥 Gestion des clients</div>',
-        unsafe_allow_html=True
-    )
-
-    if clients.empty:
-
-        st.warning(
-            "Le fichier Clients.xlsx est vide ou introuvable."
-        )
-
-    else:
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-
-            st.metric(
-                "Nombre de clients",
-                439
-            )
-
-        with col2:
-
-            st.metric(
-                "Nombre de colonnes",
-                len(clients.columns)
-            )
-
-        search_clients = st.text_input(
-            "🔎 Rechercher un client",
-            key="search_clients"
-        )
-
-        filtered_clients = search_data(
-            clients,
-            search_clients
-        )
-
-        show_table(
-            filtered_clients,
-            "clients_table"
-        )
-
-
-# ============================================================
-# COMMANDES DE VENTE
-# ============================================================
-
-elif menu == "📦 Commandes de vente":
-
-    st.markdown(
-        '<div class="section-title">📦 Commandes de vente</div>',
-        unsafe_allow_html=True
-    )
-
-    if commandes.empty:
-
-        st.warning(
-            "Le fichier Commande de vente.xlsx est vide ou introuvable."
-        )
-
-    else:
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-
-            st.metric(
-                "Commandes",
-                len(commandes)
-            )
-
-        with col2:
-
-            st.metric(
-                "Nombre de colonnes",
-                len(commandes.columns)
-            )
-
-        search_commandes = st.text_input(
-            "🔎 Rechercher une commande",
-            key="search_commandes"
-        )
-
-        filtered_commandes = search_data(
-            commandes,
-            search_commandes
-        )
-
-        show_table(
-            filtered_commandes,
-            "commandes_table"
-        )
-
-
-# ============================================================
-# RAPPORTS
-# ============================================================
-
-elif menu == "📊 Rapports":
-
-    st.markdown(
-        '<div class="section-title">📊 Rapports</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        '<div class="sub-title">📈 Synthèse générale</div>',
-        unsafe_allow_html=True
-    )
-
-    report_data = pd.DataFrame(
-        {
-            "Indicateur": [
-                "Camions",
-                "Chauffeurs",
-                "Clients",
-                "Commandes de vente",
-                "Ordres de Mission"
-            ],
-            "Nombre": [
-                210,
-                239,
-                439,
-                len(commandes),
-                1816
-            ]
-        }
-    )
-
-    st.dataframe(
-        report_data,
-        use_container_width=True,
-        hide_index=True
-    )
-
-    st.markdown(
-        '<div class="sub-title">📋 Aperçu des données</div>',
-        unsafe_allow_html=True
-    )
-
-    report_choice = st.selectbox(
-        "Sélectionner les données à afficher",
-        [
-            "Camions",
-            "Chauffeurs",
-            "Clients",
-            "Commandes de vente",
-            "Ordres de Mission"
-        ]
-    )
-
-    report_datasets = {
-        "Camions": camions,
-        "Chauffeurs": chauffeurs,
-        "Clients": clients,
-        "Commandes de vente": commandes,
-        "Ordres de Mission": om
-    }
-
-    selected_report = report_datasets[
-        report_choice
-    ]
-
-    if selected_report.empty:
-
-        st.info(
-            "Aucune donnée disponible."
-        )
-
-    else:
-
-        report_search = st.text_input(
-            "🔎 Rechercher",
-            key="report_search"
-        )
-
-        selected_report = search_data(
-            selected_report,
-            report_search
-        )
-
-        show_table(
-            selected_report,
-            "report_table"
-        )
-
-
-# ============================================================
-# FOOTER
-# ============================================================
-
-st.markdown(
-    """
-    <div class="footer">
-
-        © 2026 TMF Logistics — Gestion de la flotte
-
-        <br>
-
-        Transport & Logistique
-
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+        st.metric("Ordres de mission", nb_
