@@ -412,10 +412,10 @@ with col_t:
         padding: 15px 20px; 
         background-color: #f8faf9; 
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <div style="font-size:28px; font-weight:700; color:#ffffff;">
+        <div style="font-size:28px; font-weight:700; color:#000000;">
             Système de Gestion Intégré & Analytics Flotte
         </div>
-        <div style="font-size:18px; color:#e0f2fe; margin-top: 5px;">
+        <div style="font-size:18px; color:#000000; margin-top: 5px;">
             Suivi des opérations de transport, des KPI RH, de la rentabilité et du transfert de marchandises
         </div>
     </div>
