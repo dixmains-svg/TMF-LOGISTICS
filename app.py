@@ -452,4 +452,4 @@ elif menu == "🚚 Gestion du transport":
     with col2:
         st.metric("Chauffeurs", nb_chauffeurs)
     with col3:
-        st.metric("Ordres de mission", nb_
+        st.metric("Ordres de mission", nb_om) 
