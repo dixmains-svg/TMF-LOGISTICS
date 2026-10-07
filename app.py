@@ -404,4 +404,222 @@ elif menu == "🚚 Gestion du transport":
     with col2:
         st.metric("Chauffeurs", nb_chauffeurs)
     with col3:
-        st.metric("Ordres de mission", nb_
+        st.metric("Ordres de mission", nb_om)
+    with col4:
+        st.metric("Chiffre d'Affaires Total", format_currency(total_ca_annuel))
+
+    st.markdown('<div class="sub-title">🔎 Recherche globale dans toutes les bases</div>', unsafe_allow_html=True)
+
+    search_text = st.text_input("Rechercher", placeholder="Saisissez une référence, un camion, un client...")
+
+    if search_text:
+        datasets = {
+            "Camions": camions,
+            "Chauffeurs": chauffeurs,
+            "Clients": clients,
+            "Commandes": commandes,
+            "Ordres de Mission": om
+        }
+
+        for name, df in datasets.items():
+            if not df.empty:
+                result = search_data(df, search_text)
+                if not result.empty:
+                    st.markdown(f"### {name}")
+                    show_table(result, f"transport_{name}")
+
+# ============================================================
+# ORDRES DE MISSION
+# ============================================================
+
+elif menu == "📋 Ordres de Mission":
+
+    st.markdown('<div class="section-title">📋 Ordres de Mission</div>', unsafe_allow_html=True)
+
+    if om.empty:
+        st.warning("Aucune donnée OM disponible.")
+    else:
+        st.write(f"Nombre de lignes : **{nb_om}**")
+
+        search_om = st.text_input("🔎 Rechercher dans les Ordres de Mission", key="search_om")
+        filtered_om = search_data(om, search_om)
+
+        filter_col1, filter_col2 = st.columns(2)
+
+        with filter_col1:
+            selected_column = st.selectbox("Filtrer par colonne", ["Aucun"] + list(om.columns), key="om_filter_column")
+
+        with filter_col2:
+            if selected_column != "Aucun" and selected_column in filtered_om.columns:
+                values = filtered_om[selected_column].dropna().astype(str).unique().tolist()
+                selected_value = st.selectbox("Valeur", ["Tous"] + sorted(values), key="om_filter_value")
+                filtered_om = filter_data(filtered_om, selected_column, selected_value)
+
+        show_table(filtered_om, "om_table")
+
+# ============================================================
+# CAMIONS
+# ============================================================
+
+elif menu == "🚛 Camions":
+
+    st.markdown('<div class="section-title">🚛 Gestion des camions</div>', unsafe_allow_html=True)
+
+    if camions.empty:
+        st.warning("Le fichier Camions.xlsx est vide ou introuvable.")
+    else:
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Nombre de camions", nb_camions)
+        with col2:
+            st.metric("Nombre de colonnes", len(camions.columns))
+
+        search_camions = st.text_input("🔎 Rechercher un camion", key="search_camions")
+        filtered_camions = search_data(camions, search_camions)
+
+        show_table(filtered_camions, "camions_table")
+
+# ============================================================
+# CHAUFFEURS
+# ============================================================
+
+elif menu == "👨‍✈️ Chauffeurs":
+
+    st.markdown('<div class="section-title">👨‍✈️ Gestion des chauffeurs</div>', unsafe_allow_html=True)
+
+    if chauffeurs.empty:
+        st.warning("Le fichier Chauffeurs.xlsx est vide ou introuvable.")
+    else:
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Nombre de chauffeurs", nb_chauffeurs)
+        with col2:
+            st.metric("Nombre de colonnes", len(chauffeurs.columns))
+
+        search_chauffeurs = st.text_input("🔎 Rechercher un chauffeur", key="search_chauffeurs")
+        filtered_chauffeurs = search_data(chauffeurs, search_chauffeurs)
+
+        show_table(filtered_chauffeurs, "chauffeurs_table")
+
+# ============================================================
+# CLIENTS
+# ============================================================
+
+elif menu == "👥 Clients":
+
+    st.markdown('<div class="section-title">👥 Gestion des clients</div>', unsafe_allow_html=True)
+
+    if clients.empty:
+        st.warning("Le fichier Clients.xlsx est vide ou introuvable.")
+    else:
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Nombre de clients", nb_clients)
+        with col2:
+            st.metric("Nombre de colonnes", len(clients.columns))
+
+        search_clients = st.text_input("🔎 Rechercher un client", key="search_clients")
+        filtered_clients = search_data(clients, search_clients)
+
+        show_table(filtered_clients, "clients_table")
+
+# ============================================================
+# COMMANDES DE VENTE
+# ============================================================
+
+elif menu == "📦 Commandes de vente":
+
+    st.markdown('<div class="section-title">📦 Commandes de vente</div>', unsafe_allow_html=True)
+
+    if commandes.empty:
+        st.warning("Le fichier Commande de vente.xlsx est vide ou introuvable.")
+    else:
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Commandes", nb_commandes)
+        with col2:
+            st.metric("Nombre de colonnes", len(commandes.columns))
+
+        search_commandes = st.text_input("🔎 Rechercher une commande", key="search_commandes")
+        filtered_commandes = search_data(commandes, search_commandes)
+
+        show_table(filtered_commandes, "commandes_table")
+
+# ============================================================
+# RAPPORTS
+# ============================================================
+
+elif menu == "📊 Rapports":
+
+    st.markdown('<div class="section-title">📊 Rapports & Synthèse</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-title">📈 Récapitulatif Général</div>', unsafe_allow_html=True)
+
+    report_data = pd.DataFrame(
+        {
+            "Indicateur": [
+                "Chiffre d'Affaires Total (DA)",
+                "Camions",
+                "Chauffeurs",
+                "Clients",
+                "Commandes de vente",
+                "Ordres de Mission"
+            ],
+            "Valeur": [
+                format_currency(total_ca_annuel),
+                nb_camions,
+                nb_chauffeurs,
+                nb_clients,
+                nb_commandes,
+                nb_om
+            ]
+        }
+    )
+
+    st.dataframe(report_data, use_container_width=True, hide_index=True)
+
+    st.markdown('<div class="sub-title">📋 Aperçu explicatif des données</div>', unsafe_allow_html=True)
+
+    report_choice = st.selectbox(
+        "Sélectionner les données à afficher",
+        [
+            "Chiffre d'Affaires",
+            "Camions",
+            "Chauffeurs",
+            "Clients",
+            "Commandes de vente",
+            "Ordres de Mission"
+        ]
+    )
+
+    report_datasets = {
+        "Chiffre d'Affaires": df_ca,
+        "Camions": camions,
+        "Chauffeurs": chauffeurs,
+        "Clients": clients,
+        "Commandes de vente": commandes,
+        "Ordres de Mission": om
+    }
+
+    selected_report = report_datasets[report_choice]
+
+    if selected_report.empty:
+        st.info("Aucune donnée disponible.")
+    else:
+        report_search = st.text_input("🔎 Rechercher", key="report_search")
+        selected_report = search_data(selected_report, report_search)
+        show_table(selected_report, "report_table")
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.markdown(
+    """
+    <div class="footer">
+        © 2026 TMF Logistics — Gestion de la flotte
+        <br>
+        Transport & Logistique
+    </div>
+    """,
+    unsafe_allow_html=True
+)
