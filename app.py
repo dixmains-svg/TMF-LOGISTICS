@@ -262,13 +262,13 @@ st.markdown('<div class="tmf-header">', unsafe_allow_html=True)
 col_l, col_t = st.columns([1, 6], vertical_alignment="center")
 with col_l:
     if os.path.isfile(LOGO_FILE):
-        st.image(LOGO_FILE, width=90)
+        st.image(LOGO_FILE, width=200)
     else:
         st.markdown('<div style="font-size:50px; text-align:center;">🚚</div>', unsafe_allow_html=True)
 with col_t:
     st.markdown(
         """
-        <div style="font-size:28px; font-weight:700; color:white;">
+        <div style="font-size:28px; font-weight:700; color:black;">
             Système de Gestion Intégré & Analytics Flotte
         </div>
         <div style="font-size:18px; color:#000000;">
