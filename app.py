@@ -4,14 +4,26 @@ import os
 import io
 from datetime import datetime
 
+
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
 st.set_page_config(
-    page_title="TMF LOGISTICS",
+    page_title="TMF LOGISTICS - Rapports",
     page_icon="🚚",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
+
+# ============================================================
+# DOSSIERS ET FICHIERS
+# ============================================================
+
 DATA_DIR = "Data"
+
+LOGO_FILE = "logo.png"
 
 FILES = {
     "Camions": os.path.join(DATA_DIR, "Camions.xlsx"),
@@ -21,43 +33,48 @@ FILES = {
     "OM": os.path.join(DATA_DIR, "OM.xlsx")
 }
 
+
+# ============================================================
+# STYLE
+# ============================================================
+
 st.markdown(
     """
     <style>
+
     .block-container {
         padding-top: 1.5rem;
         padding-bottom: 2rem;
     }
 
     .tmf-header {
-        background: linear-gradient(135deg, #0b5d3b, #15915f);
-        padding: 25px 35px;
+        background: linear-gradient(
+            135deg,
+            #0b5d3b,
+            #15915f
+        );
+
+        padding: 20px 30px;
+
         border-radius: 12px;
+
         color: white;
+
         margin-bottom: 25px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    }
 
-    .tmf-header h1 {
-        margin: 0;
-        padding: 0;
-        color: white;
-        font-size: 32px;
-        font-weight: 700;
-    }
-
-    .tmf-header p {
-        margin-top: 8px;
-        margin-bottom: 0;
-        color: white;
-        font-size: 15px;
+        box-shadow:
+            0 4px 12px rgba(0,0,0,0.12);
     }
 
     .section-title {
         color: #0b5d3b;
+
         font-size: 24px;
+
         font-weight: 700;
+
         margin-top: 10px;
+
         margin-bottom: 20px;
     }
 
@@ -68,11 +85,16 @@ st.markdown(
     div[data-testid="stDataFrame"] {
         border-radius: 8px;
     }
+
     </style>
     """,
     unsafe_allow_html=True
 )
 
+
+# ============================================================
+# FONCTIONS EXCEL
+# ============================================================
 
 @st.cache_data
 def get_sheets(file_path):
@@ -81,44 +103,59 @@ def get_sheets(file_path):
         return []
 
     try:
-        return pd.ExcelFile(
+
+        excel = pd.ExcelFile(
             file_path,
             engine="openpyxl"
-        ).sheet_names
+        )
+
+        return excel.sheet_names
+
     except Exception:
+
         return []
 
 
 @st.cache_data
-def read_excel(file_path, sheet_name=None):
+def read_excel(
+    file_path,
+    sheet_name=None
+):
 
     if not os.path.exists(file_path):
+
         return pd.DataFrame()
 
     try:
 
         if sheet_name:
+
             df = pd.read_excel(
                 file_path,
                 sheet_name=sheet_name,
                 engine="openpyxl"
             )
+
         else:
+
             df = pd.read_excel(
                 file_path,
                 engine="openpyxl"
             )
 
+        # Supprimer les lignes vides
         df = df.dropna(
             axis=0,
             how="all"
         )
 
+        # Supprimer les colonnes vides
         df = df.dropna(
             axis=1,
             how="all"
         )
 
+        # Nettoyer les noms de colonnes
         df.columns = [
             str(column).strip()
             for column in df.columns
@@ -127,6 +164,7 @@ def read_excel(file_path, sheet_name=None):
         return df
 
     except Exception:
+
         return pd.DataFrame()
 
 
@@ -135,10 +173,16 @@ def load_data(
     preferred_sheet=None
 ):
 
-    sheets = get_sheets(file_path)
+    sheets = get_sheets(
+        file_path
+    )
 
     if not sheets:
-        return pd.DataFrame(), []
+
+        return (
+            pd.DataFrame(),
+            []
+        )
 
     if (
         preferred_sheet
@@ -222,7 +266,9 @@ def filter_data(
     return df[mask]
 
 
-def to_excel(df):
+def dataframe_to_excel(
+    df
+):
 
     output = io.BytesIO()
 
@@ -294,11 +340,21 @@ om, om_sheets = load_data(
 
 with st.sidebar:
 
+    # LOGO
+    if os.path.exists(LOGO_FILE):
+
+        st.image(
+            LOGO_FILE,
+            width=100
+        )
+
+    # TITRE
     st.markdown(
         """
         <div style="
             text-align:center;
-            padding:10px 0 20px 0;
+            margin-top:-10px;
+            margin-bottom:15px;
         ">
 
             <div style="
@@ -306,7 +362,7 @@ with st.sidebar:
                 font-weight:700;
                 color:#0b5d3b;
             ">
-                🚚 TMF LOGISTICS
+                TMF LOGISTICS
             </div>
 
             <div style="
@@ -341,7 +397,9 @@ with st.sidebar:
 
     st.markdown("---")
 
-    st.caption("TMF LOGISTICS")
+    st.caption(
+        "TMF LOGISTICS"
+    )
 
     st.caption(
         datetime.now().strftime(
@@ -351,16 +409,52 @@ with st.sidebar:
 
 
 # ============================================================
-# HEADER
+# EN-TÊTE PRINCIPAL AVEC LOGO
 # ============================================================
 
 st.markdown(
-    """
-    <div class="tmf-header">
+    '<div class="tmf-header">',
+    unsafe_allow_html=True
+)
 
-        <h1>🚚 TMF LOGISTICS</h1>
+col_logo, col_title = st.columns(
+    [1, 6]
+)
 
-        <p>
+with col_logo:
+
+    if os.path.exists(LOGO_FILE):
+
+        st.image(
+            LOGO_FILE,
+            width=100
+        )
+
+    else:
+
+        st.markdown(
+            "🚚",
+            unsafe_allow_html=True
+        )
+
+with col_title:
+
+    st.markdown(
+        """
+        <h1 style="
+            margin:10px 0 0 0;
+            color:white;
+            font-size:32px;
+            font-weight:700;
+        ">
+            TMF LOGISTICS
+        </h1>
+
+        <p style="
+            margin-top:8px;
+            color:white;
+            font-size:15px;
+        ">
             Gestion du transport •
             Ordres de mission •
             Camions •
@@ -368,9 +462,12 @@ st.markdown(
             Clients •
             Rapports
         </p>
+        """,
+        unsafe_allow_html=True
+    )
 
-    </div>
-    """,
+st.markdown(
+    "</div>",
     unsafe_allow_html=True
 )
 
@@ -391,30 +488,35 @@ if menu == "🏠 Accueil":
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
+
         st.metric(
             "🚛 Camions",
             len(camions)
         )
 
     with col2:
+
         st.metric(
             "👨‍✈️ Chauffeurs",
             len(chauffeurs)
         )
 
     with col3:
+
         st.metric(
             "👥 Clients",
             len(clients)
         )
 
     with col4:
+
         st.metric(
             "📦 Commandes",
             len(commandes)
         )
 
     with col5:
+
         st.metric(
             "📋 OM",
             len(om)
@@ -423,7 +525,7 @@ if menu == "🏠 Accueil":
     st.markdown("---")
 
     st.subheader(
-        "📁 État des données"
+        "📁 État des fichiers"
     )
 
     status = pd.DataFrame({
@@ -542,18 +644,21 @@ elif menu == "🚚 Gestion du transport":
     col1, col2, col3 = st.columns(3)
 
     with col1:
+
         st.metric(
             "🚛 Parc camions",
             len(camions)
         )
 
     with col2:
+
         st.metric(
             "👨‍✈️ Chauffeurs",
             len(chauffeurs)
         )
 
     with col3:
+
         st.metric(
             "📋 Ordres de Mission",
             len(om)
@@ -562,7 +667,7 @@ elif menu == "🚚 Gestion du transport":
     st.markdown("---")
 
     st.subheader(
-        "📊 Synthèse"
+        "📊 Synthèse transport"
     )
 
     synthese = pd.DataFrame({
@@ -612,18 +717,18 @@ elif menu == "📋 Ordres de Mission":
 
     else:
 
-        index = 0
+        sheet_index = 0
 
         if "Input OM fini" in om_sheets:
 
-            index = om_sheets.index(
+            sheet_index = om_sheets.index(
                 "Input OM fini"
             )
 
         sheet = st.selectbox(
             "📄 Feuille",
             om_sheets,
-            index=index
+            index=sheet_index
         )
 
         data = read_excel(
@@ -636,7 +741,7 @@ elif menu == "📋 Ordres de Mission":
         )
 
         search = st.text_input(
-            "🔎 Rechercher dans les OM"
+            "🔎 Rechercher dans les Ordres de Mission"
         )
 
         result = search_data(
@@ -682,7 +787,7 @@ elif menu == "📋 Ordres de Mission":
 
             st.download_button(
                 "⬇️ Télécharger le rapport OM",
-                to_excel(result),
+                dataframe_to_excel(result),
                 "TMF_Rapport_OM.xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
@@ -720,7 +825,7 @@ elif menu == "🚛 Camions":
         )
 
         st.metric(
-            "Nombre de lignes",
+            "Nombre de camions",
             len(data)
         )
 
@@ -745,7 +850,7 @@ elif menu == "🚛 Camions":
 
             st.download_button(
                 "⬇️ Télécharger les camions",
-                to_excel(result),
+                dataframe_to_excel(result),
                 "TMF_Camions.xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
@@ -772,18 +877,18 @@ elif menu == "👨‍✈️ Chauffeurs":
 
     else:
 
-        index = 0
+        sheet_index = 0
 
         if "Chauffeurs" in chauffeurs_sheets:
 
-            index = chauffeurs_sheets.index(
+            sheet_index = chauffeurs_sheets.index(
                 "Chauffeurs"
             )
 
         sheet = st.selectbox(
             "📄 Feuille",
             chauffeurs_sheets,
-            index=index
+            index=sheet_index
         )
 
         data = read_excel(
@@ -792,7 +897,7 @@ elif menu == "👨‍✈️ Chauffeurs":
         )
 
         st.metric(
-            "Nombre de lignes",
+            "Nombre de chauffeurs",
             len(data)
         )
 
@@ -817,7 +922,7 @@ elif menu == "👨‍✈️ Chauffeurs":
 
             st.download_button(
                 "⬇️ Télécharger les chauffeurs",
-                to_excel(result),
+                dataframe_to_excel(result),
                 "TMF_Chauffeurs.xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
@@ -855,7 +960,7 @@ elif menu == "👥 Clients":
         )
 
         st.metric(
-            "Nombre de lignes",
+            "Nombre de clients",
             len(data)
         )
 
@@ -880,7 +985,7 @@ elif menu == "👥 Clients":
 
             st.download_button(
                 "⬇️ Télécharger les clients",
-                to_excel(result),
+                dataframe_to_excel(result),
                 "TMF_Clients.xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
@@ -918,7 +1023,7 @@ elif menu == "📦 Commandes de vente":
         )
 
         st.metric(
-            "Nombre de lignes",
+            "Nombre de commandes",
             len(data)
         )
 
@@ -969,7 +1074,7 @@ elif menu == "📦 Commandes de vente":
 
             st.download_button(
                 "⬇️ Télécharger les commandes",
-                to_excel(result),
+                dataframe_to_excel(result),
                 "TMF_Commandes_Vente.xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
@@ -1000,18 +1105,23 @@ elif menu == "📊 Rapports":
     )
 
     if source == "Ordres de Mission":
+
         data = om
 
     elif source == "Camions":
+
         data = camions
 
     elif source == "Chauffeurs":
+
         data = chauffeurs
 
     elif source == "Clients":
+
         data = clients
 
     else:
+
         data = commandes
 
     if data.empty:
@@ -1025,18 +1135,21 @@ elif menu == "📊 Rapports":
         col1, col2, col3 = st.columns(3)
 
         with col1:
+
             st.metric(
                 "Lignes",
                 len(data)
             )
 
         with col2:
+
             st.metric(
                 "Colonnes",
                 len(data.columns)
             )
 
         with col3:
+
             st.metric(
                 "Cellules",
                 data.shape[0]
@@ -1092,7 +1205,7 @@ elif menu == "📊 Rapports":
 
             st.download_button(
                 "⬇️ Télécharger le rapport Excel",
-                to_excel(result),
+                dataframe_to_excel(result),
                 "TMF_Rapport.xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
