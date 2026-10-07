@@ -221,4 +221,187 @@ om = load_data(FILES["om"], "Input OM fini")
 nb_camions = len(camions)
 nb_chauffeurs = len(chauffeurs)
 nb_clients = len(clients)
-nb_commandes =
+nb_commandes = len(commandes)
+nb_om = len(om)
+total_ca_annuel = df_ca["GLOBAL"].sum()
+
+# ============================================================
+# SIDEBAR
+# ============================================================
+
+with st.sidebar:
+    if os.path.isfile(LOGO_FILE):
+        st.image(LOGO_FILE, width=120)
+    else:
+        st.markdown('<div style="font-size:55px; text-align:center; padding:10px;">🚚</div>', unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    menu = st.radio(
+        "MENU",
+        [
+            "🏠 Accueil",
+            "💰 Chiffre d'Affaires",
+            "🚚 Gestion du transport",
+            "📋 Ordres de Mission",
+            "🚛 Camions",
+            "👨‍✈️ Chauffeurs",
+            "👥 Clients",
+            "📦 Commandes de vente",
+            "📊 Rapports"
+        ],
+        index=0
+    )
+
+    st.markdown("---")
+    st.markdown('<div style="font-size:13px; font-weight:600; color:#0b5d3b; margin-bottom:8px;">📁 Fichiers de données</div>', unsafe_allow_html=True)
+
+    for name, path in FILES.items():
+        if os.path.isfile(path):
+            st.markdown(f'<div style="font-size:11px; color:#16834b; margin-bottom:3px;">✓ {os.path.basename(path)}</div>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div style="font-size:11px; color:#c0392b; margin-bottom:3px;">✗ {os.path.basename(path)}</div>', unsafe_allow_html=True)
+
+# ============================================================
+# HEADER CENTRAL
+# ============================================================
+
+st.markdown('<div class="tmf-header">', unsafe_allow_html=True)
+col_logo, col_title = st.columns([1, 6], vertical_alignment="center")
+
+with col_logo:
+    if os.path.isfile(LOGO_FILE):
+        st.image(LOGO_FILE, width=110)
+    else:
+        st.markdown('<div style="font-size:60px; text-align:center;">🚚</div>', unsafe_allow_html=True)
+
+with col_title:
+    st.markdown(
+        """
+        <div style="font-size:32px; font-weight:700; color:white; text-align:left; line-height:1.2;">
+            Gestion de la flotte TMF Logistics
+        </div>
+        <div style="margin-top:8px; font-size:15px; color:#e8f5ef; text-align:left;">
+            Transport & Logistique
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+st.markdown('</div>', unsafe_allow_html=True)
+
+# ============================================================
+# ACCUEIL
+# ============================================================
+
+if menu == "🏠 Accueil":
+
+    st.markdown('<div class="section-title">🏠 Tableau de bord</div>', unsafe_allow_html=True)
+
+    col1, col2, col3, col4, col5 = st.columns(5)
+
+    with col1:
+        st.markdown(f'<div class="info-card"><div class="info-card-title">💰 CA Annuel</div><div class="info-card-value">{format_currency(total_ca_annuel)}</div></div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown(f'<div class="info-card"><div class="info-card-title">🚛 Camions</div><div class="info-card-value">{nb_camions}</div></div>', unsafe_allow_html=True)
+    with col3:
+        st.markdown(f'<div class="info-card"><div class="info-card-title">👨‍✈️ Chauffeurs</div><div class="info-card-value">{nb_chauffeurs}</div></div>', unsafe_allow_html=True)
+    with col4:
+        st.markdown(f'<div class="info-card"><div class="info-card-title">👥 Clients</div><div class="info-card-value">{nb_clients}</div></div>', unsafe_allow_html=True)
+    with col5:
+        st.markdown(f'<div class="info-card"><div class="info-card-title">📋 Ordres de Mission</div><div class="info-card-value">{nb_om}</div></div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="sub-title">📌 Présentation</div>', unsafe_allow_html=True)
+    st.info(
+        """
+        Bienvenue dans l'application **Gestion de la flotte TMF Logistics**.
+        Suivez les performances financières (CA par section), la flotte de camions, la gestion des chauffeurs, les clients, commandes et ordres de mission.
+        """
+    )
+
+    st.markdown('<div class="sub-title">📁 État des fichiers</div>', unsafe_allow_html=True)
+    file_status = [
+        {"Fichier": os.path.basename(path), "Statut": "Disponible" if os.path.isfile(path) else "Introuvable"}
+        for name, path in FILES.items()
+    ]
+    st.dataframe(pd.DataFrame(file_status), use_container_width=True, hide_index=True)
+
+# ============================================================
+# CHIFFRE D'AFFAIRES
+# ============================================================
+
+elif menu == "💰 Chiffre d'Affaires":
+
+    st.markdown('<div class="section-title">💰 Analyse du Chiffre d\'Affaires par Section</div>', unsafe_allow_html=True)
+
+    m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+    with m_col1:
+        st.metric("CA Annuel Total", format_currency(total_ca_annuel))
+    with m_col2:
+        st.metric("CA Mensuel Moyen", format_currency(total_ca_annuel / 12))
+    with m_col3:
+        best_section = df_ca.loc[df_ca["GLOBAL"].idxmax(), "CA PAR SECTION"]
+        st.metric("Meilleure Section", best_section)
+    with m_col4:
+        best_month_col = df_ca.drop(columns=["CA PAR SECTION", "GLOBAL"]).sum().idxmax()
+        best_month_val = df_ca.drop(columns=["CA PAR SECTION", "GLOBAL"]).sum().max()
+        st.metric("Meilleur Mois", f"{best_month_col} ({format_currency(best_month_val)})")
+
+    st.markdown("---")
+    st.markdown('<div class="sub-title">📊 Tableau du CA Mensuel et Annuel (en DA)</div>', unsafe_allow_html=True)
+
+    formatted_ca = df_ca.copy()
+    for col in formatted_ca.columns:
+        if col != "CA PAR SECTION":
+            formatted_ca[col] = formatted_ca[col].apply(lambda x: f"{x:,.0f}".replace(",", " "))
+
+    show_table(formatted_ca, "ca_table")
+
+    st.markdown('<div class="sub-title">📈 Contribution des Sections au CA Annuel</div>', unsafe_allow_html=True)
+    chart_data = df_ca.set_index("CA PAR SECTION")["GLOBAL"]
+    st.bar_chart(chart_data)
+
+    st.markdown('<div class="sub-title">🔗 Croisement avec la Flotte, Ordres de Mission & Commandes</div>', unsafe_allow_html=True)
+
+    cross_analysis = []
+    for section in df_ca["CA PAR SECTION"]:
+        ca_sec = df_ca[df_ca["CA PAR SECTION"] == section]["GLOBAL"].values[0]
+        
+        om_count = 0
+        if not om.empty:
+            match_om = om.astype(str).apply(lambda col: col.str.lower().str.contains(section.lower(), na=False)).any(axis=1)
+            om_count = om[match_om].shape[0]
+
+        cmd_count = 0
+        if not commandes.empty:
+            match_cmd = commandes.astype(str).apply(lambda col: col.str.lower().str.contains(section.lower(), na=False)).any(axis=1)
+            cmd_count = commandes[match_cmd].shape[0]
+
+        ratio_om = (ca_sec / om_count) if om_count > 0 else 0
+
+        cross_analysis.append({
+            "Section": section,
+            "CA Annuel (DA)": format_currency(ca_sec),
+            "Part du CA (%)": f"{(ca_sec / total_ca_annuel)*100:.2f} %",
+            "Missions identifiées (OM)": om_count,
+            "Commandes identifiées": cmd_count,
+            "CA Moyen / Mission": format_currency(ratio_om) if ratio_om > 0 else "N/A"
+        })
+
+    st.dataframe(pd.DataFrame(cross_analysis), use_container_width=True, hide_index=True)
+
+# ============================================================
+# GESTION DU TRANSPORT
+# ============================================================
+
+elif menu == "🚚 Gestion du transport":
+
+    st.markdown('<div class="section-title">🚚 Gestion du transport</div>', unsafe_allow_html=True)
+    st.write("Suivi et analyse des données liées à l'activité de transport.")
+
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Camions", nb_camions)
+    with col2:
+        st.metric("Chauffeurs", nb_chauffeurs)
+    with col3:
+        st.metric("Ordres de mission", nb_
