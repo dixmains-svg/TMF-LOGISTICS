@@ -260,9 +260,11 @@ om = load_data(FILES["om"], "Input OM fini")
 # Extract unique values pour le panneau latéral
 opts_sections = sorted(df_ca_raw["CA PAR SECTION"].unique().tolist())
 opts_affectations = extract_unique_options(om, ["affectation", "type", "prestation", "parc", "remorque"])
-opts_camions = extract_unique_options(camions, ["immatriculation", "matricule", "camion", "code", "véhicule"])
+
+# Extraire les numéros/immatriculations de camions en ciblant spécifiquement numéro, num, code, matricule, immatriculation
+opts_camions = extract_unique_options(camions, ["numéro", "numero", "num", "code", "matricule", "immatriculation", "camion", "véhicule"])
 if not opts_camions:
-    opts_camions = extract_unique_options(om, ["camion", "immatriculation", "matricule", "tracteur"])
+    opts_camions = extract_unique_options(om, ["numéro", "numero", "num", "code_camion", "immatriculation", "matricule", "camion", "tracteur"])
 
 opts_clients = extract_unique_options(clients, ["nom", "client", "raison", "societé"])
 if not opts_clients:
@@ -271,6 +273,9 @@ if not opts_clients:
 opts_chauffeurs = extract_unique_options(chauffeurs, ["nom", "chauffeur", "conducteur", "agent"])
 if not opts_chauffeurs:
     opts_chauffeurs = extract_unique_options(om, ["chauffeur", "conducteur", "nom"])
+
+# Mots-clés pour le filtrage exact des numéros de camions
+CAMION_KEYWORDS = ["numéro", "numero", "num", "code", "matricule", "immatriculation", "camion", "tracteur", "véhicule"]
 
 # ============================================================
 # NAVIGATION & FILTRES DANS LE PANNEAU LATÉRAL (SIDEBAR)
@@ -333,8 +338,8 @@ with st.sidebar:
     sel_section = st.selectbox("📂 Section", ["Tous"] + opts_sections)
     sel_affectation = st.selectbox("📌 Affectation", ["Tous"] + opts_affectations)
 
-    # 3. Filtres par Camion / Client / Chauffeur
-    sel_camion = st.selectbox("🚛 Camion", ["Tous"] + opts_camions)
+    # 3. Filtre spécifique par Numéro de Camion
+    sel_camion = st.selectbox("🚛 Numéro de Camion", ["Tous"] + opts_camions)
     sel_client = st.selectbox("🏢 Client", ["Tous"] + opts_clients)
     sel_chauffeur = st.selectbox("👨‍✈️ Chauffeur", ["Tous"] + opts_chauffeurs)
 
@@ -372,12 +377,12 @@ om_filtered = om.copy()
 om_filtered = apply_date_filter(om_filtered, ["date", "création", "départ"], start_d, end_d)
 om_filtered = apply_text_filter(om_filtered, ["section", "activité"], sel_section)
 om_filtered = apply_text_filter(om_filtered, ["affectation", "type", "prestation"], sel_affectation)
-om_filtered = apply_text_filter(om_filtered, ["camion", "immatriculation", "matricule", "tracteur"], sel_camion)
+om_filtered = apply_text_filter(om_filtered, CAMION_KEYWORDS, sel_camion)
 om_filtered = apply_text_filter(om_filtered, ["client", "société", "nom"], sel_client)
 om_filtered = apply_text_filter(om_filtered, ["chauffeur", "conducteur", "agent"], sel_chauffeur)
 
 # Application des filtres sur Camions, Chauffeurs, Clients, Commandes
-camions_filtered = apply_text_filter(camions, ["immatriculation", "matricule", "camion", "code"], sel_camion)
+camions_filtered = apply_text_filter(camions, CAMION_KEYWORDS, sel_camion)
 chauffeurs_filtered = apply_text_filter(chauffeurs, ["nom", "chauffeur", "conducteur", "agent"], sel_chauffeur)
 clients_filtered = apply_text_filter(clients, ["nom", "client", "raison", "societé"], sel_client)
 
@@ -635,7 +640,7 @@ elif menu == "🚛 Flotte de Camions":
     else:
         st.write(f"Nombre total de camions : **{nb_camions}**")
 
-        s_cam = st.text_input("🔎 Recherche camion", key="camion_search")
+        s_cam = st.text_input("🔎 Recherche par numéro / matricule de camion", key="camion_search")
         filtered_cam = search_data(camions_filtered, s_cam)
 
         show_table(filtered_cam, "camions_main_table")
