@@ -391,7 +391,7 @@ with st.sidebar:
 
         st.image(
             LOGO_FILE,
-            width=1000
+            width=800
         )
 
     else:
@@ -503,7 +503,7 @@ with col_logo:
 
         st.image(
             LOGO_FILE,
-            width=100
+            width=800
         )
 
     else:
