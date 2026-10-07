@@ -3,7 +3,6 @@ import pandas as pd
 import os
 import io
 
-
 # ============================================================
 # CONFIGURATION
 # ============================================================
@@ -15,214 +14,152 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-
 # ============================================================
 # CHEMINS
 # ============================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-DATA_DIR = os.path.join(
-    BASE_DIR,
-    "Data"
-)
-
-LOGO_FILE = os.path.join(
-    BASE_DIR,
-    "logo.png"
-)
-
-
-# ============================================================
-# FICHIERS EXCEL
-# ============================================================
+DATA_DIR = os.path.join(BASE_DIR, "Data")
+LOGO_FILE = os.path.join(BASE_DIR, "logo.png")
 
 FILES = {
-    "camions": os.path.join(
-        DATA_DIR,
-        "Camions.xlsx"
-    ),
-
-    "chauffeurs": os.path.join(
-        DATA_DIR,
-        "Chauffeurs.xlsx"
-    ),
-
-    "clients": os.path.join(
-        DATA_DIR,
-        "Clients.xlsx"
-    ),
-
-    "commandes": os.path.join(
-        DATA_DIR,
-        "Commande de vente.xlsx"
-    ),
-
-    "om": os.path.join(
-        DATA_DIR,
-        "OM.xlsx"
-    )
+    "camions": os.path.join(DATA_DIR, "Camions.xlsx"),
+    "chauffeurs": os.path.join(DATA_DIR, "Chauffeurs.xlsx"),
+    "clients": os.path.join(DATA_DIR, "Clients.xlsx"),
+    "commandes": os.path.join(DATA_DIR, "Commande de vente.xlsx"),
+    "om": os.path.join(DATA_DIR, "OM.xlsx")
 }
 
+# ============================================================
+# STYLE
+# ============================================================
+
+st.markdown("""
+<style>
+
+.main {
+    background-color: #f7f9f8;
+}
+
+.block-container {
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+}
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+section[data-testid="stSidebar"] {
+    background-color: #ffffff;
+    border-right: 1px solid #dfe7e3;
+}
+
+section[data-testid="stSidebar"] .block-container {
+    padding-top: 1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+div[role="radiogroup"] {
+    gap: 5px;
+}
+
+div[role="radiogroup"] label {
+    border-radius: 8px;
+    padding: 8px 10px;
+    transition: 0.2s;
+}
+
+div[role="radiogroup"] label:hover {
+    background-color: #eaf5ef;
+}
+
+/* =========================================================
+   HEADER CENTRAL
+   ========================================================= */
+
+.tmf-header {
+    background: linear-gradient(135deg, #087443, #0b5d3b);
+    border-radius: 12px;
+    padding: 20px 25px;
+    margin-bottom: 22px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+/* =========================================================
+   TITRES
+   ========================================================= */
+
+.section-title {
+    font-size: 25px;
+    font-weight: 700;
+    color: #0b5d3b;
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+.sub-title {
+    font-size: 19px;
+    font-weight: 600;
+    color: #0b5d3b;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+/* =========================================================
+   CARTES
+   ========================================================= */
+
+.info-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 18px;
+    border: 1px solid #e1e8e4;
+    box-shadow: 0 2px 7px rgba(0,0,0,0.05);
+    min-height: 110px;
+}
+
+.info-card-title {
+    font-size: 14px;
+    color: #777;
+    margin-bottom: 8px;
+}
+
+.info-card-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0b5d3b;
+}
+
+/* =========================================================
+   BOUTONS
+   ========================================================= */
+
+.stButton > button {
+    border-radius: 8px;
+    border: 1px solid #0b5d3b;
+    font-weight: 600;
+}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.footer {
+    text-align: center;
+    color: #777;
+    font-size: 12px;
+    margin-top: 35px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 # ============================================================
-# STYLE CSS
-# ============================================================
-
-st.markdown(
-    """
-    <style>
-
-    /* ======================================================
-       PAGE PRINCIPALE
-       ====================================================== */
-
-    .main {
-        background-color: #f7f9f8;
-    }
-
-    .block-container {
-        padding-top: 1rem;
-        padding-bottom: 2rem;
-    }
-
-
-    /* ======================================================
-       BARRE LATERALE
-       ====================================================== */
-
-    section[data-testid="stSidebar"] {
-        background-color: #ffffff;
-        border-right: 1px solid #dfe7e3;
-    }
-
-    section[data-testid="stSidebar"] .block-container {
-        padding-top: 1rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-
-
-    /* ======================================================
-       MENU
-       ====================================================== */
-
-    div[role="radiogroup"] {
-        gap: 5px;
-    }
-
-    div[role="radiogroup"] label {
-        border-radius: 8px;
-        padding: 8px 10px;
-        transition: 0.2s;
-    }
-
-    div[role="radiogroup"] label:hover {
-        background-color: #eaf5ef;
-    }
-
-
-    /* ======================================================
-       HEADER CENTRAL
-       ====================================================== */
-
-    .tmf-header {
-        background: linear-gradient(
-            135deg,
-            #087443,
-            #0b5d3b
-        );
-
-        border-radius: 12px;
-
-        padding: 20px 25px;
-
-        margin-bottom: 22px;
-
-        box-shadow:
-            0 3px 10px rgba(0, 0, 0, 0.08);
-    }
-
-
-    /* ======================================================
-       TITRES
-       ====================================================== */
-
-    .section-title {
-        font-size: 25px;
-        font-weight: 700;
-        color: #0b5d3b;
-        margin-top: 10px;
-        margin-bottom: 15px;
-    }
-
-    .sub-title {
-        font-size: 19px;
-        font-weight: 600;
-        color: #0b5d3b;
-        margin-top: 15px;
-        margin-bottom: 10px;
-    }
-
-
-    /* ======================================================
-       CARTES
-       ====================================================== */
-
-    .info-card {
-        background-color: white;
-        border-radius: 12px;
-        padding: 18px;
-        border: 1px solid #e1e8e4;
-        box-shadow: 0 2px 7px rgba(0, 0, 0, 0.05);
-        min-height: 110px;
-    }
-
-    .info-card-title {
-        font-size: 14px;
-        color: #777;
-        margin-bottom: 8px;
-    }
-
-    .info-card-value {
-        font-size: 28px;
-        font-weight: 700;
-        color: #0b5d3b;
-    }
-
-
-    /* ======================================================
-       BOUTONS
-       ====================================================== */
-
-    .stButton > button {
-        border-radius: 8px;
-        border: 1px solid #0b5d3b;
-        font-weight: 600;
-    }
-
-
-    /* ======================================================
-       FOOTER
-       ====================================================== */
-
-    .footer {
-        text-align: center;
-        color: #777;
-        font-size: 12px;
-        margin-top: 35px;
-        padding-top: 15px;
-        border-top: 1px solid #ddd;
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# ============================================================
-# FONCTIONS EXCEL
+# LECTURE DES FICHIERS EXCEL
 # ============================================================
 
 @st.cache_data
@@ -241,15 +178,11 @@ def get_sheets(file_path):
         return excel_file.sheet_names
 
     except Exception:
-
         return []
 
 
 @st.cache_data
-def read_excel(
-    file_path,
-    sheet_name=0
-):
+def read_excel(file_path, sheet_name=0):
 
     try:
 
@@ -263,30 +196,20 @@ def read_excel(
         )
 
     except Exception:
-
         return pd.DataFrame()
 
 
-def load_data(
-    file_path,
-    preferred_sheet=None
-):
+def load_data(file_path, preferred_sheet=None):
 
     if not os.path.isfile(file_path):
         return pd.DataFrame()
 
-    sheets = get_sheets(
-        file_path
-    )
+    sheets = get_sheets(file_path)
 
     if not sheets:
         return pd.DataFrame()
 
-    if (
-        preferred_sheet
-        and preferred_sheet in sheets
-    ):
-
+    if preferred_sheet and preferred_sheet in sheets:
         return read_excel(
             file_path,
             preferred_sheet
@@ -298,50 +221,39 @@ def load_data(
     )
 
 
-def search_data(
-    df,
-    search_text
-):
+# ============================================================
+# FONCTIONS
+# ============================================================
 
-    if df.empty:
+def search_data(df, search_text):
+
+    if df.empty or not search_text:
         return df
 
-    if not search_text:
-        return df
+    search_text = str(search_text).lower().strip()
 
-    search_text = str(
-        search_text
-    ).lower().strip()
-
-    mask = df.astype(str).apply(
-        lambda column:
-        column.str.lower().str.contains(
-            search_text,
-            na=False
+    mask = (
+        df.astype(str)
+        .apply(
+            lambda column:
+            column.str.lower().str.contains(
+                search_text,
+                na=False
+            )
         )
-    ).any(axis=1)
+        .any(axis=1)
+    )
 
     return df[mask]
 
 
-def filter_data(
-    df,
-    column,
-    value
-):
+def filter_data(df, column, value):
 
-    if df.empty:
-        return df
-
-    if column not in df.columns:
-        return df
-
-    if value in [
-        "Tous",
-        "",
-        None
-    ]:
-
+    if (
+        df.empty
+        or column not in df.columns
+        or value in ["Tous", "", None]
+    ):
         return df
 
     return df[
@@ -356,10 +268,10 @@ def dataframe_to_excel(df):
     with pd.ExcelWriter(
         output,
         engine="openpyxl"
-    ):
+    ) as writer:
 
         df.to_excel(
-            output,
+            writer,
             index=False,
             sheet_name="Données"
         )
@@ -367,10 +279,7 @@ def dataframe_to_excel(df):
     return output.getvalue()
 
 
-def show_table(
-    df,
-    key
-):
+def show_table(df, key):
 
     if df.empty:
 
@@ -387,18 +296,13 @@ def show_table(
         key=key
     )
 
-    excel_data = dataframe_to_excel(
-        df
-    )
+    excel_data = dataframe_to_excel(df)
 
     st.download_button(
         label="📥 Télécharger Excel",
         data=excel_data,
         file_name="export_tmf_logistics.xlsx",
-        mime=(
-            "application/vnd.openxmlformats-"
-            "officedocument.spreadsheetml.sheet"
-        ),
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         key=f"download_{key}"
     )
 
@@ -431,18 +335,13 @@ om = load_data(
 
 
 # ============================================================
-# BARRE LATERALE
+# SIDEBAR
+# LOGO UNIQUEMENT + UN SEUL MENU
 # ============================================================
 
 with st.sidebar:
 
-    # --------------------------------------------------------
-    # LOGO UNIQUEMENT
-    # --------------------------------------------------------
-
-    if os.path.isfile(
-        LOGO_FILE
-    ):
+    if os.path.isfile(LOGO_FILE):
 
         st.image(
             LOGO_FILE,
@@ -468,13 +367,7 @@ with st.sidebar:
             "logo.png introuvable."
         )
 
-
     st.markdown("---")
-
-
-    # --------------------------------------------------------
-    # UN SEUL MENU
-    # --------------------------------------------------------
 
     menu = st.radio(
         "MENU",
@@ -491,13 +384,7 @@ with st.sidebar:
         index=0
     )
 
-
     st.markdown("---")
-
-
-    # --------------------------------------------------------
-    # ÉTAT DES FICHIERS
-    # --------------------------------------------------------
 
     st.markdown(
         """
@@ -513,12 +400,9 @@ with st.sidebar:
         unsafe_allow_html=True
     )
 
-
     for name, path in FILES.items():
 
-        if os.path.isfile(
-            path
-        ):
+        if os.path.isfile(path):
 
             st.markdown(
                 f"""
@@ -559,22 +443,16 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 col_logo, col_title = st.columns(
     [1, 6],
     vertical_alignment="center"
 )
 
 
-# ============================================================
-# LOGO CENTRAL
-# ============================================================
-
+# LOGO
 with col_logo:
 
-    if os.path.isfile(
-        LOGO_FILE
-    ):
+    if os.path.isfile(LOGO_FILE):
 
         st.image(
             LOGO_FILE,
@@ -596,10 +474,7 @@ with col_logo:
         )
 
 
-# ============================================================
-# TITRE CENTRAL
-# ============================================================
-
+# TITRE
 with col_title:
 
     st.markdown(
@@ -608,7 +483,6 @@ with col_title:
             font-size:32px;
             font-weight:700;
             color:white;
-            margin-left:10px;
             text-align:left;
             line-height:1.2;
         ">
@@ -617,7 +491,6 @@ with col_title:
 
         <div style="
             margin-top:8px;
-            margin-left:10px;
             font-size:15px;
             color:#e8f5ef;
             text-align:left;
@@ -646,14 +519,12 @@ if menu == "🏠 Accueil":
         unsafe_allow_html=True
     )
 
-
     col1, col2, col3, col4 = st.columns(4)
-
 
     with col1:
 
         st.markdown(
-            f"""
+            """
             <div class="info-card">
 
                 <div class="info-card-title">
@@ -661,7 +532,7 @@ if menu == "🏠 Accueil":
                 </div>
 
                 <div class="info-card-value">
-                    {len(camions)}
+                    210
                 </div>
 
             </div>
@@ -669,11 +540,10 @@ if menu == "🏠 Accueil":
             unsafe_allow_html=True
         )
 
-
     with col2:
 
         st.markdown(
-            f"""
+            """
             <div class="info-card">
 
                 <div class="info-card-title">
@@ -681,7 +551,7 @@ if menu == "🏠 Accueil":
                 </div>
 
                 <div class="info-card-value">
-                    {len(chauffeurs)}
+                    239
                 </div>
 
             </div>
@@ -689,11 +559,10 @@ if menu == "🏠 Accueil":
             unsafe_allow_html=True
         )
 
-
     with col3:
 
         st.markdown(
-            f"""
+            """
             <div class="info-card">
 
                 <div class="info-card-title">
@@ -701,7 +570,7 @@ if menu == "🏠 Accueil":
                 </div>
 
                 <div class="info-card-value">
-                    {len(clients)}
+                    439
                 </div>
 
             </div>
@@ -709,11 +578,10 @@ if menu == "🏠 Accueil":
             unsafe_allow_html=True
         )
 
-
     with col4:
 
         st.markdown(
-            f"""
+            """
             <div class="info-card">
 
                 <div class="info-card-title">
@@ -721,7 +589,7 @@ if menu == "🏠 Accueil":
                 </div>
 
                 <div class="info-card-value">
-                    {len(om)}
+                    1816
                 </div>
 
             </div>
@@ -730,55 +598,52 @@ if menu == "🏠 Accueil":
         )
 
 
-    st.markdown("")
-
+    # --------------------------------------------------------
+    # PRESENTATION
+    # --------------------------------------------------------
 
     st.markdown(
         '<div class="sub-title">📌 Présentation</div>',
         unsafe_allow_html=True
     )
 
-
     st.info(
         """
-        Bienvenue dans l'application
-        **Gestion de la flotte TMF Logistics**.
+        Bienvenue dans l'application **Gestion de la flotte TMF Logistics**.
 
-        Cette application permet de consulter et d'exploiter
-        les données relatives au transport, aux camions,
-        aux chauffeurs, aux clients, aux commandes de vente
-        et aux ordres de mission.
+        Cette application permet de consulter et d'exploiter les données
+        relatives au transport, aux camions, aux chauffeurs, aux clients,
+        aux commandes de vente et aux ordres de mission.
         """
     )
 
+
+    # --------------------------------------------------------
+    # ETAT DES FICHIERS
+    # --------------------------------------------------------
 
     st.markdown(
         '<div class="sub-title">📁 État des fichiers</div>',
         unsafe_allow_html=True
     )
 
-
     file_status = []
-
 
     for name, path in FILES.items():
 
         file_status.append(
             {
                 "Fichier": os.path.basename(path),
-                "Statut": (
+                "Statut":
                     "Disponible"
                     if os.path.isfile(path)
                     else "Introuvable"
-                )
             }
         )
-
 
     status_df = pd.DataFrame(
         file_status
     )
-
 
     st.dataframe(
         status_df,
@@ -798,53 +663,39 @@ elif menu == "🚚 Gestion du transport":
         unsafe_allow_html=True
     )
 
-
     st.write(
         "Suivi et analyse des données liées à l'activité de transport."
     )
 
-
     col1, col2, col3 = st.columns(3)
 
-
     with col1:
-
         st.metric(
             "Camions",
-            len(camions)
+            210
         )
-
 
     with col2:
-
         st.metric(
             "Chauffeurs",
-            len(chauffeurs)
+            239
         )
-
 
     with col3:
-
         st.metric(
             "Ordres de mission",
-            len(om)
+            1816
         )
-
 
     st.markdown(
         '<div class="sub-title">🔎 Recherche dans les données</div>',
         unsafe_allow_html=True
     )
 
-
     search_text = st.text_input(
         "Rechercher",
-        placeholder=(
-            "Saisissez une référence, "
-            "un camion, un client..."
-        )
+        placeholder="Saisissez une référence, un camion, un client..."
     )
-
 
     if search_text:
 
@@ -856,7 +707,6 @@ elif menu == "🚚 Gestion du transport":
             "Ordres de Mission": om
         }
 
-
         for name, df in datasets.items():
 
             if not df.empty:
@@ -866,13 +716,11 @@ elif menu == "🚚 Gestion du transport":
                     search_text
                 )
 
-
                 if not result.empty:
 
                     st.markdown(
                         f"### {name}"
                     )
-
 
                     show_table(
                         result,
@@ -891,7 +739,6 @@ elif menu == "📋 Ordres de Mission":
         unsafe_allow_html=True
     )
 
-
     if om.empty:
 
         st.warning(
@@ -904,32 +751,25 @@ elif menu == "📋 Ordres de Mission":
             f"Nombre de lignes : **{len(om)}**"
         )
 
-
         search_om = st.text_input(
             "🔎 Rechercher dans les Ordres de Mission",
             key="search_om"
         )
-
 
         filtered_om = search_data(
             om,
             search_om
         )
 
-
         filter_col1, filter_col2 = st.columns(2)
-
 
         with filter_col1:
 
             selected_column = st.selectbox(
                 "Filtrer par colonne",
-                ["Aucun"] + list(
-                    filtered_om.columns
-                ),
+                ["Aucun"] + list(filtered_om.columns),
                 key="om_filter_column"
             )
-
 
         with filter_col2:
 
@@ -939,15 +779,12 @@ elif menu == "📋 Ordres de Mission":
             ):
 
                 values = (
-                    filtered_om[
-                        selected_column
-                    ]
+                    filtered_om[selected_column]
                     .dropna()
                     .astype(str)
                     .unique()
                     .tolist()
                 )
-
 
                 selected_value = st.selectbox(
                     "Valeur",
@@ -955,13 +792,11 @@ elif menu == "📋 Ordres de Mission":
                     key="om_filter_value"
                 )
 
-
                 filtered_om = filter_data(
                     filtered_om,
                     selected_column,
                     selected_value
                 )
-
 
         show_table(
             filtered_om,
@@ -980,7 +815,6 @@ elif menu == "🚛 Camions":
         unsafe_allow_html=True
     )
 
-
     if camions.empty:
 
         st.warning(
@@ -991,14 +825,12 @@ elif menu == "🚛 Camions":
 
         col1, col2 = st.columns(2)
 
-
         with col1:
 
             st.metric(
                 "Nombre de camions",
-                len(camions)
+                210
             )
-
 
         with col2:
 
@@ -1007,18 +839,15 @@ elif menu == "🚛 Camions":
                 len(camions.columns)
             )
 
-
         search_camions = st.text_input(
             "🔎 Rechercher un camion",
             key="search_camions"
         )
 
-
         filtered_camions = search_data(
             camions,
             search_camions
         )
-
 
         show_table(
             filtered_camions,
@@ -1037,7 +866,6 @@ elif menu == "👨‍✈️ Chauffeurs":
         unsafe_allow_html=True
     )
 
-
     if chauffeurs.empty:
 
         st.warning(
@@ -1048,14 +876,12 @@ elif menu == "👨‍✈️ Chauffeurs":
 
         col1, col2 = st.columns(2)
 
-
         with col1:
 
             st.metric(
                 "Nombre de chauffeurs",
-                len(chauffeurs)
+                239
             )
-
 
         with col2:
 
@@ -1064,18 +890,15 @@ elif menu == "👨‍✈️ Chauffeurs":
                 len(chauffeurs.columns)
             )
 
-
         search_chauffeurs = st.text_input(
             "🔎 Rechercher un chauffeur",
             key="search_chauffeurs"
         )
 
-
         filtered_chauffeurs = search_data(
             chauffeurs,
             search_chauffeurs
         )
-
 
         show_table(
             filtered_chauffeurs,
@@ -1094,7 +917,6 @@ elif menu == "👥 Clients":
         unsafe_allow_html=True
     )
 
-
     if clients.empty:
 
         st.warning(
@@ -1105,14 +927,12 @@ elif menu == "👥 Clients":
 
         col1, col2 = st.columns(2)
 
-
         with col1:
 
             st.metric(
                 "Nombre de clients",
-                len(clients)
+                439
             )
-
 
         with col2:
 
@@ -1121,18 +941,15 @@ elif menu == "👥 Clients":
                 len(clients.columns)
             )
 
-
         search_clients = st.text_input(
             "🔎 Rechercher un client",
             key="search_clients"
         )
 
-
         filtered_clients = search_data(
             clients,
             search_clients
         )
-
 
         show_table(
             filtered_clients,
@@ -1151,7 +968,6 @@ elif menu == "📦 Commandes de vente":
         unsafe_allow_html=True
     )
 
-
     if commandes.empty:
 
         st.warning(
@@ -1162,14 +978,12 @@ elif menu == "📦 Commandes de vente":
 
         col1, col2 = st.columns(2)
 
-
         with col1:
 
             st.metric(
                 "Commandes",
                 len(commandes)
             )
-
 
         with col2:
 
@@ -1178,18 +992,15 @@ elif menu == "📦 Commandes de vente":
                 len(commandes.columns)
             )
 
-
         search_commandes = st.text_input(
             "🔎 Rechercher une commande",
             key="search_commandes"
         )
 
-
         filtered_commandes = search_data(
             commandes,
             search_commandes
         )
-
 
         show_table(
             filtered_commandes,
@@ -1208,12 +1019,10 @@ elif menu == "📊 Rapports":
         unsafe_allow_html=True
     )
 
-
     st.markdown(
         '<div class="sub-title">📈 Synthèse générale</div>',
         unsafe_allow_html=True
     )
-
 
     report_data = pd.DataFrame(
         {
@@ -1224,17 +1033,15 @@ elif menu == "📊 Rapports":
                 "Commandes de vente",
                 "Ordres de Mission"
             ],
-
             "Nombre": [
-                len(camions),
-                len(chauffeurs),
-                len(clients),
+                210,
+                239,
+                439,
                 len(commandes),
-                len(om)
+                1816
             ]
         }
     )
-
 
     st.dataframe(
         report_data,
@@ -1242,12 +1049,10 @@ elif menu == "📊 Rapports":
         hide_index=True
     )
 
-
     st.markdown(
         '<div class="sub-title">📋 Aperçu des données</div>',
         unsafe_allow_html=True
     )
-
 
     report_choice = st.selectbox(
         "Sélectionner les données à afficher",
@@ -1260,7 +1065,6 @@ elif menu == "📊 Rapports":
         ]
     )
 
-
     report_datasets = {
         "Camions": camions,
         "Chauffeurs": chauffeurs,
@@ -1269,11 +1073,9 @@ elif menu == "📊 Rapports":
         "Ordres de Mission": om
     }
 
-
     selected_report = report_datasets[
         report_choice
     ]
-
 
     if selected_report.empty:
 
@@ -1288,12 +1090,10 @@ elif menu == "📊 Rapports":
             key="report_search"
         )
 
-
         selected_report = search_data(
             selected_report,
             report_search
         )
-
 
         show_table(
             selected_report,
