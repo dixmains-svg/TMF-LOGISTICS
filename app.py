@@ -519,41 +519,35 @@ with col_logo:
 # TITRE DE L'APPLICATION
 # ------------------------------------------------------------
 
-with col_title:
+col_logo, col_title = st.columns([1, 6], vertical_alignment="center")
 
+with col_logo:
+    if os.path.isfile(LOGO_FILE):
+        st.image(LOGO_FILE, width=600)
+    else:
+        st.markdown("🚚")
+
+with col_title:
     st.markdown(
         """
         <div style="
-            margin-left:10px;
-            margin-top:5px;
+            font-size:32px;
+            font-weight:700;
+            color:white;
         ">
+            Gestion de la flotte TMF Logistics
+        </div>
 
-            <div style="
-                font-size:32px;
-                font-weight:700;
-                color:white;
-            ">
-                Gestion de la flotte TMF Logistics
-            </div>
-
-            <div style="
-                margin-top:8px;
-                font-size:15px;
-                color:#e8f5ef;
-            ">
-                Transport & Logistique
-            </div>
-
+        <div style="
+            margin-top:8px;
+            font-size:15px;
+            color:#e8f5ef;
+        ">
+            Transport & Logistique
         </div>
         """,
         unsafe_allow_html=True
     )
-
-
-st.markdown(
-    "</div>",
-    unsafe_allow_html=True
-)
 
 # ============================================================
 # ACCUEIL
