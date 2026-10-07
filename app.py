@@ -80,8 +80,8 @@ section[data-testid="stSidebar"] {
 
 .section-title {
     font-size: 24px;
-    font-weight: 700;
-    color: #0b5d3b;
+    font-weight: 800;
+    color: #000000;
     margin-top: 15px;
     margin-bottom: 15px;
 }
