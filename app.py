@@ -5,6 +5,7 @@ import os
 import io
 import plotly.express as px
 import plotly.graph_objects as go
+from datetime import datetime
 
 # ============================================================
 # CONFIGURATION DE LA PAGE
@@ -54,7 +55,13 @@ CA_DATA = {
     "GLOBAL": [888123893, 305321416, 222376847, 18756481, 49454000, 2196840]
 }
 
-df_ca = pd.DataFrame(CA_DATA)
+df_ca_raw = pd.DataFrame(CA_DATA)
+
+# Map des mois pour filtrage par date
+MONTH_MAP = {
+    "Janvier": 1, "Février": 2, "Mars": 3, "Avril": 4, "Mai": 5, "Juin": 6,
+    "Juillet": 7, "Août": 8, "Septembre": 9, "Octobre": 10, "Novembre": 11, "Décembre": 12
+}
 
 # ============================================================
 # STYLE CSS CUSTOM
@@ -201,8 +208,47 @@ def kpi_card(title, value, subtext="", color="#087443"):
     </div>
     """, unsafe_allow_html=True)
 
+def find_column_by_keywords(df, keywords):
+    """Trouve la première colonne contenant un des mots-clés."""
+    if df.empty:
+        return None
+    for col in df.columns:
+        col_str = str(col).lower()
+        if any(kw in col_str for kw in keywords):
+            return col
+    return None
+
+def extract_unique_options(df, keywords):
+    col = find_column_by_keywords(df, keywords)
+    if col and not df.empty:
+        vals = df[col].dropna().astype(str).str.strip().unique().tolist()
+        vals = [v for v in vals if v and v.lower() != "nan"]
+        return sorted(vals)
+    return []
+
+def apply_text_filter(df, keywords, selected_value):
+    if df.empty or not selected_value or selected_value == "Tous":
+        return df
+    col = find_column_by_keywords(df, keywords)
+    if col:
+        return df[df[col].astype(str).str.strip() == str(selected_value).strip()]
+    return df
+
+def apply_date_filter(df, keywords, start_date, end_date):
+    if df.empty or not start_date or not end_date:
+        return df
+    col = find_column_by_keywords(df, keywords)
+    if col:
+        try:
+            temp_dates = pd.to_datetime(df[col], errors='coerce')
+            mask = (temp_dates.dt.date >= start_date) & (temp_dates.dt.date <= end_date)
+            return df[mask | temp_dates.isna()]
+        except Exception:
+            return df
+    return df
+
 # ============================================================
-# CHARGEMENT DES BASE DE DONNÉES
+# CHARGEMENT DE LA BASE DE DONNÉES
 # ============================================================
 
 camions = load_data(FILES["camions"])
@@ -211,16 +257,23 @@ clients = load_data(FILES["clients"])
 commandes = load_data(FILES["commandes"])
 om = load_data(FILES["om"], "Input OM fini")
 
-# Statistiques globales
-nb_camions = len(camions) if not camions.empty else 0
-nb_chauffeurs = len(chauffeurs) if not chauffeurs.empty else 0
-nb_clients = len(clients) if not clients.empty else 0
-nb_commandes = len(commandes) if not commandes.empty else 0
-nb_om = len(om) if not om.empty else 0
-total_ca_annuel = df_ca["GLOBAL"].sum()
+# Extract unique values pour le panneau latéral
+opts_sections = sorted(df_ca_raw["CA PAR SECTION"].unique().tolist())
+opts_affectations = extract_unique_options(om, ["affectation", "type", "prestation", "parc", "remorque"])
+opts_camions = extract_unique_options(camions, ["immatriculation", "matricule", "camion", "code", "véhicule"])
+if not opts_camions:
+    opts_camions = extract_unique_options(om, ["camion", "immatriculation", "matricule", "tracteur"])
+
+opts_clients = extract_unique_options(clients, ["nom", "client", "raison", "societé"])
+if not opts_clients:
+    opts_clients = extract_unique_options(om, ["client", "société", "nom"])
+
+opts_chauffeurs = extract_unique_options(chauffeurs, ["nom", "chauffeur", "conducteur", "agent"])
+if not opts_chauffeurs:
+    opts_chauffeurs = extract_unique_options(om, ["chauffeur", "conducteur", "nom"])
 
 # ============================================================
-# NAVIGATION SIDEBAR
+# NAVIGATION & FILTRES DANS LE PANNEAU LATÉRAL (SIDEBAR)
 # ============================================================
 
 with st.sidebar:
@@ -248,11 +301,96 @@ with st.sidebar:
     )
 
     st.markdown("---")
+    st.markdown("### 🔍 **FILTRES GLOBAUX**")
+
+    # 1. Filtre par intervalle de dates
+    st.markdown("**📅 Intervalle de Dates**")
+    date_preset = st.selectbox(
+        "Période prédéfinie",
+        ["Toute l'année", "Janvier - Mars (Q1)", "Avril - Juin (Q2)", "Juillet - Septembre (Q3)", "Octobre - Décembre (Q4)", "Personnalisé"],
+        index=0
+    )
+
+    start_d, end_d = None, None
+    if date_preset == "Toute l'année":
+        start_d, end_d = datetime(2026, 1, 1).date(), datetime(2026, 12, 31).date()
+    elif date_preset == "Janvier - Mars (Q1)":
+        start_d, end_d = datetime(2026, 1, 1).date(), datetime(2026, 3, 31).date()
+    elif date_preset == "Avril - Juin (Q2)":
+        start_d, end_d = datetime(2026, 4, 1).date(), datetime(2026, 6, 30).date()
+    elif date_preset == "Juillet - Septembre (Q3)":
+        start_d, end_d = datetime(2026, 7, 1).date(), datetime(2026, 9, 30).date()
+    elif date_preset == "Octobre - Décembre (Q4)":
+        start_d, end_d = datetime(2026, 10, 1).date(), datetime(2026, 12, 31).date()
+    else:
+        c_d1, c_d2 = st.columns(2)
+        with c_d1:
+            start_d = st.date_input("Du", datetime(2026, 1, 1))
+        with c_d2:
+            end_d = st.date_input("Au", datetime(2026, 12, 31))
+
+    # 2. Filtres par Section / Affectation
+    sel_section = st.selectbox("📂 Section", ["Tous"] + opts_sections)
+    sel_affectation = st.selectbox("📌 Affectation", ["Tous"] + opts_affectations)
+
+    # 3. Filtres par Camion / Client / Chauffeur
+    sel_camion = st.selectbox("🚛 Camion", ["Tous"] + opts_camions)
+    sel_client = st.selectbox("🏢 Client", ["Tous"] + opts_clients)
+    sel_chauffeur = st.selectbox("👨‍✈️ Chauffeur", ["Tous"] + opts_chauffeurs)
+
+    st.markdown("---")
     st.markdown("**📁 Fichiers Source :**")
     for name, path in FILES.items():
         status = "✓" if os.path.isfile(path) else "✗"
         color = "#16834b" if os.path.isfile(path) else "#c0392b"
         st.markdown(f"<span style='color:{color}; font-size:12px;'>{status} {os.path.basename(path)}</span>", unsafe_allow_html=True)
+
+# ============================================================
+# APPLICATION DES FILTRES SUR LES DONNÉES
+# ============================================================
+
+# Filtrage du Tableau du Chiffre d'Affaires (CA)
+df_ca = df_ca_raw.copy()
+
+if sel_section != "Tous":
+    df_ca = df_ca[df_ca["CA PAR SECTION"] == sel_section]
+
+# Filtrage temporel du CA selon les mois de l'intervalle sélectionné
+selected_months = [
+    m for m, idx in MONTH_MAP.items() 
+    if start_d and end_d and (start_d.month <= idx <= end_d.month)
+]
+if not selected_months:
+    selected_months = list(MONTH_MAP.keys())
+
+cols_ca_to_keep = ["CA PAR SECTION"] + [m for m in selected_months if m in df_ca.columns]
+df_ca_filtered = df_ca[cols_ca_to_keep].copy()
+df_ca_filtered["GLOBAL"] = df_ca_filtered[[m for m in selected_months if m in df_ca_filtered.columns]].sum(axis=1)
+
+# Application des filtres sur OM
+om_filtered = om.copy()
+om_filtered = apply_date_filter(om_filtered, ["date", "création", "départ"], start_d, end_d)
+om_filtered = apply_text_filter(om_filtered, ["section", "activité"], sel_section)
+om_filtered = apply_text_filter(om_filtered, ["affectation", "type", "prestation"], sel_affectation)
+om_filtered = apply_text_filter(om_filtered, ["camion", "immatriculation", "matricule", "tracteur"], sel_camion)
+om_filtered = apply_text_filter(om_filtered, ["client", "société", "nom"], sel_client)
+om_filtered = apply_text_filter(om_filtered, ["chauffeur", "conducteur", "agent"], sel_chauffeur)
+
+# Application des filtres sur Camions, Chauffeurs, Clients, Commandes
+camions_filtered = apply_text_filter(camions, ["immatriculation", "matricule", "camion", "code"], sel_camion)
+chauffeurs_filtered = apply_text_filter(chauffeurs, ["nom", "chauffeur", "conducteur", "agent"], sel_chauffeur)
+clients_filtered = apply_text_filter(clients, ["nom", "client", "raison", "societé"], sel_client)
+
+commandes_filtered = apply_date_filter(commandes, ["date", "création"], start_d, end_d)
+commandes_filtered = apply_text_filter(commandes_filtered, ["client", "société", "nom"], sel_client)
+
+# Calcul des KPI globaux actualisés selon les filtres
+nb_camions = len(camions_filtered) if not camions_filtered.empty else 0
+nb_chauffeurs = len(chauffeurs_filtered) if not chauffeurs_filtered.empty else 0
+nb_clients = len(clients_filtered) if not clients_filtered.empty else 0
+nb_commandes = len(commandes_filtered) if not commandes_filtered.empty else 0
+nb_om = len(om_filtered) if not om_filtered.empty else 0
+total_ca_annuel = df_ca_filtered["GLOBAL"].sum() if not df_ca_filtered.empty else 0
 
 # ============================================================
 # HEADER EN TÊTE
@@ -290,9 +428,9 @@ if menu == "🏠 Tableau de bord Global":
     # Ligne KPI Principaux
     c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
-        kpi_card("CA Annuel Total", format_currency(total_ca_annuel), "Global toutes sections")
+        kpi_card("CA Annuel Total", format_currency(total_ca_annuel), "Global sections filtrées")
     with c2:
-        kpi_card("Total Missions (OM)", f"{nb_om:,}", "Ordres de mission exécutés")
+        kpi_card("Total Missions (OM)", f"{nb_om:,}", "Ordres de mission filtrés")
     with c3:
         kpi_card("Taille Flotte", f"{nb_camions} Véhicules", "Camions enregistrés")
     with c4:
@@ -306,19 +444,22 @@ if menu == "🏠 Tableau de bord Global":
 
     with col_g1:
         st.markdown('<div class="sub-title">📈 Évolution Mensuelle du Chiffre d\'Affaires</div>', unsafe_allow_html=True)
-        months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
-        ca_mensuel = df_ca.drop(columns=["CA PAR SECTION", "GLOBAL"]).sum().values
+        months_in_chart = [m for m in selected_months if m in df_ca_filtered.columns]
+        ca_mensuel = df_ca_filtered[months_in_chart].sum().values if not df_ca_filtered.empty else []
 
-        df_trend = pd.DataFrame({"Mois": months, "CA": ca_mensuel})
+        df_trend = pd.DataFrame({"Mois": months_in_chart, "CA": ca_mensuel})
         fig_trend = px.line(df_trend, x="Mois", y="CA", markers=True, title="Tendance du CA Mensuel (DA)")
         fig_trend.update_traces(line_color="#087443", line_width=3)
         st.plotly_chart(fig_trend, use_container_width=True)
 
     with col_g2:
         st.markdown('<div class="sub-title">📊 Répartition du CA par Section</div>', unsafe_allow_html=True)
-        fig_pie = px.pie(df_ca, names="CA PAR SECTION", values="GLOBAL", hole=0.4, title="Part de Chiffre d'Affaires")
-        fig_pie.update_traces(textposition='inside', textinfo='percent+label')
-        st.plotly_chart(fig_pie, use_container_width=True)
+        if not df_ca_filtered.empty and df_ca_filtered["GLOBAL"].sum() > 0:
+            fig_pie = px.pie(df_ca_filtered, names="CA PAR SECTION", values="GLOBAL", hole=0.4, title="Part de Chiffre d'Affaires")
+            fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig_pie, use_container_width=True)
+        else:
+            st.info("Aucune donnée disponible pour la répartition du CA.")
 
 # ============================================================
 # 2. ANALYTICS TRANSPORT & TRANSFERT DE MARCHANDISES
@@ -337,9 +478,9 @@ elif menu == "📊 Analytics Transport & Transfert":
     with k1:
         kpi_card("CA Moyen / Mission", format_currency(ca_par_om), "Rentabilité par Ordre de Mission")
     with k2:
-        kpi_card("CA Moyen / Camion", format_currency(ca_par_camion), "Productivité annuelle par camion")
+        kpi_card("CA Moyen / Camion", format_currency(ca_par_camion), "Productivité par camion")
     with k3:
-        kpi_card("Missions / Camion", f"{om_par_camion:.1f}", "Moyenne annuelle de rotations")
+        kpi_card("Missions / Camion", f"{om_par_camion:.1f}", "Moyenne de rotations")
     with k4:
         ratio_rotation = (nb_commandes / nb_om) if nb_om > 0 else 0
         kpi_card("Taux Commandes/OM", f"{ratio_rotation:.2f}", "Nombre de commandes par mission")
@@ -348,21 +489,21 @@ elif menu == "📊 Analytics Transport & Transfert":
     st.markdown('<div class="sub-title">📊 Analyse d\'Activité par Type de Remorque / Section</div>', unsafe_allow_html=True)
 
     transport_kpi = []
-    for section in df_ca["CA PAR SECTION"]:
-        ca_sec = df_ca[df_ca["CA PAR SECTION"] == section]["GLOBAL"].values[0]
+    for section in df_ca_filtered["CA PAR SECTION"]:
+        ca_sec = df_ca_filtered[df_ca_filtered["CA PAR SECTION"] == section]["GLOBAL"].values[0]
         
         # Recherche correspondance OM
         om_count = 0
-        if not om.empty:
-            match_om = om.astype(str).apply(lambda col: col.str.lower().str.contains(section.lower(), na=False)).any(axis=1)
-            om_count = om[match_om].shape[0]
+        if not om_filtered.empty:
+            match_om = om_filtered.astype(str).apply(lambda col: col.str.lower().str.contains(section.lower(), na=False)).any(axis=1)
+            om_count = om_filtered[match_om].shape[0]
 
         ca_moyen_mission = (ca_sec / om_count) if om_count > 0 else 0
 
         transport_kpi.append({
             "Section Transport": section,
             "CA Annuel Total": ca_sec,
-            "Part du CA (%)": (ca_sec / total_ca_annuel) * 100,
+            "Part du CA (%)": (ca_sec / total_ca_annuel * 100) if total_ca_annuel > 0 else 0,
             "Nombre d'OM": om_count,
             "CA Moyen / Mission (DA)": ca_moyen_mission
         })
@@ -404,7 +545,7 @@ elif menu == "👨‍✈️ Analytics RH & Chauffeurs":
     with rh1:
         kpi_card("Effectif Chauffeurs", f"{nb_chauffeurs}", "Chauffeurs enregistrés")
     with rh2:
-        kpi_card("Missions / Chauffeur", f"{om_par_chauffeur:.1f}", "Rotations moyennes / an")
+        kpi_card("Missions / Chauffeur", f"{om_par_chauffeur:.1f}", "Rotations moyennes")
     with rh3:
         kpi_card("CA Généré / Chauffeur", format_currency(ca_par_chauffeur), "Productivité RH moyenne")
     with rh4:
@@ -412,15 +553,14 @@ elif menu == "👨‍✈️ Analytics RH & Chauffeurs":
 
     st.markdown("---")
 
-    if not chauffeurs.empty and not om.empty:
+    if not chauffeurs_filtered.empty and not om_filtered.empty:
         st.markdown('<div class="sub-title">🏆 Top Chauffeurs par Nombre de Missions (Ordres de Mission)</div>', unsafe_allow_html=True)
         
         # Détection de la colonne chauffeur dans OM
-        possible_cols = [c for c in om.columns if "chauffeur" in c.lower() or "conducteur" in c.lower() or "nom" in c.lower()]
+        col_driver = find_column_by_keywords(om_filtered, ["chauffeur", "conducteur", "agent", "nom"])
         
-        if possible_cols:
-            col_driver = possible_cols[0]
-            driver_counts = om[col_driver].value_counts().reset_index()
+        if col_driver:
+            driver_counts = om_filtered[col_driver].value_counts().reset_index()
             driver_counts.columns = ["Chauffeur", "Nombre de Missions"]
             
             f_driver = px.bar(driver_counts.head(10), x="Chauffeur", y="Nombre de Missions", title="Top 10 Chauffeurs les plus sollicités", color="Nombre de Missions")
@@ -440,7 +580,7 @@ elif menu == "💰 Chiffre d'Affaires & Sections":
 
     st.markdown('<div class="section-title">💰 Analyse du Chiffre d\'Affaires par Section</div>', unsafe_allow_html=True)
 
-    formatted_ca = df_ca.copy()
+    formatted_ca = df_ca_filtered.copy()
     for col in formatted_ca.columns:
         if col != "CA PAR SECTION":
             formatted_ca[col] = formatted_ca[col].apply(lambda x: f"{x:,.0f}".replace(",", " "))
@@ -448,11 +588,12 @@ elif menu == "💰 Chiffre d'Affaires & Sections":
     show_table(formatted_ca, "ca_full_table")
 
     st.markdown('<div class="sub-title">📊 CA Mensuel par Section (Détail)</div>', unsafe_allow_html=True)
-    df_melted = df_ca.melt(id_vars=["CA PAR SECTION"], var_name="Mois", value_name="CA")
+    df_melted = df_ca_filtered.melt(id_vars=["CA PAR SECTION"], var_name="Mois", value_name="CA")
     df_melted = df_melted[df_melted["Mois"] != "GLOBAL"]
 
-    fig_stack = px.bar(df_melted, x="Mois", y="CA", color="CA PAR SECTION", title="Répartition du CA mensuel par section")
-    st.plotly_chart(fig_stack, use_container_width=True)
+    if not df_melted.empty:
+        fig_stack = px.bar(df_melted, x="Mois", y="CA", color="CA PAR SECTION", title="Répartition du CA mensuel par section")
+        st.plotly_chart(fig_stack, use_container_width=True)
 
 # ============================================================
 # 5. ORDRES DE MISSION (OM)
@@ -462,24 +603,24 @@ elif menu == "📋 Ordres de Mission (OM)":
 
     st.markdown('<div class="section-title">📋 Gestion des Ordres de Mission</div>', unsafe_allow_html=True)
 
-    if om.empty:
-        st.warning("Aucune donnée disponible dans OM.xlsx")
+    if om_filtered.empty:
+        st.warning("Aucune donnée disponible correspondant aux filtres sélectionnés.")
     else:
-        st.write(f"Total des enregistrements : **{nb_om}**")
+        st.write(f"Total des enregistrements filtrés : **{nb_om}**")
 
-        s_om = st.text_input("🔎 Recherche rapide", key="om_search")
-        filtered_om = search_data(om, s_om)
+        s_om = st.text_input("🔎 Recherche rapide dans les OM", key="om_search")
+        final_om = search_data(om_filtered, s_om)
 
         col_f1, col_f2 = st.columns(2)
         with col_f1:
-            sel_col = st.selectbox("Filtrer par colonne", ["Aucun"] + list(om.columns))
+            sel_col = st.selectbox("Filtrer par colonne spécifique", ["Aucun"] + list(final_om.columns))
         with col_f2:
             if sel_col != "Aucun":
-                vals = filtered_om[sel_col].dropna().astype(str).unique().tolist()
+                vals = final_om[sel_col].dropna().astype(str).unique().tolist()
                 sel_val = st.selectbox("Valeur", ["Tous"] + sorted(vals))
-                filtered_om = filter_data(filtered_om, sel_col, sel_val)
+                final_om = filter_data(final_om, sel_col, sel_val)
 
-        show_table(filtered_om, "om_main_table")
+        show_table(final_om, "om_main_table")
 
 # ============================================================
 # 6. FLOTTE DE CAMIONS
@@ -489,13 +630,13 @@ elif menu == "🚛 Flotte de Camions":
 
     st.markdown('<div class="section-title">🚛 Gestion de la Flotte de Camions</div>', unsafe_allow_html=True)
 
-    if camions.empty:
-        st.warning("Aucune donnée disponible dans Camions.xlsx")
+    if camions_filtered.empty:
+        st.warning("Aucune donnée disponible dans la liste des camions.")
     else:
         st.write(f"Nombre total de camions : **{nb_camions}**")
 
         s_cam = st.text_input("🔎 Recherche camion", key="camion_search")
-        filtered_cam = search_data(camions, s_cam)
+        filtered_cam = search_data(camions_filtered, s_cam)
 
         show_table(filtered_cam, "camions_main_table")
 
@@ -510,20 +651,20 @@ elif menu == "📦 Commandes & Clients":
     tab1, tab2 = st.tabs(["📦 Commandes", "👥 Clients"])
 
     with tab1:
-        if commandes.empty:
+        if commandes_filtered.empty:
             st.warning("Aucune donnée Commande disponible.")
         else:
             st.write(f"Nombre de commandes : **{nb_commandes}**")
             s_cmd = st.text_input("🔎 Recherche commande", key="cmd_search")
-            show_table(search_data(commandes, s_cmd), "cmd_table")
+            show_table(search_data(commandes_filtered, s_cmd), "cmd_table")
 
     with tab2:
-        if clients.empty:
+        if clients_filtered.empty:
             st.warning("Aucune donnée Client disponible.")
         else:
             st.write(f"Nombre de clients : **{nb_clients}**")
             s_cli = st.text_input("🔎 Recherche client", key="cli_search")
-            show_table(search_data(clients, s_cli), "cli_table")
+            show_table(search_data(clients_filtered, s_cli), "cli_table")
 
 # ============================================================
 # 8. RAPPORTS & EXPORTS
