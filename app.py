@@ -334,54 +334,54 @@ om, om_sheets = load_data(
 )
 
 
-# ============================================================
-# MENU UNIQUE
-# ============================================================
+# =========================
+# SIDEBAR - MENU PRINCIPAL
+# =========================
 
 with st.sidebar:
 
-    # LOGO
+    # Logo
     if os.path.exists(LOGO_FILE):
+        st.image(LOGO_FILE, width=90)
 
-        st.image(
-            LOGO_FILE,
-            width=100
-        )
+    # Nom de l'application
+    st.markdown("""
+    <div style="
+        font-size:24px;
+        font-weight:700;
+        color:#0b5d3b;
+        margin-top:5px;
+    ">
+        TMF LOGISTICS
+    </div>
 
-    # TITRE
-    st.markdown(
-        """
-        <div style="
-            text-align:center;
-            margin-top:-10px;
-            margin-bottom:15px;
-        ">
+    <div style="
+        margin-top:5px;
+        color:#666;
+        font-size:13px;
+        margin-bottom:20px;
+    ">
+        Transport & Logistique
+    </div>
+    """, unsafe_allow_html=True)
 
-            <div style="
-                font-size:24px;
-                font-weight:700;
-                color:#0b5d3b;
-            ">
-                TMF LOGISTICS
-            </div>
+    # =========================
+    # MENU PRINCIPAL
+    # =========================
 
-            <div style="
-                margin-top:5px;
-                color:#666;
-                font-size:13px;
-            ">
-                Transport & Logistique
-            </div>
-
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown("---")
+    st.markdown("""
+    <div style="
+        font-size:14px;
+        font-weight:700;
+        color:#0b5d3b;
+        margin-bottom:8px;
+    ">
+        MENU PRINCIPAL
+    </div>
+    """, unsafe_allow_html=True)
 
     menu = st.radio(
-        "MENU PRINCIPAL",
+        "",
         [
             "🏠 Accueil",
             "🚚 Gestion du transport",
@@ -392,21 +392,13 @@ with st.sidebar:
             "📦 Commandes de vente",
             "📊 Rapports"
         ],
-        index=0
+        label_visibility="collapsed"
     )
 
     st.markdown("---")
 
-    st.caption(
-        "TMF LOGISTICS"
-    )
-
-    st.caption(
-        datetime.now().strftime(
-            "%d/%m/%Y %H:%M"
-        )
-    )
-
+    st.caption("TMF LOGISTICS")
+    st.caption("Transport & Logistique")
 
 # ============================================================
 # EN-TÊTE PRINCIPAL AVEC LOGO
