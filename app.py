@@ -404,17 +404,18 @@ with col_l:
     else:
         st.markdown('<div style="font-size:50px; text-align:center;">🚚</div>', unsafe_allow_html=True)
 with col_t:
-   st.markdown(
+  st.markdown(
     """
     <div style="
         border: 2px solid #087443; 
         border-radius: 10px; 
         padding: 15px 20px; 
-        background-color: #ffffff;">
-        <div style="font-size:28px; font-weight:700; color:#0b5d3b;">
+        background-color: #087443; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div style="font-size:28px; font-weight:700; color:#ffffff;">
             Système de Gestion Intégré & Analytics Flotte
         </div>
-        <div style="font-size:18px; color:#333333; margin-top: 5px;">
+        <div style="font-size:18px; color:#e0f2fe; margin-top: 5px;">
             Suivi des opérations de transport, des KPI RH, de la rentabilité et du transfert de marchandises
         </div>
     </div>
