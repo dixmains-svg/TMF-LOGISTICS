@@ -10,7 +10,7 @@ from datetime import datetime
 # ============================================================
 
 st.set_page_config(
-    page_title="TMF LOGISTICS - Rapports",
+    page_title="Gestion de la flotte TMF Logistics",
     page_icon="🚚",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -391,7 +391,7 @@ with st.sidebar:
 
         st.image(
             LOGO_FILE,
-            width=600
+            width=120
         )
 
     else:
@@ -413,12 +413,12 @@ with st.sidebar:
     st.markdown(
         """
         <div style="
-            font-size:24px;
+            font-size:22px;
             font-weight:700;
             color:#0b5d3b;
             margin-top:5px;
         ">
-            TMF LOGISTICS
+            Gestion de la flotte TMF Logistics
         </div>
 
         <div style="
@@ -519,27 +519,22 @@ with col_logo:
 # TITRE DE L'APPLICATION
 # ------------------------------------------------------------
 
-col_logo, col_title = st.columns([1, 6], vertical_alignment="center")
-
-with col_logo:
-    if os.path.isfile(LOGO_FILE):
-        st.image(LOGO_FILE, width=600)
-    else:
-        st.markdown("🚚")
-
 with col_title:
+
     st.markdown(
         """
         <div style="
             font-size:32px;
             font-weight:700;
             color:white;
+            margin-left:10px;
         ">
             Gestion de la flotte TMF Logistics
         </div>
 
         <div style="
             margin-top:8px;
+            margin-left:10px;
             font-size:15px;
             color:#e8f5ef;
         ">
@@ -548,6 +543,13 @@ with col_title:
         """,
         unsafe_allow_html=True
     )
+
+
+st.markdown(
+    "</div>",
+    unsafe_allow_html=True
+)
+
 
 # ============================================================
 # ACCUEIL
