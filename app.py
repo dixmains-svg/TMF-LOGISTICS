@@ -63,7 +63,6 @@ CA_DATA = {
 }
 
 df_ca_raw = pd.DataFrame(CA_DATA)
-# Calcul automatique de la colonne Globale / Annuelle prévisionnelle par section
 df_ca_raw["GLOBAL"] = df_ca_raw.drop(columns=["CA PAR SECTION"]).sum(axis=1)
 
 # ============================================================
@@ -272,6 +271,7 @@ with st.sidebar:
         "MENU PRINCIPAL",
         [
             "📊 Analyse Mensuelle (OM & Ventes)",
+            "📈 Rapport & Analyse Croisée",
             "📋 Ordres de Mission (OM)",
             "📦 Commandes de Vente",
             "🚛 Flotte & Chauffeurs",
@@ -319,8 +319,6 @@ chauffeurs_filtered = apply_text_filter(chauffeurs, ["nom", "chauffeur", "conduc
 nb_om_mois = len(om_filtered) if not om_filtered.empty else 0
 nb_commandes_mois = len(commandes_filtered) if not commandes_filtered.empty else 0
 nb_camions_actifs = len(camions_filtered) if not camions_filtered.empty else 0
-
-# Somme totale du CA prévisionnel annuel et par mois
 total_ca_objectif_annuel = df_ca_raw["GLOBAL"].sum()
 
 # ============================================================
@@ -395,7 +393,76 @@ if menu == "📊 Analyse Mensuelle (OM & Ventes)":
             st.info("Données insuffisantes pour la répartition par client.")
 
 # ============================================================
-# 2. PAGE : ORDRES DE MISSION (OM)
+# 2. PAGE : RAPPORT & ANALYSE CROISÉE (NOUVEAU)
+# ============================================================
+
+elif menu == "📈 Rapport & Analyse Croisée":
+    st.markdown('<div class="section-title">📈 Tableau Croisé Dynamique & Analyses Croisées (OM, Ventes, Camions & Chauffeurs)</div>', unsafe_allow_html=True)
+    
+    st.markdown("Cette section croise les données opérationnelles des **Ordres de Mission** et des **Commandes de Ventes** avec la **Flotte (Camions)** et le **Personnel (Chauffeurs)**.")
+
+    # 1. Croisement Camions vs OM & Commandes
+    st.markdown('<div class="sub-title">🚛 Croisement Flotte (Camions) — Missions & Activité</div>', unsafe_allow_html=True)
+    col_cam_om = find_column_by_keywords(om_filtered, ["camion", "immatriculation", "matricule", "code", "tracteur"])
+    col_cam_cmd = find_column_by_keywords(commandes_filtered, ["camion", "immatriculation", "matricule", "code", "tracteur"])
+
+    if col_cam_om and not om_filtered.empty:
+        df_croise_camion = om_filtered[col_cam_om].value_counts().reset_index()
+        df_croise_camion.columns = ["Numéro de Camion", "Total Ordres de Mission (OM)"]
+        
+        # Si la colonne camion existe aussi dans commandes
+        if col_cam_cmd and not commandes_filtered.empty:
+            df_cmd_cam = commandes_filtered[col_cam_cmd].value_counts().reset_index()
+            df_cmd_cam.columns = ["Numéro de Camion", "Total Commandes de Vente"]
+            df_croise_camion = pd.merge(df_croise_camion, df_cmd_cam, on="Numéro de Camion", how="outer").fillna(0)
+
+        show_table(df_croise_camion, "table_croise_camion")
+
+        # Graphique croisé camions
+        fig_croise_cam = px.bar(df_croise_camion, x="Numéro de Camion", y=["Total Ordres de Mission (OM)"], title="Analyse Croisée par Camion", barmode="group")
+        st.plotly_chart(fig_croise_cam, use_container_width=True)
+    else:
+        st.info("Données de camions non détectées dans la base OM pour établir le croisement.")
+
+    st.markdown("---")
+
+    # 2. Croisement Chauffeurs vs OM
+    st.markdown('<div class="sub-title">👨‍✈️ Croisement RH (Chauffeurs) — Charge de Travail & Rotations</div>', unsafe_allow_html=True)
+    col_ch_om = find_column_by_keywords(om_filtered, ["chauffeur", "conducteur", "agent", "nom"])
+    if col_ch_om and not om_filtered.empty:
+        df_croise_ch = om_filtered[col_ch_om].value_counts().reset_index()
+        df_croise_ch.columns = ["Nom du Chauffeur", "Nombre d'OM Exécutés"]
+        show_table(df_croise_ch, "table_croise_chauffeur")
+
+        fig_croise_ch = px.bar(df_croise_ch.head(10), x="Nom du Chauffeur", y="Nombre d'OM Exécutés", title="Top 10 Chauffeurs par Volume de Missions", color="Nombre d'OM Exécutés")
+        st.plotly_chart(fig_croise_ch, use_container_width=True)
+    else:
+        st.info("Données de chauffeurs non détectées dans la base OM.")
+
+    st.markdown("---")
+
+    # 3. Croisement Clients vs Commandes & OM
+    st.markdown('<div class="sub-title">🏢 Croisement Commercial — Clients, Commandes & OM</div>', unsafe_allow_html=True)
+    col_cli_cmd = find_column_by_keywords(commandes_filtered, ["client", "société", "nom", "raison"])
+    col_cli_om = find_column_by_keywords(om_filtered, ["client", "société", "nom", "raison"])
+
+    if col_cli_cmd and not commandes_filtered.empty:
+        df_cli_v = commandes_filtered[col_cli_cmd].value_counts().reset_index()
+        df_cli_v.columns = ["Client", "Commandes Enregistrées"]
+
+        if col_cli_om and not om_filtered.empty:
+            df_cli_o = om_filtered[col_cli_om].value_counts().reset_index()
+            df_cli_o.columns = ["Client", "OM Exécutés"]
+            df_cli_croise = pd.merge(df_cli_v, df_cli_o, on="Client", how="outer").fillna(0)
+        else:
+            df_cli_croise = df_cli_v
+
+        show_table(df_cli_croise, "table_croise_client")
+    else:
+        st.info("Données clients insuffisantes pour le rapport croisé.")
+
+# ============================================================
+# 3. PAGE : ORDRES DE MISSION (OM)
 # ============================================================
 
 elif menu == "📋 Ordres de Mission (OM)":
@@ -407,7 +474,7 @@ elif menu == "📋 Ordres de Mission (OM)":
         show_table(om_filtered, "table_om_mois")
 
 # ============================================================
-# 3. PAGE : COMMANDES DE VENTE
+# 4. PAGE : COMMANDES DE VENTE
 # ============================================================
 
 elif menu == "📦 Commandes de Vente":
@@ -419,7 +486,7 @@ elif menu == "📦 Commandes de Vente":
         show_table(commandes_filtered, "table_cmd_mois")
 
 # ============================================================
-# 4. PAGE : FLOTTE & CHAUFFEURS
+# 5. PAGE : FLOTTE & CHAUFFEURS
 # ============================================================
 
 elif menu == "🚛 Flotte & Chauffeurs":
@@ -428,37 +495,4 @@ elif menu == "🚛 Flotte & Chauffeurs":
     with t1:
         show_table(camions_filtered, "table_camions_mois")
     with t2:
-        show_table(chauffeurs_filtered, "table_chauffeurs_mois")
-
-# ============================================================
-# 5. PAGE : OBJECTIFS CA À RÉALISER
-# ============================================================
-
-elif menu == "💰 Objectifs CA à Réaliser":
-    st.markdown('<div class="section-title">💰 Chiffre d\'Affaires Prévisionnel (À Réaliser par Section)</div>', unsafe_allow_html=True)
-    st.markdown("Ce tableau présente les objectifs de Chiffre d'Affaires prévus par section et par mois pour l'exercice :")
-    
-    # Affichage du tableau formaté avec séparateurs de milliers
-    formatted_ca = df_ca_raw.copy()
-    for col in formatted_ca.columns:
-        if col != "CA PAR SECTION":
-            formatted_ca[col] = formatted_ca[col].apply(lambda x: f"{x:,.0f} DA".replace(",", " "))
-
-    show_table(formatted_ca, "table_ca_objectif")
-
-    st.markdown('<div class="sub-title">📊 Répartition Graphique des Objectifs de CA par Section</div>', unsafe_allow_html=True)
-    fig_ca_bar = px.bar(df_ca_raw, x="CA PAR SECTION", y="GLOBAL", title="Objectif CA Total Annuel par Section (DA)", color="CA PAR SECTION")
-    st.plotly_chart(fig_ca_bar, use_container_width=True)
-
-# ============================================================
-# FOOTER
-# ============================================================
-
-st.markdown(
-    """
-    <div class="footer">
-        © 2026 TMF Logistics — Solution Intégrée Analytics Transport & RH (Akbou / Béjaïa)
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+        show_table(chauffeurs_filtered, "
