@@ -393,7 +393,7 @@ if menu == "📊 Analyse Mensuelle (OM & Ventes)":
             st.info("Données insuffisantes pour la répartition par client.")
 
 # ============================================================
-# 2. PAGE : RAPPORT & ANALYSE CROISÉE (NOUVEAU)
+# 2. PAGE : RAPPORT & ANALYSE CROISÉE
 # ============================================================
 
 elif menu == "📈 Rapport & Analyse Croisée":
@@ -410,7 +410,6 @@ elif menu == "📈 Rapport & Analyse Croisée":
         df_croise_camion = om_filtered[col_cam_om].value_counts().reset_index()
         df_croise_camion.columns = ["Numéro de Camion", "Total Ordres de Mission (OM)"]
         
-        # Si la colonne camion existe aussi dans commandes
         if col_cam_cmd and not commandes_filtered.empty:
             df_cmd_cam = commandes_filtered[col_cam_cmd].value_counts().reset_index()
             df_cmd_cam.columns = ["Numéro de Camion", "Total Commandes de Vente"]
@@ -418,7 +417,6 @@ elif menu == "📈 Rapport & Analyse Croisée":
 
         show_table(df_croise_camion, "table_croise_camion")
 
-        # Graphique croisé camions
         fig_croise_cam = px.bar(df_croise_camion, x="Numéro de Camion", y=["Total Ordres de Mission (OM)"], title="Analyse Croisée par Camion", barmode="group")
         st.plotly_chart(fig_croise_cam, use_container_width=True)
     else:
@@ -495,4 +493,36 @@ elif menu == "🚛 Flotte & Chauffeurs":
     with t1:
         show_table(camions_filtered, "table_camions_mois")
     with t2:
-        show_table(chauffeurs_filtered, "
+        show_table(chauffeurs_filtered, "table_chauffeurs_mois")
+
+# ============================================================
+# 6. PAGE : OBJECTIFS CA À RÉALISER
+# ============================================================
+
+elif menu == "💰 Objectifs CA à Réaliser":
+    st.markdown('<div class="section-title">💰 Chiffre d\'Affaires Prévisionnel (À Réaliser par Section)</div>', unsafe_allow_html=True)
+    st.markdown("Ce tableau présente les objectifs de Chiffre d'Affaires prévus par section et par mois pour l'exercice :")
+    
+    formatted_ca = df_ca_raw.copy()
+    for col in formatted_ca.columns:
+        if col != "CA PAR SECTION":
+            formatted_ca[col] = formatted_ca[col].apply(lambda x: f"{x:,.0f} DA".replace(",", " "))
+
+    show_table(formatted_ca, "table_ca_objectif")
+
+    st.markdown('<div class="sub-title">📊 Répartition Graphique des Objectifs de CA par Section</div>', unsafe_allow_html=True)
+    fig_ca_bar = px.bar(df_ca_raw, x="CA PAR SECTION", y="GLOBAL", title="Objectif CA Total Annuel par Section (DA)", color="CA PAR SECTION")
+    st.plotly_chart(fig_ca_bar, use_container_width=True)
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.markdown(
+    """
+    <div class="footer">
+        © 2026 TMF Logistics — Solution Intégrée Analytics Transport & RH (Akbou / Béjaïa)
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
