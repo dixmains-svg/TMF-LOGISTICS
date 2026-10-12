@@ -839,4 +839,85 @@ elif menu == "📦 Commandes & Clients":
         if clients_filtered.empty:
             st.warning("Aucune donnée Client disponible.")
         else:
-            st.
+            st.write(f"Nombre de clients : **{nb_clients}**")
+            s_cli = st.text_input("🔎 Recherche client", key="cli_search")
+            show_table(search_data(clients_filtered, s_cli), "cli_table")
+
+# ============================================================
+# 8. RAPPORTS & EXPORTS
+# ============================================================
+
+elif menu == "📊 Rapports & Exports":
+    st.markdown(
+        '<div class="section-title">📊 Synthèse Globale des KPI</div>',
+        unsafe_allow_html=True,
+    )
+
+    kpi_summary = pd.DataFrame([
+        {
+            "Catégorie": "Financier",
+            "Indicateur": "CA Annuel Total",
+            "Valeur": format_currency(total_ca_annuel),
+        },
+        {
+            "Catégorie": "Financier",
+            "Indicateur": "CA Moyen / Mission",
+            "Valeur": format_currency(
+                total_ca_annuel / nb_om if nb_om > 0 else 0
+            ),
+        },
+        {
+            "Catégorie": "Financier",
+            "Indicateur": "CA Moyen / Camion",
+            "Valeur": format_currency(
+                total_ca_annuel / nb_camions if nb_camions > 0 else 0
+            ),
+        },
+        {
+            "Catégorie": "Transport",
+            "Indicateur": "Total Missions Exécutées",
+            "Valeur": f"{nb_om}",
+        },
+        {
+            "Catégorie": "Transport",
+            "Indicateur": "Nombre de Camions",
+            "Valeur": f"{nb_camions}",
+        },
+        {
+            "Catégorie": "RH",
+            "Indicateur": "Effectif Chauffeurs",
+            "Valeur": f"{nb_chauffeurs}",
+        },
+        {
+            "Catégorie": "RH",
+            "Indicateur": "Productivité Chauffeur (CA/Conducteur)",
+            "Valeur": format_currency(
+                total_ca_annuel / nb_chauffeurs if nb_chauffeurs > 0 else 0
+            ),
+        },
+        {
+            "Catégorie": "Commercial",
+            "Indicateur": "Nombre de Clients",
+            "Valeur": f"{nb_clients}",
+        },
+        {
+            "Catégorie": "Commercial",
+            "Indicateur": "Nombre de Commandes",
+            "Valeur": f"{nb_commandes}",
+        },
+    ])
+
+    show_table(kpi_summary, "kpi_summary_table")
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.markdown(
+    """
+    <div class="footer">
+        © 2026 TMF Logistics — Solution Intégrée Analytics Transport & RH
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
