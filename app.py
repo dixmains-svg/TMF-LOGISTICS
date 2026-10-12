@@ -64,7 +64,6 @@ CA_DATA = {
 
 df_ca_raw = pd.DataFrame(CA_DATA)
 
-# Map des mois pour filtrage par date
 MONTH_MAP = {
     "Janvier": 1,
     "Février": 2,
@@ -269,17 +268,15 @@ def apply_text_filter(df, keywords, selected_value):
     return df
 
 
-def apply_date_filter(df, keywords, start_date, end_date):
-    if df.empty or not start_date or not end_date:
+def apply_month_filter(df, keywords, month_name):
+    if df.empty or month_name == "Tous":
         return df
     col = find_column_by_keywords(df, keywords)
     if col:
         try:
             temp_dates = pd.to_datetime(df[col], errors="coerce")
-            mask = (temp_dates.dt.date >= start_date) & (
-                temp_dates.dt.date <= end_date
-            )
-            return df[mask | temp_dates.isna()]
+            target_month = MONTH_MAP[month_name]
+            return df[temp_dates.dt.month == target_month]
         except Exception:
             return df
     return df
@@ -297,15 +294,13 @@ om = load_data(FILES["om"], "Input OM fini")
 
 # Extraction des options uniques
 opts_sections = sorted(df_ca_raw["CA PAR SECTION"].unique().tolist())
-opts_affectations = extract_unique_options(
-    om, ["affectation", "type", "prestation", "parc", "remorque"]
-)
+opts_affectations = ["Akbou", "Setif", "Alger", "Oran"]
 opts_camions = extract_unique_options(
     camions, ["immatriculation", "matricule", "camion", "code", "véhicule"]
 )
 if not opts_camions:
     opts_camions = extract_unique_options(
-        om, ["camion", "immatriculation", "matricule", "tracteur"]
+        om, ["camion", "immatriculation", "matricule", "tracteur", "code"]
     )
 
 opts_clients = extract_unique_options(
@@ -354,50 +349,19 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 🔍 **FILTRES GLOBAUX**")
 
-    # 1. Filtre Temporel
-    date_preset = st.selectbox(
-        "Période prédéfinie",
-        [
-            "Toute l'année",
-            "Janvier - Mars (Q1)",
-            "Avril - Juin (Q2)",
-            "Juillet - Septembre (Q3)",
-            "Octobre - Décembre (Q4)",
-            "Personnalisé",
-        ],
-        index=0,
+    # 1. Filtre Mois (Janvier à Décembre)
+    sel_mois = st.selectbox(
+        "📅 Mois",
+        ["Tous"] + list(MONTH_MAP.keys()),
     )
 
-    start_d, end_d = None, None
-    if date_preset == "Toute l'année":
-        start_d, end_d = (
-            datetime(2026, 1, 1).date(),
-            datetime(2026, 12, 31).date(),
-        )
-    elif date_preset == "Janvier - Mars (Q1)":
-        start_d, end_d = datetime(2026, 1, 1).date(), datetime(2026, 3, 31).date()
-    elif date_preset == "Avril - Juin (Q2)":
-        start_d, end_d = datetime(2026, 4, 1).date(), datetime(2026, 6, 30).date()
-    elif date_preset == "Juillet - Septembre (Q3)":
-        start_d, end_d = datetime(2026, 7, 1).date(), datetime(2026, 9, 30).date()
-    elif date_preset == "Octobre - Décembre (Q4)":
-        start_d, end_d = (
-            datetime(2026, 10, 1).date(),
-            datetime(2026, 12, 31).date(),
-        )
-    else:
-        c_d1, c_d2 = st.columns(2)
-        with c_d1:
-            start_d = st.date_input("Du", datetime(2026, 1, 1))
-        with c_d2:
-            end_d = st.date_input("Au", datetime(2026, 12, 31))
-
-    # 2. Filtres par Section / Affectation
-    sel_section = st.selectbox("📂 Section", ["Tous"] + opts_sections)
+    # 2. Filtre Affectation (Akbou, Setif, Alger, Oran)
     sel_affectation = st.selectbox("📌 Affectation", ["Tous"] + opts_affectations)
 
-    # 3. Filtres par Acteurs
-    sel_camion = st.selectbox("🚛 Camion", ["Tous"] + opts_camions)
+    # 3. Filtre Numéro de Camion (CB021, CB022, ..., TR329)
+    sel_camion = st.selectbox("🚛 Numéro de Camion", ["Tous"] + opts_camions)
+
+    # 4. Autres filtres optionnels
     sel_client = st.selectbox("🏢 Client", ["Tous"] + opts_clients)
     sel_chauffeur = st.selectbox("👨‍✈️ Chauffeur", ["Tous"] + opts_chauffeurs)
 
@@ -417,38 +381,22 @@ with st.sidebar:
 
 df_ca = df_ca_raw.copy()
 
-if sel_section != "Tous":
-    df_ca = df_ca[df_ca["CA PAR SECTION"] == sel_section]
-
-selected_months = [
-    m
-    for m, idx in MONTH_MAP.items()
-    if start_d and end_d and (start_d.month <= idx <= end_d.month)
-]
-if not selected_months:
-    selected_months = list(MONTH_MAP.keys())
-
-cols_ca_to_keep = ["CA PAR SECTION"] + [
-    m for m in selected_months if m in df_ca.columns
-]
+# Filtrage du CA selon le mois sélectionné
+selected_months = [sel_mois] if sel_mois != "Tous" else list(MONTH_MAP.keys())
+cols_ca_to_keep = ["CA PAR SECTION"] + [m for m in selected_months if m in df_ca.columns]
 df_ca_filtered = df_ca[cols_ca_to_keep].copy()
 df_ca_filtered["GLOBAL"] = df_ca_filtered[
     [m for m in selected_months if m in df_ca_filtered.columns]
 ].sum(axis=1)
 
-# Filtrage des bases de données
-om_filtered = apply_date_filter(
-    om, ["date", "création", "départ"], start_d, end_d
-)
+# Filtrage des bases de données OM, Camions, Chauffeurs, Clients, Commandes
+om_filtered = apply_month_filter(om, ["date", "création", "départ"], sel_mois)
 om_filtered = apply_text_filter(
-    om_filtered, ["section", "activité"], sel_section
-)
-om_filtered = apply_text_filter(
-    om_filtered, ["affectation", "type", "prestation"], sel_affectation
+    om_filtered, ["affectation", "type", "prestation", "agence", "site"], sel_affectation
 )
 om_filtered = apply_text_filter(
     om_filtered,
-    ["camion", "immatriculation", "matricule", "tracteur"],
+    ["camion", "immatriculation", "matricule", "tracteur", "code"],
     sel_camion,
 )
 om_filtered = apply_text_filter(
@@ -468,9 +416,7 @@ clients_filtered = apply_text_filter(
     clients, ["nom", "client", "raison", "societé"], sel_client
 )
 
-commandes_filtered = apply_date_filter(
-    commandes, ["date", "création"], start_d, end_d
-)
+commandes_filtered = apply_month_filter(commandes, ["date", "création"], sel_mois)
 commandes_filtered = apply_text_filter(
     commandes_filtered, ["client", "société", "nom"], sel_client
 )
@@ -893,85 +839,4 @@ elif menu == "📦 Commandes & Clients":
         if clients_filtered.empty:
             st.warning("Aucune donnée Client disponible.")
         else:
-            st.write(f"Nombre de clients : **{nb_clients}**")
-            s_cli = st.text_input("🔎 Recherche client", key="cli_search")
-            show_table(search_data(clients_filtered, s_cli), "cli_table")
-
-# ============================================================
-# 8. RAPPORTS & EXPORTS
-# ============================================================
-
-elif menu == "📊 Rapports & Exports":
-    st.markdown(
-        '<div class="section-title">📊 Synthèse Globale des KPI</div>',
-        unsafe_allow_html=True,
-    )
-
-    kpi_summary = pd.DataFrame([
-        {
-            "Catégorie": "Financier",
-            "Indicateur": "CA Annuel Total",
-            "Valeur": format_currency(total_ca_annuel),
-        },
-        {
-            "Catégorie": "Financier",
-            "Indicateur": "CA Moyen / Mission",
-            "Valeur": format_currency(
-                total_ca_annuel / nb_om if nb_om > 0 else 0
-            ),
-        },
-        {
-            "Catégorie": "Financier",
-            "Indicateur": "CA Moyen / Camion",
-            "Valeur": format_currency(
-                total_ca_annuel / nb_camions if nb_camions > 0 else 0
-            ),
-        },
-        {
-            "Catégorie": "Transport",
-            "Indicateur": "Total Missions Exécutées",
-            "Valeur": f"{nb_om}",
-        },
-        {
-            "Catégorie": "Transport",
-            "Indicateur": "Nombre de Camions",
-            "Valeur": f"{nb_camions}",
-        },
-        {
-            "Catégorie": "RH",
-            "Indicateur": "Effectif Chauffeurs",
-            "Valeur": f"{nb_chauffeurs}",
-        },
-        {
-            "Catégorie": "RH",
-            "Indicateur": "Productivité Chauffeur (CA/Conducteur)",
-            "Valeur": format_currency(
-                total_ca_annuel / nb_chauffeurs if nb_chauffeurs > 0 else 0
-            ),
-        },
-        {
-            "Catégorie": "Commercial",
-            "Indicateur": "Nombre de Clients",
-            "Valeur": f"{nb_clients}",
-        },
-        {
-            "Catégorie": "Commercial",
-            "Indicateur": "Nombre de Commandes",
-            "Valeur": f"{nb_commandes}",
-        },
-    ])
-
-    show_table(kpi_summary, "kpi_summary_table")
-
-# ============================================================
-# FOOTER
-# ============================================================
-
-st.markdown(
-    """
-    <div class="footer">
-        © 2026 TMF Logistics — Solution Intégrée Analytics Transport & RH
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+            st.
