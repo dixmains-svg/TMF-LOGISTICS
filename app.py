@@ -229,6 +229,41 @@ clients = load_data(FILES["clients"])
 commandes = load_data(FILES["commandes"])
 om = load_data(FILES["om"], "Input OM fini")
 
+# ============================================================
+# STANDARDISATION / ENRICHISSEMENT DES CLIENTS DANS LES OM & COMMANDES
+# ============================================================
+# Recherche des colonnes de nom de client dans clients, om et commandes
+col_cli_id_clients = find_column_by_keywords(clients, ["id", "code", "client_id"])
+col_cli_name_clients = find_column_by_keywords(clients, ["nom", "client", "raison", "societé", "societe"])
+
+if col_cli_name_clients and not clients.empty:
+    # Création d'un dictionnaire de correspondance ID/Nom si un ID client existe, sinon mapping direct
+    if col_cli_id_clients:
+        client_mapping = dict(zip(clients[col_cli_id_clients].astype(str).str.strip(), clients[col_cli_name_clients].astype(str).str.strip()))
+    else:
+        client_mapping = {}
+
+    # Remplacement dans OM
+    col_cli_om = find_column_by_keywords(om, ["client", "société", "nom"])
+    if col_cli_om and not om.empty:
+        om["Client_Nom_Standard"] = om[col_cli_om].astype(str).str.strip().map(lambda x: client_mapping.get(x, x))
+    else:
+        om["Client_Nom_Standard"] = "Inconnu"
+
+    # Remplacement dans Commandes
+    col_cli_cmd = find_column_by_keywords(commandes, ["client", "société", "nom", "raison"])
+    if col_cli_cmd and not commandes.empty:
+        commandes["Client_Nom_Standard"] = commandes[col_cli_cmd].astype(str).str.strip().map(lambda x: client_mapping.get(x, x))
+    else:
+        commandes["Client_Nom_Standard"] = "Inconnu"
+else:
+    if not om.empty:
+        col_cli_om = find_column_by_keywords(om, ["client", "société", "nom"])
+        om["Client_Nom_Standard"] = om[col_cli_om].astype(str).str.strip() if col_cli_om else "Inconnu"
+    if not commandes.empty:
+        col_cli_cmd = find_column_by_keywords(commandes, ["client", "société", "nom", "raison"])
+        commandes["Client_Nom_Standard"] = commandes[col_cli_cmd].astype(str).str.strip() if col_cli_cmd else "Inconnu"
+
 # Options dynamiques pour filtres
 opts_affectations = ["Akbou", "Setif", "Alger", "Oran"]
 opts_camions = extract_unique_options(
@@ -239,11 +274,9 @@ if not opts_camions:
         om, ["camion", "immatriculation", "matricule", "tracteur", "code"]
     )
 
-opts_clients = extract_unique_options(
-    clients, ["nom", "client", "raison", "societé"]
-)
+opts_clients = sorted(om["Client_Nom_Standard"].dropna().unique().tolist()) if "Client_Nom_Standard" in om.columns else []
 if not opts_clients:
-    opts_clients = extract_unique_options(om, ["client", "société", "nom"])
+    opts_clients = extract_unique_options(clients, ["nom", "client", "raison", "societé"])
 
 opts_chauffeurs = extract_unique_options(
     chauffeurs, ["nom", "chauffeur", "conducteur", "agent"]
@@ -308,10 +341,15 @@ om_filtered = apply_text_filter(
 om_filtered = apply_text_filter(
     om_filtered, ["camion", "immatriculation", "matricule", "tracteur", "code"], sel_camion
 )
-om_filtered = apply_text_filter(om_filtered, ["client", "société", "nom"], sel_client)
+if sel_client != "Tous" and "Client_Nom_Standard" in om_filtered.columns:
+    om_filtered = om_filtered[om_filtered["Client_Nom_Standard"].astype(str).str.strip() == str(sel_client).strip()]
+
 om_filtered = apply_text_filter(om_filtered, ["chauffeur", "conducteur", "agent"], sel_chauffeur)
 
-commandes_filtered = apply_text_filter(commandes, ["client", "société", "nom"], sel_client)
+if sel_client != "Tous" and "Client_Nom_Standard" in commandes.columns:
+    commandes_filtered = commandes[commandes["Client_Nom_Standard"].astype(str).str.strip() == str(sel_client).strip()]
+else:
+    commandes_filtered = apply_text_filter(commandes, ["client", "société", "nom"], sel_client)
 
 camions_filtered = apply_text_filter(camions, ["immatriculation", "matricule", "camion", "code"], sel_camion)
 chauffeurs_filtered = apply_text_filter(chauffeurs, ["nom", "chauffeur", "conducteur", "agent"], sel_chauffeur)
@@ -382,7 +420,7 @@ if menu == "📊 Analyse Mensuelle (OM & Ventes)":
 
     with col_m2:
         st.markdown('<div class="sub-title">🏢 Portefeuille Clients (Commandes du Mois)</div>', unsafe_allow_html=True)
-        col_cli_cmd = find_column_by_keywords(commandes_filtered, ["client", "société", "nom", "raison"])
+        col_cli_cmd = "Client_Nom_Standard" if "Client_Nom_Standard" in commandes_filtered.columns else find_column_by_keywords(commandes_filtered, ["client", "société", "nom", "raison"])
         if col_cli_cmd and not commandes_filtered.empty:
             cli_counts = commandes_filtered[col_cli_cmd].value_counts().reset_index().head(10)
             cli_counts.columns = ["Client", "Nombre de Commandes"]
@@ -392,38 +430,82 @@ if menu == "📊 Analyse Mensuelle (OM & Ventes)":
             st.info("Données insuffisantes pour la répartition par client.")
 
 # ============================================================
-# 2. PAGE : RAPPORT & ANALYSE CROISÉE (NOUVEAU)
+# 2. PAGE : RAPPORT & ANALYSE CROISÉE (MIS À JOUR)
 # ============================================================
 
 elif menu == "📈 Rapport & Analyse Croisée":
-    st.markdown('<div class="section-title">📈 Analyse Croisée : OM, Commandes, Camions & Chauffeurs</div>', unsafe_allow_html=True)
-    st.markdown("Ce rapport croise les données opérationnelles des **Ordres de Mission (`OM.xlsx`)** avec les **Commandes de Vente (`Commande de vente.xlsx`)**, en corrélant les performances des **Camions** et des **Chauffeurs**.")
+    st.markdown('<div class="section-title">📈 Analyse Croisée : OM, Commandes, Clients, Camions & Chauffeurs</div>', unsafe_allow_html=True)
+    st.markdown("Ce rapport croise les données opérationnelles des **Ordres de Mission (`OM.xlsx`)** avec les **Commandes de Vente (`Commande de vente.xlsx`)** et le fichier des **Clients (`Clients.xlsx`)**, en corrélant les performances détaillées de chaque camion (missions, kilométrage, montant réalisé, roulage à vide).")
 
-    # 1. Tableau Croisé Chauffeurs & Camions selon les OM
-    st.markdown('<div class="sub-title">👥 Tableau Croisé : Chauffeurs vs Camions (Missions Réalisées)</div>', unsafe_allow_html=True)
-    col_chauffeur_om = find_column_by_keywords(om_filtered, ["chauffeur", "conducteur", "agent"])
-    col_camion_om = find_column_by_keywords(om_filtered, ["camion", "tracteur", "immatriculation", "code"])
+    # 1. Analyse détaillée par Camion (Nombre de missions, kilométrage, montant, roulage à vide)
+    st.markdown('<div class="sub-title">🚛 Performance Détaillée par Camion (Missions, Km, Montant, Vide)</div>', unsafe_allow_html=True)
+    col_cam_om = find_column_by_keywords(om_filtered, ["camion", "tracteur", "immatriculation", "code"])
+    col_km_om = find_column_by_keywords(om_filtered, ["km", "kilometre", "kilométrage", "distance"])
+    col_montant_om = find_column_by_keywords(om_filtered, ["montant", "prix", "valeur", "ca", "chiffre"])
+    col_vide_om = find_column_by_keywords(om_filtered, ["vide", "roulage à vide", "km vide", "kilometrage vide"])
 
-    if col_chauffeur_om and col_camion_om and not om_filtered.empty:
-        # Création d'une table croisée (Pivot Table)
-        pivot_chauffeur_camion = pd.pivot_table(
-            om_filtered,
-            index=col_chauffeur_om,
-            columns=col_camion_om,
-            aggfunc='size',
-            fill_value=0
-        )
-        show_table(pivot_chauffeur_camion.reset_index(), "pivot_chauffeur_camion")
+    if col_cam_om and not om_filtered.empty:
+        # Construction d'un DataFrame agrégé par camion
+        agg_dict = {col_cam_om: 'count'} # Nombre de missions (OM)
+        rename_dict = {col_cam_om: 'Nombre de Missions'}
+
+        if col_km_om:
+            om_filtered['Numeric_Km'] = pd.to_numeric(om_filtered[col_km_om], errors='coerce').fillna(0)
+            agg_dict['Numeric_Km'] = 'sum'
+            rename_dict['Numeric_Km'] = 'Kilométrage Total (Km)'
+
+        if col_montant_om:
+            om_filtered['Numeric_Montant'] = pd.to_numeric(om_filtered[col_montant_om], errors='coerce').fillna(0)
+            agg_dict['Numeric_Montant'] = 'sum'
+            rename_dict['Numeric_Montant'] = 'Montant Réalisé (DA)'
+
+        if col_vide_om:
+            om_filtered['Numeric_Vide'] = pd.to_numeric(om_filtered[col_vide_om], errors='coerce').fillna(0)
+            agg_dict['Numeric_Vide'] = 'sum'
+            rename_dict['Numeric_Vide'] = 'Roulage à Vide (Km)'
+
+        df_camion_perf = om_filtered.groupby(col_cam_om).agg(agg_dict).reset_index()
+        df_camion_perf = df_camion_perf.rename(columns=rename_dict)
+        
+        # Calcul du pourcentage de roulage à vide si les deux colonnes existent
+        if col_km_om and col_vide_om and 'Kilométrage Total (Km)' in df_camion_perf.columns and 'Roulage à Vide (Km)' in df_camion_perf.columns:
+            df_camion_perf['% Roulage à Vide'] = np.where(
+                df_camion_perf['Kilométrage Total (Km)'] > 0,
+                (df_camion_perf['Roulage à Vide (Km)'] / df_camion_perf['Kilométrage Total (Km)'] * 100).round(2),
+                0
+            )
+
+        show_table(df_camion_perf, "table_camion_performance")
     else:
-        st.info("Colonnes Chauffeur ou Camion non détectées simultanément dans OM.xlsx.")
+        st.info("Données de camions non détectées dans OM.xlsx.")
 
     st.markdown("---")
 
-    # 2. Graphiques et Tableaux Croisés Avancés
+    # 2. Tableau Croisé Clients & Camions (avec les noms de clients réels)
+    st.markdown('<div class="sub-title">🏢 Tableau Croisé : Clients (par Nom) vs Camions (Missions Réalisées)</div>', unsafe_allow_html=True)
+    col_camion_om = find_column_by_keywords(om_filtered, ["camion", "tracteur", "immatriculation", "code"])
+
+    if "Client_Nom_Standard" in om_filtered.columns and col_camion_om and not om_filtered.empty:
+        pivot_client_camion = pd.pivot_table(
+            om_filtered,
+            index="Client_Nom_Standard",
+            columns=col_camion_om,
+            aggfunc='size',
+            fill_value=0
+        ).reset_index()
+        pivot_client_camion = pivot_client_camion.rename(columns={"Client_Nom_Standard": "Nom du Client"})
+        show_table(pivot_client_camion, "pivot_client_camion")
+    else:
+        st.info("Informations client ou camion insuffisantes pour générer le tableau croisé.")
+
+    st.markdown("---")
+
+    # 3. Graphiques et Tableaux Croisés Avancés (Chauffeurs & Clients)
     col_r1, col_r2 = st.columns(2)
 
     with col_r1:
         st.markdown('<div class="sub-title">👨‍✈️ Top Chauffeurs par Nombre de Missions</div>', unsafe_allow_html=True)
+        col_chauffeur_om = find_column_by_keywords(om_filtered, ["chauffeur", "conducteur", "agent"])
         if col_chauffeur_om and not om_filtered.empty:
             df_top_chauffeurs = om_filtered[col_chauffeur_om].value_counts().reset_index()
             df_top_chauffeurs.columns = ["Chauffeur", "Nombre d'OM"]
@@ -434,36 +516,15 @@ elif menu == "📈 Rapport & Analyse Croisée":
             st.info("Données de chauffeurs non disponibles dans les OM.")
 
     with col_r2:
-        st.markdown('<div class="sub-title">🚛 Top Camions par Nombre de Missions</div>', unsafe_allow_html=True)
-        if col_camion_om and not om_filtered.empty:
-            df_top_camions = om_filtered[col_camion_om].value_counts().reset_index()
-            df_top_camions.columns = ["Camion", "Nombre d'OM"]
-            fig_top_cm = px.bar(df_top_camions.head(10), x="Camion", y="Nombre d'OM", title="Top 10 Camions les plus actifs", color="Nombre d'OM")
-            st.plotly_chart(fig_top_cm, use_container_width=True)
-            show_table(df_top_camions, "table_top_camions")
+        st.markdown('<div class="sub-title">🏢 Top Clients par Volume de Missions (OM)</div>', unsafe_allow_html=True)
+        if "Client_Nom_Standard" in om_filtered.columns and not om_filtered.empty:
+            df_top_clients_om = om_filtered["Client_Nom_Standard"].value_counts().reset_index()
+            df_top_clients_om.columns = ["Nom du Client", "Nombre d'OM"]
+            fig_top_cli = px.bar(df_top_clients_om.head(10), x="Nom du Client", y="Nombre d'OM", title="Top 10 Clients (basé sur les OM)", color="Nombre d'OM")
+            st.plotly_chart(fig_top_cli, use_container_width=True)
+            show_table(df_top_clients_om, "table_top_clients_om")
         else:
-            st.info("Données de camions non disponibles dans les OM.")
-
-    st.markdown("---")
-
-    # 3. Analyse Croisée Commandes & Clients (Ventes vs Logistique)
-    st.markdown('<div class="sub-title">📦 Analyse de la Demande : Commandes par Client</div>', unsafe_allow_html=True)
-    col_client_cmd = find_column_by_keywords(commandes_filtered, ["client", "société", "nom", "raison"])
-    col_vol_cmd = find_column_by_keywords(commandes_filtered, ["quantite", "tonnage", "poids", "volume", "montant"])
-
-    if col_client_cmd and not commandes_filtered.empty:
-        if col_vol_cmd:
-            df_cmd_summary = commandes_filtered.groupby(col_client_cmd)[col_vol_cmd].agg(['count', 'sum']).reset_index()
-            df_cmd_summary.columns = ["Client", "Nombre de Commandes", "Volume / Montant Total"]
-        else:
-            df_cmd_summary = commandes_filtered[col_client_cmd].value_counts().reset_index()
-            df_cmd_summary.columns = ["Client", "Nombre de Commandes"]
-
-        fig_cmd_bar = px.bar(df_cmd_summary.head(15), x="Client", y=df_cmd_summary.columns[1], title="Répartition des Commandes par Client", color=df_cmd_summary.columns[1])
-        st.plotly_chart(fig_cmd_bar, use_container_width=True)
-        show_table(df_cmd_summary, "table_cmd_summary")
-    else:
-        st.info("Aucune donnée de commande exploitable pour ce croisement.")
+            st.info("Données clients non disponibles dans les OM.")
 
 # ============================================================
 # 3. PAGE : ORDRES DE MISSION (OM)
