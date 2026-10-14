@@ -232,25 +232,21 @@ om = load_data(FILES["om"], "Input OM fini")
 # ============================================================
 # STANDARDISATION / ENRICHISSEMENT DES CLIENTS DANS LES OM & COMMANDES
 # ============================================================
-# Recherche des colonnes de nom de client dans clients, om et commandes
 col_cli_id_clients = find_column_by_keywords(clients, ["id", "code", "client_id"])
 col_cli_name_clients = find_column_by_keywords(clients, ["nom", "client", "raison", "societé", "societe"])
 
 if col_cli_name_clients and not clients.empty:
-    # Création d'un dictionnaire de correspondance ID/Nom si un ID client existe, sinon mapping direct
     if col_cli_id_clients:
         client_mapping = dict(zip(clients[col_cli_id_clients].astype(str).str.strip(), clients[col_cli_name_clients].astype(str).str.strip()))
     else:
         client_mapping = {}
 
-    # Remplacement dans OM
     col_cli_om = find_column_by_keywords(om, ["client", "société", "nom"])
     if col_cli_om and not om.empty:
         om["Client_Nom_Standard"] = om[col_cli_om].astype(str).str.strip().map(lambda x: client_mapping.get(x, x))
     else:
         om["Client_Nom_Standard"] = "Inconnu"
 
-    # Remplacement dans Commandes
     col_cli_cmd = find_column_by_keywords(commandes, ["client", "société", "nom", "raison"])
     if col_cli_cmd and not commandes.empty:
         commandes["Client_Nom_Standard"] = commandes[col_cli_cmd].astype(str).str.strip().map(lambda x: client_mapping.get(x, x))
@@ -430,14 +426,14 @@ if menu == "📊 Analyse Mensuelle (OM & Ventes)":
             st.info("Données insuffisantes pour la répartition par client.")
 
 # ============================================================
-# 2. PAGE : RAPPORT & ANALYSE CROISÉE (MIS À JOUR)
+# 2. PAGE : RAPPORT & ANALYSE CROISÉE
 # ============================================================
 
 elif menu == "📈 Rapport & Analyse Croisée":
     st.markdown('<div class="section-title">📈 Analyse Croisée : OM, Commandes, Clients, Camions & Chauffeurs</div>', unsafe_allow_html=True)
     st.markdown("Ce rapport croise les données opérationnelles des **Ordres de Mission (`OM.xlsx`)** avec les **Commandes de Vente (`Commande de vente.xlsx`)** et le fichier des **Clients (`Clients.xlsx`)**, en corrélant les performances détaillées de chaque camion (missions, kilométrage, montant réalisé, roulage à vide).")
 
-    # 1. Analyse détaillée par Camion (Nombre de missions, kilométrage, montant, roulage à vide)
+    # 1. Analyse détaillée par Camion
     st.markdown('<div class="sub-title">🚛 Performance Détaillée par Camion (Missions, Km, Montant, Vide)</div>', unsafe_allow_html=True)
     col_cam_om = find_column_by_keywords(om_filtered, ["camion", "tracteur", "immatriculation", "code"])
     col_km_om = find_column_by_keywords(om_filtered, ["km", "kilometre", "kilométrage", "distance"])
@@ -445,35 +441,49 @@ elif menu == "📈 Rapport & Analyse Croisée":
     col_vide_om = find_column_by_keywords(om_filtered, ["vide", "roulage à vide", "km vide", "kilometrage vide"])
 
     if col_cam_om and not om_filtered.empty:
-        # Construction d'un DataFrame agrégé par camion
-        agg_dict = {col_cam_om: 'count'} # Nombre de missions (OM)
-        rename_dict = {col_cam_om: 'Nombre de Missions'}
-
+        # Copie de travail pour éviter d'altérer le DataFrame global
+        df_work = om_filtered.copy()
+        
+        # Nettoyage et conversion des colonnes numériques
+        df_work['__count_col__'] = 1
         if col_km_om:
-            om_filtered['Numeric_Km'] = pd.to_numeric(om_filtered[col_km_om], errors='coerce').fillna(0)
-            agg_dict['Numeric_Km'] = 'sum'
-            rename_dict['Numeric_Km'] = 'Kilométrage Total (Km)'
+            df_work['__km_col__'] = pd.to_numeric(df_work[col_km_om], errors='coerce').fillna(0)
+        else:
+            df_work['__km_col__'] = 0
 
         if col_montant_om:
-            om_filtered['Numeric_Montant'] = pd.to_numeric(om_filtered[col_montant_om], errors='coerce').fillna(0)
-            agg_dict['Numeric_Montant'] = 'sum'
-            rename_dict['Numeric_Montant'] = 'Montant Réalisé (DA)'
+            df_work['__montant_col__'] = pd.to_numeric(df_work[col_montant_om], errors='coerce').fillna(0)
+        else:
+            df_work['__montant_col__'] = 0
 
         if col_vide_om:
-            om_filtered['Numeric_Vide'] = pd.to_numeric(om_filtered[col_vide_om], errors='coerce').fillna(0)
-            agg_dict['Numeric_Vide'] = 'sum'
-            rename_dict['Numeric_Vide'] = 'Roulage à Vide (Km)'
+            df_work['__vide_col__'] = pd.to_numeric(df_work[col_vide_om], errors='coerce').fillna(0)
+        else:
+            df_work['__vide_col__'] = 0
 
-        df_camion_perf = om_filtered.groupby(col_cam_om).agg(agg_dict).reset_index()
-        df_camion_perf = df_camion_perf.rename(columns=rename_dict)
+        df_camion_perf = df_work.groupby(col_cam_om).agg(
+            {
+                '__count_col__': 'count',
+                '__km_col__': 'sum',
+                '__montant_col__': 'sum',
+                '__vide_col__': 'sum'
+            }
+        ).reset_index()
+
+        df_camion_perf.columns = [
+            'Camion / Immatriculation', 
+            'Nombre de Missions', 
+            'Kilométrage Total (Km)', 
+            'Montant Réalisé (DA)', 
+            'Roulage à Vide (Km)'
+        ]
         
-        # Calcul du pourcentage de roulage à vide si les deux colonnes existent
-        if col_km_om and col_vide_om and 'Kilométrage Total (Km)' in df_camion_perf.columns and 'Roulage à Vide (Km)' in df_camion_perf.columns:
-            df_camion_perf['% Roulage à Vide'] = np.where(
-                df_camion_perf['Kilométrage Total (Km)'] > 0,
-                (df_camion_perf['Roulage à Vide (Km)'] / df_camion_perf['Kilométrage Total (Km)'] * 100).round(2),
-                0
-            )
+        # Calcul du pourcentage de roulage à vide
+        df_camion_perf['% Roulage à Vide'] = np.where(
+            df_camion_perf['Kilométrage Total (Km)'] > 0,
+            (df_camion_perf['Roulage à Vide (Km)'] / df_camion_perf['Kilométrage Total (Km)'] * 100).round(2),
+            0
+        )
 
         show_table(df_camion_perf, "table_camion_performance")
     else:
@@ -481,7 +491,7 @@ elif menu == "📈 Rapport & Analyse Croisée":
 
     st.markdown("---")
 
-    # 2. Tableau Croisé Clients & Camions (avec les noms de clients réels)
+    # 2. Tableau Croisé Clients & Camions
     st.markdown('<div class="sub-title">🏢 Tableau Croisé : Clients (par Nom) vs Camions (Missions Réalisées)</div>', unsafe_allow_html=True)
     col_camion_om = find_column_by_keywords(om_filtered, ["camion", "tracteur", "immatriculation", "code"])
 
@@ -500,7 +510,7 @@ elif menu == "📈 Rapport & Analyse Croisée":
 
     st.markdown("---")
 
-    # 3. Graphiques et Tableaux Croisés Avancés (Chauffeurs & Clients)
+    # 3. Graphiques et Tableaux Croisés Avancés
     col_r1, col_r2 = st.columns(2)
 
     with col_r1:
