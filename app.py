@@ -42,7 +42,7 @@ FILES = {
 CA_DATA = {
     "CA PAR SECTION": [
         "BACHE",
-        "CELLULE",
+        "FRIGO",
         "PORTE",
         "MANUTENTION",
         "LOCAT CHAMB FROIDE",
