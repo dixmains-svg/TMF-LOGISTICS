@@ -149,7 +149,7 @@ def read_excel(file_path, sheet_name=0):
         if not os.path.isfile(file_path):
             return pd.DataFrame()
         return pd.read_excel(file_path, sheet_name=sheet_name, engine="openpyxl")
-    except Exception:
+    except Exception as e:
         return pd.DataFrame()
 
 def load_data(file_path, preferred_sheet=None):
@@ -163,7 +163,7 @@ def load_data(file_path, preferred_sheet=None):
     return read_excel(file_path, sheets[0])
 
 def find_column_by_keywords(df, keywords):
-    if df.empty:
+    if df is None or df.empty:
         return None
     for col in df.columns:
         col_str = str(col).lower()
@@ -172,15 +172,17 @@ def find_column_by_keywords(df, keywords):
     return None
 
 def extract_unique_options(df, keywords):
+    if df is None or df.empty:
+        return []
     col = find_column_by_keywords(df, keywords)
-    if col and not df.empty:
+    if col:
         vals = df[col].dropna().astype(str).str.strip().unique().tolist()
         vals = [v for v in vals if v and v.lower() != "nan"]
         return sorted(vals)
     return []
 
 def apply_text_filter(df, keywords, selected_value):
-    if df.empty or not selected_value or selected_value == "Tous":
+    if df is None or df.empty or not selected_value or selected_value == "Tous":
         return df
     col = find_column_by_keywords(df, keywords)
     if col:
@@ -203,7 +205,7 @@ def kpi_card(title, value, subtext="", color="#087443"):
     )
 
 def show_table(df, key):
-    if df.empty:
+    if df is None or df.empty:
         st.info("Aucune donnée disponible pour cette sélection.")
         return
     st.dataframe(df, use_container_width=True, key=key)
@@ -222,51 +224,54 @@ om = load_data(FILES["om"], "Input OM fini")
 # STANDARDISATION / ENRICHISSEMENT DES CLIENTS & FUSION PAR OM
 # ============================================================
 
-col_cli_id_clients = find_column_by_keywords(clients, ["id", "code", "client_id"])
-col_cli_name_clients = find_column_by_keywords(clients, ["nom", "client", "raison", "societé", "societe"])
+try:
+    col_cli_id_clients = find_column_by_keywords(clients, ["id", "code", "client_id"])
+    col_cli_name_clients = find_column_by_keywords(clients, ["nom", "client", "raison", "societé", "societe"])
 
-if col_cli_name_clients and not clients.empty:
-    if col_cli_id_clients:
-        client_mapping = dict(zip(clients[col_cli_id_clients].astype(str).str.strip(), clients[col_cli_name_clients].astype(str).str.strip()))
-        reverse_client_mapping = dict(zip(clients[col_cli_name_clients].astype(str).str.strip(), clients[col_cli_id_clients].astype(str).str.strip()))
-    else:
-        client_mapping = {}
-        reverse_client_mapping = {}
+    if col_cli_name_clients and not clients.empty:
+        if col_cli_id_clients:
+            client_mapping = dict(zip(clients[col_cli_id_clients].astype(str).str.strip(), clients[col_cli_name_clients].astype(str).str.strip()))
+            reverse_client_mapping = dict(zip(clients[col_cli_name_clients].astype(str).str.strip(), clients[col_cli_id_clients].astype(str).str.strip()))
+        else:
+            client_mapping = {}
+            reverse_client_mapping = {}
 
-    col_cli_om = find_column_by_keywords(om, ["client", "société", "nom"])
-    if col_cli_om and not om.empty:
-        om["Client_Code_Standard"] = om[col_cli_om].astype(str).str.strip().map(lambda x: x if x in client_mapping else reverse_client_mapping.get(x, "N/A"))
-        om["Client_Nom_Standard"] = om[col_cli_om].astype(str).str.strip().map(lambda x: client_mapping.get(x, x))
-    else:
-        om["Client_Code_Standard"] = "N/A"
-        om["Client_Nom_Standard"] = "Inconnu"
-
-    col_cli_cmd = find_column_by_keywords(commandes, ["client", "société", "nom", "raison"])
-    if col_cli_cmd and not commandes.empty:
-        commandes["Client_Nom_Standard"] = commandes[col_cli_cmd].astype(str).str.strip().map(lambda x: client_mapping.get(x, x))
-    else:
-        commandes["Client_Nom_Standard"] = "Inconnu"
-else:
-    if not om.empty:
         col_cli_om = find_column_by_keywords(om, ["client", "société", "nom"])
-        om["Client_Code_Standard"] = "N/A"
-        om["Client_Nom_Standard"] = om[col_cli_om].astype(str).str.strip() if col_cli_om else "Inconnu"
-    if not commandes.empty:
+        if col_cli_om and not om.empty:
+            om["Client_Code_Standard"] = om[col_cli_om].astype(str).str.strip().map(lambda x: x if x in client_mapping else reverse_client_mapping.get(x, "N/A"))
+            om["Client_Nom_Standard"] = om[col_cli_om].astype(str).str.strip().map(lambda x: client_mapping.get(x, x))
+        else:
+            om["Client_Code_Standard"] = "N/A"
+            om["Client_Nom_Standard"] = "Inconnu"
+
         col_cli_cmd = find_column_by_keywords(commandes, ["client", "société", "nom", "raison"])
-        commandes["Client_Nom_Standard"] = commandes[col_cli_cmd].astype(str).str.strip() if col_cli_cmd else "Inconnu"
+        if col_cli_cmd and not commandes.empty:
+            commandes["Client_Nom_Standard"] = commandes[col_cli_cmd].astype(str).str.strip().map(lambda x: client_mapping.get(x, x))
+        else:
+            commandes["Client_Nom_Standard"] = "Inconnu"
+    else:
+        if not om.empty:
+            col_cli_om = find_column_by_keywords(om, ["client", "société", "nom"])
+            om["Client_Code_Standard"] = "N/A"
+            om["Client_Nom_Standard"] = om[col_cli_om].astype(str).str.strip() if col_cli_om else "Inconnu"
+        if not commandes.empty:
+            col_cli_cmd = find_column_by_keywords(commandes, ["client", "société", "nom", "raison"])
+            commandes["Client_Nom_Standard"] = commandes[col_cli_cmd].astype(str).str.strip() if col_cli_cmd else "Inconnu"
 
-# --- FUSION CROISÉE (OM <-> COMMANDES DE VENTE VIA LE NUMÉRO D'OM) ---
-col_om_num_om = find_column_by_keywords(om, ["om", "ordre", "mission", "n° om", "numéro d'ordre"])
-col_om_num_cmd = find_column_by_keywords(commandes, ["om", "ordre", "mission", "n° om", "numéro d'ordre"])
+    # --- FUSION CROISÉE (OM <-> COMMANDES DE VENTE VIA LE NUMÉRO D'OM) ---
+    col_om_num_om = find_column_by_keywords(om, ["om", "ordre", "mission", "n° om", "numéro d'ordre"])
+    col_om_num_cmd = find_column_by_keywords(commandes, ["om", "ordre", "mission", "n° om", "numéro d'ordre"])
 
-if col_om_num_om and col_om_num_cmd and not om.empty and not commandes.empty:
-    om_clean = om.copy()
-    cmd_clean = commandes.copy()
-    om_clean['join_key'] = om_clean[col_om_num_om].astype(str).str.strip()
-    cmd_clean['join_key'] = cmd_clean[col_om_num_cmd].astype(str).str.strip()
-    df_merged = pd.merge(om_clean, cmd_clean, on='join_key', how='left', suffixes=('_om', '_cmd'))
-else:
-    df_merged = om.copy()
+    if col_om_num_om and col_om_num_cmd and not om.empty and not commandes.empty:
+        om_clean = om.copy()
+        cmd_clean = commandes.copy()
+        om_clean['join_key'] = om_clean[col_om_num_om].astype(str).str.strip()
+        cmd_clean['join_key'] = cmd_clean[col_om_num_cmd].astype(str).str.strip()
+        df_merged = pd.merge(om_clean, cmd_clean, on='join_key', how='left', suffixes=('_om', '_cmd'))
+    else:
+        df_merged = om.copy()
+except Exception as e:
+    df_merged = om.copy() if not om.empty else pd.DataFrame()
 
 # Options dynamiques pour filtres
 opts_affectations = ["Akbou", "Setif", "Alger", "Oran"]
@@ -274,7 +279,7 @@ opts_camions = extract_unique_options(camions, ["immatriculation", "matricule", 
 if not opts_camions:
     opts_camions = extract_unique_options(om, ["camion", "immatriculation", "matricule", "tracteur", "code"])
 
-opts_clients = sorted(om["Client_Nom_Standard"].dropna().unique().tolist()) if "Client_Nom_Standard" in om.columns else []
+opts_clients = sorted(om["Client_Nom_Standard"].dropna().unique().tolist()) if not om.empty and "Client_Nom_Standard" in om.columns else []
 if not opts_clients:
     opts_clients = extract_unique_options(clients, ["nom", "client", "raison", "societé"])
 
@@ -330,16 +335,16 @@ with st.sidebar:
 
 om_filtered = apply_text_filter(om, ["affectation", "type", "prestation", "agence", "site", "parc", "wilaya"], sel_affectation)
 om_filtered = apply_text_filter(om_filtered, ["camion", "immatriculation", "matricule", "tracteur", "code"], sel_camion)
-if sel_client != "Tous" and "Client_Nom_Standard" in om_filtered.columns:
+if sel_client != "Tous" and not om_filtered.empty and "Client_Nom_Standard" in om_filtered.columns:
     om_filtered = om_filtered[om_filtered["Client_Nom_Standard"].astype(str).str.strip() == str(sel_client).strip()]
 om_filtered = apply_text_filter(om_filtered, ["chauffeur", "conducteur", "agent"], sel_chauffeur)
 
-if sel_client != "Tous" and "Client_Nom_Standard" in commandes.columns:
+if sel_client != "Tous" and not commandes.empty and "Client_Nom_Standard" in commandes.columns:
     commandes_filtered = commandes[commandes["Client_Nom_Standard"].astype(str).str.strip() == str(sel_client).strip()]
 else:
     commandes_filtered = apply_text_filter(commandes, ["client", "société", "nom"], sel_client)
 
-if sel_client != "Tous" and "Client_Nom_Standard" in df_merged.columns:
+if sel_client != "Tous" and not df_merged.empty and "Client_Nom_Standard" in df_merged.columns:
     df_merged_filtered = df_merged[df_merged["Client_Nom_Standard"].astype(str).str.strip() == str(sel_client).strip()]
 else:
     df_merged_filtered = apply_text_filter(df_merged, ["client", "société", "nom"], sel_client)
@@ -388,7 +393,6 @@ if menu == "🏢 Détail & Analyse par Client":
     if not df_merged_filtered.empty:
         df_c = df_merged_filtered.copy()
 
-        # Détection sécurisée des colonnes
         col_km_tot = find_column_by_keywords(df_c, ["km parcouru", "km total", "kilométrage", "km", "distance"])
         col_km_charge = find_column_by_keywords(df_c, ["km à charge", "km charge", "charge"])
         col_km_vide = find_column_by_keywords(df_c, ["km à vide", "km vide", "roulage à vide", "vide"])
@@ -564,7 +568,7 @@ if menu == "🏢 Détail & Analyse par Client":
             st.plotly_chart(fig_tr, use_container_width=True)
 
     else:
-        st.info("Aucune donnée d'Ordre de Mission ou de Vente disponible.")
+        st.warning("⚠️ Aucune donnée d'Ordre de Mission ou de Vente disponible ou les fichiers source (OM.xlsx, Commande de vente.xlsx) sont introuvables dans le dossier 'Data'.")
 
 # ============================================================
 # 1. PAGE : ANALYSE MENSUELLE (OM & VENTES)
@@ -601,7 +605,7 @@ elif menu == "📊 Analyse Mensuelle (OM & Ventes)":
 
     with col_m2:
         st.markdown('<div class="sub-title">🏢 Portefeuille Clients (Commandes du Mois)</div>', unsafe_allow_html=True)
-        col_cli_cmd = "Client_Nom_Standard" if "Client_Nom_Standard" in commandes_filtered.columns else find_column_by_keywords(commandes_filtered, ["client", "société", "nom", "raison"])
+        col_cli_cmd = "Client_Nom_Standard" if not commandes_filtered.empty and "Client_Nom_Standard" in commandes_filtered.columns else find_column_by_keywords(commandes_filtered, ["client", "société", "nom", "raison"])
         if col_cli_cmd and not commandes_filtered.empty:
             cli_counts = commandes_filtered[col_cli_cmd].value_counts().reset_index().head(10)
             cli_counts.columns = ["Client", "Nombre de Commandes"]
