@@ -206,7 +206,7 @@ def show_table(df, key):
     if df.empty:
         st.info("Aucune donnée disponible pour cette sélection.")
         return
-    st.dataframe(df, use_container_width=True, hide_index=True, key=key)
+    st.dataframe(df, use_container_width=True, key=key)
 
 # ============================================================
 # CHARGEMENT DES BASES DE DONNÉES
@@ -356,7 +356,7 @@ total_ca_objectif_annuel = df_ca_raw["GLOBAL"].sum()
 # ============================================================
 
 st.markdown('<div class="tmf-header">', unsafe_allow_html=True)
-col_l, col_t = st.columns([1, 6], vertical_alignment="center")
+col_l, col_t = st.columns(2)
 with col_l:
     if os.path.isfile(LOGO_FILE):
         st.image(LOGO_FILE, width=200)
@@ -388,7 +388,7 @@ if menu == "🏢 Détail & Analyse par Client":
     if not df_merged_filtered.empty:
         df_c = df_merged_filtered.copy()
 
-        # Détection sécurisée des colonnes avec fallback automatique à 0 si absentes
+        # Détection sécurisée des colonnes
         col_km_tot = find_column_by_keywords(df_c, ["km parcouru", "km total", "kilométrage", "km", "distance"])
         col_km_charge = find_column_by_keywords(df_c, ["km à charge", "km charge", "charge"])
         col_km_vide = find_column_by_keywords(df_c, ["km à vide", "km vide", "roulage à vide", "vide"])
@@ -519,11 +519,11 @@ if menu == "🏢 Détail & Analyse par Client":
         df_final_table = pd.concat([total_row, df_display], ignore_index=True)
 
         st.markdown('<div class="sub-title">📋 Tableau Analytique Complet par Client & Tranches Kilométriques</div>', unsafe_allow_html=True)
-        st.dataframe(df_final_table, use_container_width=True, hide_index=True, height=520)
+        st.dataframe(df_final_table, use_container_width=True, key="table_detail_clients")
 
         st.markdown("---")
 
-        col_top10, col_tranches = st.columns([1.2, 1.8])
+        col_top10, col_tranches = st.columns(2)
 
         with col_top10:
             st.markdown('<div class="sub-title">🏆 Top 10 Clients par CA Réalisé</div>', unsafe_allow_html=True)
