@@ -379,7 +379,7 @@ with col_t:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ============================================================
-# 0. PAGE : DÉTAIL & ANALYSE PAR CLIENT (NOUVEAU TABLEAU MODÈLE)
+# 0. PAGE : DÉTAIL & ANALYSE PAR CLIENT (MODÈLE EXACT)
 # ============================================================
 
 if menu == "🏢 Détail & Analyse par Client":
@@ -388,7 +388,7 @@ if menu == "🏢 Détail & Analyse par Client":
     if not df_merged_filtered.empty:
         df_c = df_merged_filtered.copy()
 
-        # Identification des colonnes numériques dans la fusion OM/Commandes
+        # Détection sécurisée des colonnes avec fallback automatique à 0 si absentes
         col_km_tot = find_column_by_keywords(df_c, ["km parcouru", "km total", "kilométrage", "km", "distance"])
         col_km_charge = find_column_by_keywords(df_c, ["km à charge", "km charge", "charge"])
         col_km_vide = find_column_by_keywords(df_c, ["km à vide", "km vide", "roulage à vide", "vide"])
@@ -396,7 +396,6 @@ if menu == "🏢 Détail & Analyse par Client":
         col_immob_chg = find_column_by_keywords(df_c, ["immob au chargement", "immob chargement", "chargement"])
         col_immob_dechg = find_column_by_keywords(df_c, ["immob au déchargement", "immob dechargement", "déchargement", "dechargement"])
 
-        # Conversion sécurisée en numérique
         df_c["_km_tot"] = pd.to_numeric(df_c[col_km_tot], errors="coerce").fillna(0) if col_km_tot else 0.0
         df_c["_km_vide"] = pd.to_numeric(df_c[col_km_vide], errors="coerce").fillna(0) if col_km_vide else 0.0
         
@@ -409,7 +408,7 @@ if menu == "🏢 Détail & Analyse par Client":
         df_c["_immob_chg"] = pd.to_numeric(df_c[col_immob_chg], errors="coerce").fillna(0) if col_immob_chg else 0.0
         df_c["_immob_dechg"] = pd.to_numeric(df_c[col_immob_dechg], errors="coerce").fillna(0) if col_immob_dechg else 0.0
 
-        # Calcul des tranches kilométriques par mission
+        # Tranches kilométriques
         df_c["<=100km"] = (df_c["_km_tot"] <= 100).astype(int)
         df_c["101→200km"] = ((df_c["_km_tot"] > 100) & (df_c["_km_tot"] <= 200)).astype(int)
         df_c["201→300km"] = ((df_c["_km_tot"] > 200) & (df_c["_km_tot"] <= 300)).astype(int)
@@ -418,7 +417,6 @@ if menu == "🏢 Détail & Analyse par Client":
         df_c["501→600km"] = ((df_c["_km_tot"] > 500) & (df_c["_km_tot"] <= 600)).astype(int)
         df_c[">600km"] = (df_c["_km_tot"] > 600).astype(int)
 
-        # Groupement par Code Client & Nom Client
         code_col = "Client_Code_Standard" if "Client_Code_Standard" in df_c.columns else "Client_Nom_Standard"
         name_col = "Client_Nom_Standard" if "Client_Nom_Standard" in df_c.columns else code_col
 
@@ -439,7 +437,6 @@ if menu == "🏢 Détail & Analyse par Client":
             Immob_Dechargement=("_immob_dechg", "sum"),
         )
 
-        # Calcul des moyennes
         df_grouped["CA_moy_Mission"] = np.where(
             df_grouped["Nombre_de_Mission"] > 0,
             df_grouped["CA_Genere"] / df_grouped["Nombre_de_Mission"],
@@ -451,10 +448,8 @@ if menu == "🏢 Détail & Analyse par Client":
             0.0,
         )
 
-        # Numérotation N°
         df_grouped.insert(0, "N°", range(1, len(df_grouped) + 1))
 
-        # --- LIGNE DE SYNTHÈSE GLOBALE (TOTAUX) EN HAUT ---
         tot_missions = int(df_grouped["Nombre_de_Mission"].sum())
         tot_km = df_grouped["Km_Parcouru"].sum()
         tot_km_chg = df_grouped["KM_a_Charge"].sum()
@@ -463,20 +458,20 @@ if menu == "🏢 Détail & Analyse par Client":
         moy_ca_mission = (tot_ca / tot_missions) if tot_missions > 0 else 0
         moy_ca_km = (tot_ca / tot_km) if tot_km > 0 else 0
 
-        # Affichage des cartes KPI de synthèse globale
+        # KPI Synthèse
         k1, k2, k3, k4, k5 = st.columns(5)
         with k1:
             kpi_card("Total Missions", f"{tot_missions:,} Missions".replace(",", " "))
         with k2:
-            kpi_card("Total Km Parcouru", f"{tot_km:,.0f} Km".replace(",", " "), f"Charge: {tot_km_chg:,.0f} | Vide: {tot_km_vide:,.0f}".replace(",", " "))
+            kpi_card("Total Km", f"{tot_km:,.0f} Km".replace(",", " "), f"Chg: {tot_km_chg:,.0f} | Vid: {tot_km_vide:,.0f}".replace(",", " "))
         with k3:
-            kpi_card("Total CA Généré", format_currency(tot_ca, "DZD"))
+            kpi_card("Total CA", format_currency(tot_ca, "DZD"))
         with k4:
             kpi_card("CA moy / Mission", format_currency(moy_ca_mission, "DZD"))
         with k5:
             kpi_card("CA moy / Km", format_currency(moy_ca_km, "DZD"))
 
-        # --- CONSTRUCTION DU TABLEAU PRINCIPAL ---
+        # Construction du tableau principal
         df_display = pd.DataFrame({
             "N°": df_grouped["N°"],
             "Code Client": df_grouped[code_col],
@@ -499,7 +494,6 @@ if menu == "🏢 Détail & Analyse par Client":
             "Immob Au Déchargement (H)": df_grouped["Immob_Dechargement"].apply(lambda x: f"{x:,.2f}".replace(".", ",")),
         })
 
-        # Ligne Total en tête de tableau (comme dans le modèle Excel)
         total_row = pd.DataFrame([{
             "N°": "TOTAL",
             "Code Client": "-",
@@ -529,11 +523,10 @@ if menu == "🏢 Détail & Analyse par Client":
 
         st.markdown("---")
 
-        # --- SECTION INFÉRIEURE : TOP 10 CLIENTS & RÉPARTITION PAR TRANCHE KILOMÉTRIQUE ---
         col_top10, col_tranches = st.columns([1.2, 1.8])
 
         with col_top10:
-            st.markdown('<div class="sub-title">🏆 Les 10 clients ayant réalisé le CA le plus élevé</div>', unsafe_allow_html=True)
+            st.markdown('<div class="sub-title">🏆 Top 10 Clients par CA Réalisé</div>', unsafe_allow_html=True)
             top10_df = df_grouped.sort_values(by="CA_Genere", ascending=False).head(10).reset_index(drop=True)
             badges = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"]
             top10_display = pd.DataFrame({
@@ -546,7 +539,7 @@ if menu == "🏢 Détail & Analyse par Client":
         with col_tranches:
             st.markdown('<div class="sub-title">🚛 Répartition des missions clients par plage kilométrique</div>', unsafe_allow_html=True)
             client_inspect = st.selectbox(
-                "Sélectionnez un client pour inspecter sa répartition kilométrique :",
+                "Sélectionnez un client :",
                 options=df_grouped[name_col].tolist(),
                 index=0,
             )
@@ -563,7 +556,7 @@ if menu == "🏢 Détail & Analyse par Client":
                 tranche_data,
                 x="Plage Kilométrique",
                 y="Nombre de Missions",
-                title=f"Distribution des missions — {client_inspect}",
+                title=f"Distribution — {client_inspect}",
                 color="Nombre de Missions",
                 color_continuous_scale="Greens",
             )
@@ -571,7 +564,7 @@ if menu == "🏢 Détail & Analyse par Client":
             st.plotly_chart(fig_tr, use_container_width=True)
 
     else:
-        st.info("Aucune donnée d'Ordre de Mission ou de Vente disponible pour générer le détail client.")
+        st.info("Aucune donnée d'Ordre de Mission ou de Vente disponible.")
 
 # ============================================================
 # 1. PAGE : ANALYSE MENSUELLE (OM & VENTES)
